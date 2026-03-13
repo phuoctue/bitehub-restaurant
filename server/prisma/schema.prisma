@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator dbml {
   provider = "prisma-dbml-generator"
 }
@@ -9,9 +8,38 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql" // connect postgreSQL
   url      = env("DATABASE_URL")
 }
+
+// --- CÁC ENUM ĐƯỢC THÊM MỚI ---
+enum Role {
+  Owner
+  Employee
+}
+
+enum DishStatus {
+  Available
+  Unavailable
+  Hidden
+}
+
+enum TableStatus {
+  Available
+  Hidden
+  Reserved
+}
+
+enum OrderStatus {
+  Pending
+  Processing
+  Rejected
+  Delivered
+  Paid
+  Cancelled
+}
+
+// --- CÁC MODEL ---
 
 model Account {
   id           Int            @id @default(autoincrement())
@@ -19,7 +47,7 @@ model Account {
   email        String         @unique
   password     String
   avatar       String?
-  role         String         @default("Employee") // Owner, Employee
+  role         Role           @default(Employee) // Đã chuyển sang Enum Role (Owner, Employee)
   orders       Order[]
   employees    Account[]      @relation("OwnerEmployee")
   owner        Account?       @relation("OwnerEmployee", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -36,35 +64,35 @@ model Dish {
   price         Int
   description   String
   image         String
-  status        String         @default("Available")
+  status        DishStatus     @default(Available) // Đã chuyển sang Enum DishStatus
   dishSnapshots DishSnapshot[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
 
 model DishSnapshot {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   name        String
   price       Int
   description String
   image       String
-  status      String   @default("Available")
+  status      DishStatus @default(Available) // Đã chuyển sang Enum DishStatus
   dishId      Int?
-  dish        Dish?    @relation(fields: [dishId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
+  dish        Dish?      @relation(fields: [dishId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime   @default(now())
   order       Order?
 }
 
 model Table {
-  number    Int      @id
+  number    Int         @id
   capacity  Int
   orders    Order[]
   guests    Guest[]
-  status    String   @default("Available")
+  status    TableStatus @default(Available) // Đã chuyển sang Enum TableStatus
   token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model Order {
@@ -78,7 +106,7 @@ model Order {
   quantity       Int
   orderHandler   Account?     @relation(fields: [orderHandlerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   orderHandlerId Int?
-  status         String       @default("Pending")
+  status         OrderStatus  @default(Pending) // Đã chuyển sang Enum OrderStatus
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }

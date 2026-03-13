@@ -8,7 +8,7 @@ Table Account {
   email String [unique, not null]
   password String [not null]
   avatar String
-  role String [not null, default: 'Employee']
+  role Role [not null, default: 'Employee']
   orders Order [not null]
   employees Account [not null]
   owner Account
@@ -25,7 +25,7 @@ Table Dish {
   price Int [not null]
   description String [not null]
   image String [not null]
-  status String [not null, default: 'Available']
+  status DishStatus [not null, default: 'Available']
   dishSnapshots DishSnapshot [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
@@ -37,7 +37,7 @@ Table DishSnapshot {
   price Int [not null]
   description String [not null]
   image String [not null]
-  status String [not null, default: 'Available']
+  status DishStatus [not null, default: 'Available']
   dishId Int
   dish Dish
   updatedAt DateTime [not null]
@@ -50,7 +50,7 @@ Table Table {
   capacity Int [not null]
   orders Order [not null]
   guests Guest [not null]
-  status String [not null, default: 'Available']
+  status TableStatus [not null, default: 'Available']
   token String [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
@@ -67,7 +67,7 @@ Table Order {
   quantity Int [not null]
   orderHandler Account
   orderHandlerId Int
-  status String [not null, default: 'Pending']
+  status OrderStatus [not null, default: 'Pending']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -99,6 +99,32 @@ Table Socket {
   account Account
   guestId Int [unique]
   guest Guest
+}
+
+Enum Role {
+  Owner
+  Employee
+}
+
+Enum DishStatus {
+  Available
+  Unavailable
+  Hidden
+}
+
+Enum TableStatus {
+  Available
+  Hidden
+  Reserved
+}
+
+Enum OrderStatus {
+  Pending
+  Processing
+  Rejected
+  Delivered
+  Paid
+  Cancelled
 }
 
 Ref: Account.ownerId > Account.id
