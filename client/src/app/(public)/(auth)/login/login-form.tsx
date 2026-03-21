@@ -23,6 +23,7 @@ import { Mail, Lock } from "lucide-react";
 import { useLoginMutation } from "@/queries/useAuth";
 import { toast } from "sonner";
 import { handleErrorApi } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const loginMutation = useLoginMutation();
@@ -34,6 +35,8 @@ export default function LoginForm() {
     },
   });
 
+  const router = useRouter();
+
   const onSubmit = async (data: LoginBodyType) => {
     //khi nhấn submit thì React hook form sẽ validate cái form bằng zod schema ở client trươc1
     //nếu không pass qua vòng này thì sẽ không gọi API
@@ -41,6 +44,7 @@ export default function LoginForm() {
     try {
       const result = await loginMutation.mutateAsync(data);
       toast.success(result.payload.message);
+      router.push("/manage/dashboard");
     } catch (error) {
       handleErrorApi({
         error,
