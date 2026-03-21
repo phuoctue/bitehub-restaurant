@@ -139,19 +139,22 @@ const request = async <Response>(
           }
         }
       } else {
-        const authHeader = (options?.headers as Record<string, string> | undefined)
-          ?.Authorization;
+        const authHeader = (
+          options?.headers as Record<string, string> | undefined
+        )?.Authorization;
         const accessToken = authHeader ? authHeader.split("Bearer ")[1] : "";
         redirect(`/logout?sessionToken=${accessToken}`);
       }
     } else {
-      throw new HttpError(data as {
-        status: number;
-        payload: {
-          message: string;
-          [key: string]: unknown;
-        };
-      });
+      throw new HttpError(
+        data as {
+          status: number;
+          payload: {
+            message: string;
+            [key: string]: unknown;
+          };
+        },
+      );
     }
   }
   // Đảm bảo logic dưới đây chỉ chạy ở phía client (browser)
