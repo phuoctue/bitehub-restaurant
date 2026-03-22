@@ -1,18 +1,21 @@
-import accountApiRequest from "@/apiRequest/account"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { on } from "events"
-import { use } from "react"
+import accountApiRequest from "@/apiRequest/account";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useAccountMe = () => {
-return useQuery({
-    queryKey: ['account-me'],
-    queryFn: accountApiRequest.me
-})
-}
-
+  return useQuery({
+    queryKey: ["account-me"],
+    queryFn: accountApiRequest.me,
+  });
+};
 
 export const useUpdateMeMutation = () => {
-    return useMutation({
-        mutationFn: accountApiRequest.updatMe
-    })
-}
+  return useMutation({
+    mutationFn: accountApiRequest.updatMe,
+  });
+};
+
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: accountApiRequest.changPassword,
+  });
+};
