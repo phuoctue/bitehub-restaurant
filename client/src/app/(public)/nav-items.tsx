@@ -31,9 +31,14 @@ const menuItems = [
 
 export default function NavItems({ className }: { className?: string }) {
   const [isAuth, setIsAuth] = useState(false);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     setIsAuth(Boolean(getAccessTokenFromLocalStorage()));
   }, []);
+
+  if (!mounted) return null; // Tránh Hydration Mismatch bằng cách không render gì trên Server
+
   return menuItems.map((item) => {
     // const isAuth = Boolean(getAccessTokenFromLocalStorage());
     if (
