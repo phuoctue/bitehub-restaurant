@@ -5,7 +5,7 @@ const privatePaths = ["/manage"];
 const unAuthPaths = ["/login"];
 
 // This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuth = Boolean(request.cookies.get("accessToken")?.value);
 
