@@ -142,6 +142,8 @@ const request = async <Response>(
         const authHeader = (
           options?.headers as Record<string, string> | undefined
         )?.Authorization;
+        //Đây là trường hop khi ma chúng ta vẫn còn accessToken còn hạn
+        //Và chúng ta gọi API ở Next.js server (Route handler, Server component đến server backend)
         const accessToken = authHeader ? authHeader.split("Bearer ")[1] : "";
         redirect(`/logout?sessionToken=${accessToken}`);
       }
@@ -160,7 +162,10 @@ const request = async <Response>(
   // Đảm bảo logic dưới đây chỉ chạy ở phía client (browser)
   if (isClient) {
     const normalizeUrl = normalizePath(url);
-    if (normalizeUrl === "api/auth/login") {
+    if (
+      normalizeUrl === "api/auth/login" ||
+      normalizeUrl === "api/auth/refresh-token"
+    ) {
       const { accessToken, refreshToken } = (payload as LoginResType).data;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
