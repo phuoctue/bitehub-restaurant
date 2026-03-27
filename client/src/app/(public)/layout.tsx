@@ -45,6 +45,10 @@ export default function Layout({
             </SheetTrigger>
             <SheetContent side="left">
               <nav className="grid gap-6 text-lg font-medium">
+                <div className="sr-only">
+                  <Package2 className="h-6 w-6" />
+                  <span>BiteHub</span>
+                </div>
                 <Link
                   href="#"
                   className="flex items-center gap-2 text-lg font-semibold"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppContext } from "@/components/app-provider";
 import { getAccessTokenFromLocalStorage } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -12,6 +13,7 @@ const menuItems = [
   {
     title: "Đơn hàng",
     href: "/orders", //authRequired: undefined nghĩa là login hay chưa đều cho hiển thị
+    authRequired: true,
   },
   {
     title: "Đăng nhập",
@@ -30,15 +32,7 @@ const menuItems = [
 //do đã check đc trạng thái đăng nhập
 
 export default function NavItems({ className }: { className?: string }) {
-  const [isAuth, setIsAuth] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    setIsAuth(Boolean(getAccessTokenFromLocalStorage()));
-  }, []);
-
-  if (!mounted) return null; // Tránh Hydration Mismatch bằng cách không render gì trên Server
-
+  const { isAuth } = useAppContext();
   return menuItems.map((item) => {
     // const isAuth = Boolean(getAccessTokenFromLocalStorage());
     if (
