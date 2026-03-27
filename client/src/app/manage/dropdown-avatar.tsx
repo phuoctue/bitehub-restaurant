@@ -20,8 +20,11 @@ export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation();
   const router = useRouter();
   const { setIsAuth } = useAppContext();
+  
+  // Lấy dữ liệu profile của user hiện tại
   const { data } = useAccountMe();
   const account = data?.payload.data;
+
   const logout = async () => {
     if (logoutMutation.isPending) return;
     try {
@@ -34,6 +37,7 @@ export default function DropdownAvatar() {
       });
     }
   };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -43,27 +47,31 @@ export default function DropdownAvatar() {
           className="overflow-hidden rounded-full"
         >
           <Avatar>
+            {/* Fix Bài 44: Chỉ truyền src nếu account?.avatar có giá trị thực sự. 
+                Nếu rỗng hoặc null, AvatarImage sẽ không render lỗi 403 */}
             <AvatarImage
               src={account?.avatar ?? undefined}
               alt={account?.name}
+              className="object-cover"
             />
+            {/* Fix lỗi .slice() khi account?.name chưa có dữ liệu */}
             <AvatarFallback>
-              {account?.name.slice(0, 2).toUpperCase()}
+              {account?.name ? account.name.slice(0, 2).toUpperCase() : "AI"}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{account?.name}</DropdownMenuLabel>
+        <DropdownMenuLabel>{account?.name ?? "Người dùng"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={"/manage/setting"} className="cursor-pointer">
+          <Link href={"/manage/setting"} className="cursor-pointer w-full">
             Cài đặt
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>Hỗ trợ</DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">Hỗ trợ</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="cursor-pointer">
+        <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
           Đăng xuất
         </DropdownMenuItem>
       </DropdownMenuContent>

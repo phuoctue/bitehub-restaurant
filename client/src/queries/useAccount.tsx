@@ -1,5 +1,9 @@
 import accountApiRequest from "@/apiRequest/account";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { UpdateEmployeeAccountBody } from "@/schemaValidations/account.schema";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+
+type UpdateEmployeeAccountBodyType = z.infer<typeof UpdateEmployeeAccountBody>;
 
 export const useAccountMe = () => {
   return useQuery({
@@ -10,12 +14,65 @@ export const useAccountMe = () => {
 
 export const useUpdateMeMutation = () => {
   return useMutation({
-    mutationFn: accountApiRequest.updatMe,
+    mutationFn: accountApiRequest.updateMe,
   });
 };
 
 export const useChangePasswordMutation = () => {
   return useMutation({
-    mutationFn: accountApiRequest.changPassword,
+    mutationFn: accountApiRequest.changePassword,
+  });
+};
+
+export const useAccountList = () => {
+  return useQuery({
+    queryKey: ["accounts"],
+    queryFn: accountApiRequest.list,
+  });
+};
+
+export const useGetAccount = ({id, enabled}: {id: number; enabled: boolean}) => {
+  return useQuery({
+    queryKey: ["account", id],
+    queryFn: () => accountApiRequest.getEmployee(id),
+    enabled 
+  });
+};
+
+export const useAddEmployeeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accountApiRequest.addEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["accounts"],
+      });
+    },
+  });
+};
+
+export const useUpdateAccountMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: UpdateEmployeeAccountBodyType & { id: number }) =>
+      accountApiRequest.updateEmployee(id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["accounts"],
+        exact: true
+      });
+    },
+  });
+};
+
+export const useDeleteAccountMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accountApiRequest.deleteEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["accounts"],
+      });
+    },
   });
 };

@@ -28,11 +28,30 @@ export default function UpdateProfileForm() {
     resolver: zodResolver(UpdateMeBody),
     defaultValues: {
       name: '',
-      avatar: ''
+      avatar: '' 
     }
   })
 
+  // Theo dõi giá trị avatar trong form
   const avatar = form.watch('avatar')
+
+  // Fix Bài 44: Xử lý Preview ảnh an toàn
+  const previewAvatar = useMemo(() => {
+    if (file) {
+      return URL.createObjectURL(file)
+    }
+    // Nếu không có file mới, dùng avatar từ server hoặc ảnh mặc định
+    return avatar || '/default-avatar.png' 
+  }, [file, avatar])
+
+  // Fix Bài 44: Thu hồi URL tạm để tránh rò rỉ bộ nhớ
+  useEffect(() => {
+    return () => {
+      if (previewAvatar && previewAvatar.startsWith('blob:')) {
+        URL.revokeObjectURL(previewAvatar)
+      }
+    }
+  }, [previewAvatar])
 
   useEffect(() => {
     if (data) {
@@ -44,13 +63,6 @@ export default function UpdateProfileForm() {
     }
   }, [data, form])
 
-  const previewAvatar = useMemo(() => {
-    if (file) {
-      return URL.createObjectURL(file)
-    }
-    return avatar
-  }, [file, avatar])
-
   const reset = () => {
     form.reset()
     setFile(null)
@@ -61,13 +73,11 @@ export default function UpdateProfileForm() {
 
     try {
       let body = values
-
+      // Nếu có chọn file mới thì upload lên server trước
       if (file) {
         const formData = new FormData()
         formData.append('file', file)
-
         const uploadImageResult = await uploadImageMutation.mutateAsync(formData)
-
         const imageUrl = uploadImageResult.payload.data
 
         body = {
@@ -77,10 +87,8 @@ export default function UpdateProfileForm() {
       }
 
       const result = await updateMeMutation.mutateAsync(body)
-
       toast.success(result.payload.message)
-
-      refetch()
+      refetch() // Tải lại dữ liệu để đồng bộ với Header (DropdownAvatar)
     } catch (error) {
       handleErrorApi({
         error,
@@ -110,9 +118,11 @@ export default function UpdateProfileForm() {
                 render={({ field }) => (
                   <FormItem>
                     <div className='flex gap-2 items-start justify-start'>
-                      <Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
-                        <AvatarImage src={previewAvatar} />
-                        <AvatarFallback className='rounded-none'>Avatar</AvatarFallback>
+                      <Avatar className='aspect-square w-[100px] h-[100px] rounded-md'>
+                        <AvatarImage src={previewAvatar} className='object-cover' />
+                        <AvatarFallback className='rounded-none'>
+                          {form.getValues('name')?.slice(0, 2).toUpperCase() || 'AV'}
+                        </AvatarFallback>
                       </Avatar>
 
                       <input
@@ -124,7 +134,8 @@ export default function UpdateProfileForm() {
                           const file = e.target.files?.[0]
                           if (file) {
                             setFile(file)
-                            field.onChange('http://localhost:3000/' + file.name) // Set a temporary value to trigger validation
+                            // Chỉ cần gọi field.onChange để báo cho react-hook-form là có thay đổi
+                            field.onChange(URL.createObjectURL(file)) 
                           }
                         }}
                       />
@@ -138,6 +149,7 @@ export default function UpdateProfileForm() {
                         <span className='sr-only'>Upload</span>
                       </button>
                     </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -160,8 +172,8 @@ export default function UpdateProfileForm() {
                 <Button variant='outline' size='sm' type='reset'>
                   Hủy
                 </Button>
-                <Button size='sm' type='submit'>
-                  Lưu thông tin
+                <Button size='sm' type='submit' disabled={updateMeMutation.isPending || uploadImageMutation.isPending}>
+                  {updateMeMutation.isPending ? 'Đang lưu...' : 'Lưu thông tin'}
                 </Button>
               </div>
             </div>
