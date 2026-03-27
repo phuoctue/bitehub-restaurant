@@ -14,23 +14,36 @@ import { EntityError, isPrismaClientKnownRequestError } from '@/utils/errors'
 import { getChalk } from '@/utils/helpers'
 
 export const initOwnerAccount = async () => {
-  const accountCount = await prisma.account.count()
-  if (accountCount === 0) {
-    const hashedPassword = await hashPassword(envConfig.INITIAL_PASSWORD_OWNER)
-    await prisma.account.create({
-      data: {
-        name: 'Owner',
-        email: envConfig.INITIAL_EMAIL_OWNER,
-        password: hashedPassword,
-        role: Role.Owner
-      }
+  try {
+    const email = envConfig.INITIAL_EMAIL_OWNER
+    const password = envConfig.INITIAL_PASSWORD_OWNER
+    if (!email || !password) {
+      console.warn('Thiếu cấu hình INITIAL_EMAIL_OWNER hoặc INITIAL_PASSWORD_OWNER trong file .env. Bỏ qua khởi tạo Admin.')
+      return
+    }
+
+    const account = await prisma.account.findUnique({
+      where: { email }
     })
-    const chalk = await getChalk()
-    console.log(
-      chalk.bgCyan(
-        `Khởi tạo tài khoản chủ quán thành công: ${envConfig.INITIAL_EMAIL_OWNER}|${envConfig.INITIAL_PASSWORD_OWNER}`
+    if (!account) {
+      const hashedPassword = await hashPassword(password)
+      await prisma.account.create({
+        data: {
+          name: 'Owner',
+          email,
+          password: hashedPassword,
+          role: Role.Owner
+        }
+      })
+      const chalk = await getChalk()
+      console.log(
+        chalk.bgCyan(
+          `Khởi tạo tài khoản chủ quán thành công: ${email}|${password}`
+        )
       )
-    )
+    }
+  } catch (error) {
+    console.error('Lỗi khi khởi tạo tài khoản Admin:', error)
   }
 }
 
