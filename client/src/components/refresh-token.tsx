@@ -16,7 +16,7 @@ export default function RefreshToken() {
     const refreshToken = localStorage.getItem("refreshToken");
     if (!accessToken || !refreshToken) return;
     let interval: any = null;
-
+    console.log(refreshToken);
     const onRefreshTokenError = () => {
       clearInterval(interval);
       // Xóa sạch token ở LocalStorage để tránh loop

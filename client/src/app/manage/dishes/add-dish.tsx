@@ -37,13 +37,15 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUploadImageMutation } from "@/queries/useMedia";
-import { useAddDishMutation } from "@/queries/useDish";
+import { useAddDishMutation, useGetDishListQuery } from "@/queries/useDish";
 import { toast } from "sonner";
 
 export default function AddDish() {
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
   const addDishMutation = useAddDishMutation();
+  const { data: dishListRes } = useGetDishListQuery();
+  const dishList = dishListRes?.payload.data || [];
   const uploadImageMutation = useUploadImageMutation();
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -75,6 +77,17 @@ export default function AddDish() {
   const onSubmit = async (values: CreateDishBodyType) => {
     if (addDishMutation.isPending || uploadImageMutation.isPending) return;
     try {
+      // Kiểm tra tên món ăn trùng
+      const isNameExist = dishList.some(
+        (dish) => dish.name.toLowerCase() === values.name.toLowerCase()
+      );
+      if (isNameExist) {
+        form.setError("name", {
+          message: "Tên món ăn đã tồn tại",
+        });
+        return;
+      }
+
       let body = { ...values };
       if (file) {
         const formData = new FormData();
