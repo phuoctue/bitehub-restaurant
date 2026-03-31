@@ -22,7 +22,7 @@ import { UpdateDishBody, UpdateDishBodyType } from '@/schemaValidations/dish.sch
 import { DishStatus, DishStatusValues } from '@/constants/type'
 import { Textarea } from '@/components/ui/textarea'
 import { useUploadImageMutation } from '@/queries/useMedia'
-import { useGetDishQuery, useUpdateDishMutation } from '@/queries/useDish'
+import { useGetDishListQuery, useGetDishQuery, useUpdateDishMutation } from '@/queries/useDish'
 import { toast } from 'sonner'
 
 export default function EditDish({
@@ -38,6 +38,8 @@ export default function EditDish({
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const uploadImageMutation = useUploadImageMutation()
   const updateDishMutation = useUpdateDishMutation()
+  const { data: dishListRes } = useGetDishListQuery()
+  const dishList = dishListRes?.payload.data || []
   
   const { data } = useGetDishQuery(id as number)
 
@@ -78,6 +80,17 @@ export default function EditDish({
   const onSubmit = async (values: UpdateDishBodyType) => {
   if (updateDishMutation.isPending) return
   try {
+    // Kiểm tra tên món ăn trùng (loại trừ món hiện tại)
+    const isNameExist = dishList.some(
+      (dish) => dish.name.toLowerCase() === values.name.toLowerCase() && dish.id !== id
+    );
+    if (isNameExist) {
+      form.setError("name", {
+        message: "Tên món ăn đã tồn tại",
+      });
+      return;
+    }
+
     let bodyValues = { ...values } // Tạo một bản sao của values
     
     // 1. Xử lý upload ảnh nếu có file mới
