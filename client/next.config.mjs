@@ -1,8 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    qualities: [25, 50, 75, 100],
-  },
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '4000',
+        pathname: '/**'
+      }
+    ],
+    qualities: [75, 100],
+    dangerouslyAllowLocalIP: true
+  }
 };
 
 export default nextConfig;
