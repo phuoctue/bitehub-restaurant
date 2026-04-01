@@ -8,9 +8,7 @@ import {
 
 const dishApiRequest = {
   list: () =>
-    http.get<DishListResType>("/dishes", {
-      cache: "no-store",
-    }),
+    http.get<DishListResType>("/dishes"),
 
   add: (body: CreateDishBodyType) => 
     http.post<DishResType>("/dishes", body),
