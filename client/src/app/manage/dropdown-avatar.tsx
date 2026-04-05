@@ -19,8 +19,8 @@ import { useAppContext } from "@/components/app-provider";
 export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation();
   const router = useRouter();
-  const { setIsAuth } = useAppContext();
-  
+  const { setRole } = useAppContext();
+
   // Lấy dữ liệu profile của user hiện tại
   const { data } = useAccountMe();
   const account = data?.payload.data;
@@ -29,7 +29,7 @@ export default function DropdownAvatar() {
     if (logoutMutation.isPending) return;
     try {
       await logoutMutation.mutateAsync();
-      setIsAuth(false);
+      setRole();
       router.push("/");
     } catch (error) {
       handleErrorApi({
@@ -65,13 +65,21 @@ export default function DropdownAvatar() {
         <DropdownMenuLabel>{account?.name ?? "Người dùng"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
+          <Link href={"/"} className="cursor-pointer w-full">
+            Trang chủ
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href={"/manage/setting"} className="cursor-pointer w-full">
             Cài đặt
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer">Hỗ trợ</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={logout}
+          className="cursor-pointer text-destructive focus:text-destructive"
+        >
           Đăng xuất
         </DropdownMenuItem>
       </DropdownMenuContent>

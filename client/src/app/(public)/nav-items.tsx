@@ -1,29 +1,56 @@
 "use client";
-
 import { useAppContext } from "@/components/app-provider";
-import { getAccessTokenFromLocalStorage } from "@/lib/utils";
+import { Role } from "@/constants/type";
+import { cn, handleErrorApi } from "@/lib/utils";
+import { useLogoutMutation } from "@/queries/useAuth";
+import { RoleType } from "@/types/jwt.types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
-const menuItems = [
+const menuItems: {
+  title: string;
+  href: string;
+  authRequired?: boolean;
+  role?: RoleType[];
+  hideWhenLogin?: boolean;
+}[] = [
   {
-    title: "Món ăn",
-    href: "/menu",
+    title: "Trang chủ",
+    href: "/",
+  },
+  {
+    title: "Menu",
+    href: "/guest/menu",
+    role: [Role.Guest],
   },
   {
     title: "Đơn hàng",
-    href: "/orders", //authRequired: undefined nghĩa là login hay chưa đều cho hiển thị
-    authRequired: true,
+    href: "/guest/orders",
+    role: [Role.Guest],
   },
   {
     title: "Đăng nhập",
     href: "/login",
-    authRequired: false, //khi false nghĩa là chưa đăng nhập sẽ hiển thị
+    hideWhenLogin: true,
   },
   {
     title: "Quản lý",
     href: "/manage/dashboard",
-    authRequired: true, //true nghĩa là đăng nhập mới hiển thị
+    role: [Role.Owner, Role.Employee],
   },
 ];
 
@@ -32,18 +59,68 @@ const menuItems = [
 //do đã check đc trạng thái đăng nhập
 
 export default function NavItems({ className }: { className?: string }) {
-  const { isAuth } = useAppContext();
-  return menuItems.map((item) => {
-    // const isAuth = Boolean(getAccessTokenFromLocalStorage());
-    if (
-      (item.authRequired === false && isAuth) || // Đăng nhập: ẩn khi đã login
-      (item.authRequired === true && !isAuth) // Quản lý: ẩn khi chưa login
-    )
-      return null;
-    return (
-      <Link href={item.href} key={item.href} className={className}>
-        {item.title}
-      </Link>
-    );
-  });
+  const { role, setRole } = useAppContext();
+  const logoutMutation = useLogoutMutation();
+  const router = useRouter();
+  const logout = async () => {
+    if (logoutMutation.isPending) return;
+    try {
+      await logoutMutation.mutateAsync();
+      setRole();
+      router.push("/");
+      toast.success("Đăng xuất thành công");
+    } catch (error) {
+      handleErrorApi({
+        error,
+      });
+    }
+  };
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <>
+      {menuItems.map((item) => {
+        // Trường hợp menu item yêu cầu role cụ thể
+        const isRoleAuthorized = item.role && role && item.role.includes(role);
+        // Trường hợp menu item không yêu cầu role (public)
+        // Nếu hideWhenLogin = true thì chỉ hiện khi CHƯA login (không có role)
+        const isPublicVisible =
+          item.role === undefined &&
+          (!item.hideWhenLogin || (item.hideWhenLogin && !role));
+
+        if (isRoleAuthorized || isPublicVisible) {
+          return (
+            <Link href={item.href} key={item.href} className={className}>
+              {item.title}
+            </Link>
+          );
+        }
+        return null;
+      })}
+      {role && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <div className={cn(className, "cursor-pointer")}>Đăng xuất</div>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Bạn có muốn đăng xuất không?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Việc đăng xuất có thể làm mất đi hóa đơn của bạn
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Thoát</AlertDialogCancel>
+              <AlertDialogAction onClick={logout}>OK</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
+  );
 }
