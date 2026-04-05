@@ -5,8 +5,10 @@ import { EntityError, HttpError } from "@/lib/http";
 import { toast } from "sonner";
 import { jwtDecode } from "jwt-decode";
 import authApiRequest from "@/apiRequest/auth";
-import { DishStatus, TableStatus } from "@/constants/type";
+import { DishStatus, OrderStatus, Role, TableStatus } from "@/constants/type";
 import envConfig from "@/config";
+import { TokenPayload } from "@/types/jwt.types";
+import guestApiRequest from "@/apiRequest/guest";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -89,14 +91,8 @@ export const checkAndRefreshToken = async (param?: {
     return;
   }
   //check token co het han khong
-  const decodedAccessToken = jwtDecode(accessToken) as {
-    exp: number;
-    iat: number;
-  };
-  const decodedRefreshToken = jwtDecode(refreshToken) as {
-    exp: number;
-    iat: number;
-  };
+  const decodedAccessToken = decodeToken(accessToken);
+  const decodedRefreshToken = decodeToken(refreshToken);
   //thoi điểm het han cua token la tính th epoch time (s)
   //còn khi sai cu pháp new Date().getTime() thi se tra ve epock time (ms)
   const now = Math.round(new Date().getTime() / 1000);
@@ -125,7 +121,11 @@ export const checkAndRefreshToken = async (param?: {
   ) {
     //goi api refresh token
     try {
-      const res = await authApiRequest.refreshToken();
+      const role = decodedRefreshToken.role;
+      const res =
+        role === Role.Guest
+          ? await guestApiRequest.refreshToken()
+          : await authApiRequest.refreshToken();
       setAccessTokenToLocalStorage(res.payload.data.accessToken);
       setRefreshTokenToLocalStorage(res.payload.data.refreshToken);
       param?.onSuccess && param.onSuccess();
@@ -136,33 +136,66 @@ export const checkAndRefreshToken = async (param?: {
 };
 
 export const formatCurrency = (number: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(number)
-}
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(number);
+};
 
-export const getVietnameseDishStatus = (status: (typeof DishStatus)[keyof typeof DishStatus]) => {
+export const getVietnameseDishStatus = (
+  status: (typeof DishStatus)[keyof typeof DishStatus],
+) => {
   switch (status) {
     case DishStatus.Available:
-      return 'Có sẵn'
+      return "Có sẵn";
     case DishStatus.Unavailable:
-      return 'Không có sẵn'
+      return "Không có sẵn";
     default:
-      return 'Ẩn'
+      return "Ẩn";
   }
-}
+};
 
-export const getVietnameseTableStatus = (status: (typeof TableStatus)[keyof typeof TableStatus]) => {
+export const getVietnameseOrderStatus = (
+  status: (typeof OrderStatus)[keyof typeof OrderStatus],
+) => {
+  switch (status) {
+    case OrderStatus.Delivered:
+      return "Đã phục vụ";
+    case OrderStatus.Paid:
+      return "Đã thanh toán";
+    case OrderStatus.Pending:
+      return "Chờ xử lý";
+    case OrderStatus.Processing:
+      return "Đang nấu";
+    default:
+      return "Từ chối";
+  }
+};
+
+export const getVietnameseTableStatus = (
+  status: (typeof TableStatus)[keyof typeof TableStatus],
+) => {
   switch (status) {
     case TableStatus.Available:
-      return 'Có sẵn'
+      return "Có sẵn";
     case TableStatus.Reserved:
-      return 'Đã đặt'
+      return "Đã đặt";
     default:
-      return 'Ẩn'
+      return "Ẩn";
   }
-}
-export const getTableLink = ({ token, tableNumber }: { token: string; tableNumber: number }) => {
-  return envConfig.NEXT_PUBLIC_URL + '/tables/' + tableNumber + '?token=' + token
-}
+};
+export const getTableLink = ({
+  token,
+  tableNumber,
+}: {
+  token: string;
+  tableNumber: number;
+}) => {
+  return (
+    envConfig.NEXT_PUBLIC_URL + "/tables/" + tableNumber + "?token=" + token
+  );
+};
+
+export const decodeToken = (token: string) => {
+  return jwtDecode(token) as TokenPayload;
+};

@@ -180,7 +180,7 @@ export const updateOrderController = async (
 ) => {
   const { status, dishId, quantity, orderHandlerId } = body
   const result = await prisma.$transaction(async (tx) => {
-    const order = await prisma.order.findUniqueOrThrow({
+    const order = await tx.order.findUniqueOrThrow({
       where: {
         id: orderId
       },

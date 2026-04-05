@@ -11,7 +11,7 @@ import React, { useEffect, useRef, Suspense } from "react";
 function LogoutContent() {
   const { mutateAsync } = useLogoutMutation();
   const router = useRouter();
-  const { setIsAuth } = useAppContext();
+  const { setRole } = useAppContext();
   const searchParams = useSearchParams();
   const refreshTokenFromUrl = searchParams.get("refreshToken");
   const accessTokenFromUrl = searchParams.get("accessToken");
@@ -37,7 +37,7 @@ function LogoutContent() {
         // Điều hướng về trang login
         // Dùng window.location.href để ép trình duyệt load lại hoàn toàn (đảm bảo xóa sạch cache/middleware state)
         // Hoặc router.push nếu bạn muốn nhanh hơn
-        setIsAuth(false);
+        setRole();
         router.push("/login");
       }
     };
@@ -53,7 +53,7 @@ function LogoutContent() {
       // Nếu không có bất kỳ token nào, quay về trang chủ hoặc login luôn
       router.push("/");
     }
-  }, [mutateAsync, router, refreshTokenFromUrl]);
+  }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl, setRole]);
 
   return (
     <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center">

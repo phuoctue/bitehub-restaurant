@@ -1,13 +1,30 @@
+'use client'
 import DarkModeToggle from '@/components/dark-mode-toggle'
 import DropdownAvatar from '@/app/manage/dropdown-avatar'
 import NavLinks from '@/app/manage/nav-links'
 import MobileNavLinks from '@/app/manage/mobile-nav-links'
+import { useAppContext } from '@/components/app-provider'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function Layout({
   children
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const { isAuth } = useAppContext()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Nếu không có isAuth thì redirect về login
+    // Tuy nhiên isAuth có thể false lúc đầu do useEffect chưa kịp chạy
+    // Nên ta cần check thêm accessToken trong localStorage cho chắc chắn
+    const accessToken = localStorage.getItem('accessToken')
+    if (!accessToken && !isAuth) {
+      router.push('/login')
+    }
+  }, [isAuth, router])
+
   return (
     <div className='flex min-h-screen w-full flex-col bg-muted/40'>
       <NavLinks />
