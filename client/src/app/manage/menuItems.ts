@@ -1,6 +1,5 @@
 import {
   Home,
-  LineChart,
   ShoppingCart,
   Users2,
   Salad,
@@ -29,11 +28,6 @@ const menuItems = [
     href: "/manage/dishes",
   },
 
-  {
-    title: "Phân tích",
-    Icon: LineChart,
-    href: "/manage/analytics",
-  },
   {
     title: "Nhân viên",
     Icon: Users2,

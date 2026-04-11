@@ -18,18 +18,25 @@ export async function POST(request: Request) {
       path: "/",
       httpOnly: true, //chỉ server đọc, không JS client
       sameSite: "lax", //Bảo mật CSRF
-      secure: true, // Chỉ HTTPS
+      secure: false, // Chỉ HTTP cho localhost
       expires: decodedAccessToken.exp * 1000, // Chuyển từ seconds sang ms
     });
     cookieStore.set("refreshToken", refreshToken, {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: false, // Chỉ HTTP cho localhost
       expires: decodedRefreshToken.exp * 1000,
     });
 
-    return Response.json(payload);
+    return Response.json({
+      message: payload.message,
+      data: {
+        accessToken,
+        refreshToken,
+        guest: payload.data.guest,
+      },
+    });
   } catch (error: any) {
     console.log(error);
     if (error instanceof HttpError) {

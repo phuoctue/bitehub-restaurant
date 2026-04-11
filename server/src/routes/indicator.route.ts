@@ -22,7 +22,19 @@ export default async function indicatorRoutes(fastify: FastifyInstance, options:
       const data = await getIndicatorsController(request.query)
       reply.send({
         message: 'Lấy dữ liệu indicators thành công',
-        data
+        data: {
+          ...data,
+          dishIndicator: data.dishIndicator.map((dish) => ({
+            ...dish,
+            status: dish.status ?? 'Available',
+            id: dish.id ?? 0,
+            createdAt: dish.createdAt ?? new Date(),
+            updatedAt: dish.updatedAt ?? new Date(),
+            price: dish.price ?? 0,
+            description: dish.description ?? '',
+            image: dish.image ?? ''
+          }))
+        }
       })
     }
   )
