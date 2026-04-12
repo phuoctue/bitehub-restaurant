@@ -25,11 +25,18 @@ export async function POST(request: Request) {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: false,
       expires: decodedRefreshToken.exp * 1000,
     });
 
-    return Response.json(payload);
+    return Response.json({
+      message: payload.message,
+      data: {
+        accessToken,
+        refreshToken,
+        account: payload.data.account,
+      },
+    });
   } catch (error: any) {
     if (error instanceof HttpError) {
       return Response.json(error.payload, {

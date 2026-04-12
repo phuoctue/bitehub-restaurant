@@ -30,7 +30,7 @@ export default function GuestLoginForm() {
     defaultValues: {
       name: "",
       token: token ?? "",
-      tableNumber: 1,
+      tableNumber: tableNumber,
     },
   });
 

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { decodeToken } from "./lib/utils";
 import { Role } from "./constants/type";
 
-const managePaths = ["/manage"];
+const managePaths = ["/manage/dashboard", "/manage/dishes", "/manage/orders"];
 const guestPaths = ["/guest"];
 const privatePaths = [...managePaths, ...guestPaths];
 const unAuthPaths = ["/login"];
