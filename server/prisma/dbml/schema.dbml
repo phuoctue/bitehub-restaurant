@@ -137,7 +137,7 @@ Ref: Order.guestId > Guest.id
 
 Ref: Order.orderHandlerId > Account.id
 
-Ref: Order.tableNumber > Table.number
+Ref: Order.tableNumber > Table.number [delete: Cascade]
 
 Ref: RefreshToken.accountId > Account.id [delete: Cascade]
 

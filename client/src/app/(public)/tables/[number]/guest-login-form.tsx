@@ -40,6 +40,15 @@ export default function GuestLoginForm() {
     }
   }, [token, router]);
 
+  useEffect(() => {
+    if (tableNumber) {
+      form.setValue("tableNumber", tableNumber);
+    }
+    if (token) {
+      form.setValue("token", token);
+    }
+  }, [tableNumber, token, form]);
+
   async function onSubmit(values: GuestLoginBodyType) {
     if (loginMutation.isPending) return;
     try {

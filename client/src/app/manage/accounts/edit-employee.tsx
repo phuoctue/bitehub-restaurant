@@ -191,9 +191,9 @@ export default function EditEmployee({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="name">Tên</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="name" className="w-full" {...field} />
                         <FormMessage />
                       </div>
@@ -206,9 +206,9 @@ export default function EditEmployee({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="email">Email</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="email" className="w-full" {...field} />
                         <FormMessage />
                       </div>
@@ -221,9 +221,9 @@ export default function EditEmployee({
                 name="changePassword"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="email">Đổi mật khẩu</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
@@ -240,9 +240,9 @@ export default function EditEmployee({
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                         <Label htmlFor="password">Mật khẩu mới</Label>
-                        <div className="col-span-3 w-full space-y-2">
+                        <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                           <Input
                             id="password"
                             className="w-full"
@@ -262,11 +262,11 @@ export default function EditEmployee({
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                         <Label htmlFor="confirmPassword">
                           Xác nhận mật khẩu mới
                         </Label>
-                        <div className="col-span-3 w-full space-y-2">
+                        <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                           <Input
                             id="confirmPassword"
                             className="w-full"

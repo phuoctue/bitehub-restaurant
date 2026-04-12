@@ -104,9 +104,9 @@ export default function AddTable() {
                 name="number"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="name">Số hiệu bàn</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input
                           id="number"
                           type="number"
@@ -124,9 +124,9 @@ export default function AddTable() {
                 name="capacity"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="price">Lượng khách cho phép</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input
                           id="capacity"
                           className="w-full"
@@ -144,9 +144,9 @@ export default function AddTable() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="description">Trạng thái</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}

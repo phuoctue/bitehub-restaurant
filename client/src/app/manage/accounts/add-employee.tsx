@@ -151,9 +151,9 @@ export default function AddEmployee() {
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='name'>Tên</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input id='name' className='w-full' {...field} />
                         <FormMessage />
                       </div>
@@ -166,9 +166,9 @@ export default function AddEmployee() {
                 name='email'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='email'>Email</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input id='email' className='w-full' {...field} />
                         <FormMessage />
                       </div>
@@ -181,9 +181,9 @@ export default function AddEmployee() {
                 name='password'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='password'>Mật khẩu</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input id='password' className='w-full' type='password' {...field} />
                         <FormMessage />
                       </div>
@@ -196,9 +196,9 @@ export default function AddEmployee() {
                 name='confirmPassword'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='confirmPassword'>Xác nhận mật khẩu</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input id='confirmPassword' className='w-full' type='password' {...field} />
                         <FormMessage />
                       </div>

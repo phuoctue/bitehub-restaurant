@@ -110,9 +110,9 @@ export default function EditTable({
             <div className='grid gap-4 py-4'>
               {/* Số hiệu bàn - Read Only */}
               <FormItem>
-                <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                   <Label htmlFor='number'>Số hiệu bàn</Label>
-                  <div className='col-span-3 w-full space-y-2'>
+                  <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                     <Input id='number' type='number' className='w-full' value={tableData?.number ?? 0} readOnly />
                   </div>
                 </div>
@@ -124,9 +124,9 @@ export default function EditTable({
                 name='capacity'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='capacity'>Sức chứa (người)</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input
                           id='capacity'
                           className='w-full'
@@ -147,9 +147,9 @@ export default function EditTable({
                 name='status'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label>Trạng thái</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -177,9 +177,9 @@ export default function EditTable({
                 name='changeToken'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='changeToken'>Đổi QR Code</Label>
-                      <div className='col-span-3 w-full'>
+                      <div className='col-span-1 sm:col-span-3 w-full'>
                         <div className='flex items-center space-x-2'>
                           <Switch id='changeToken' checked={field.value} onCheckedChange={field.onChange} />
                           <Label htmlFor='changeToken' className='font-normal text-muted-foreground italic text-xs'>
@@ -196,9 +196,9 @@ export default function EditTable({
               {tableData && (
                 <>
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label>QR Code</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <QRCodeCanvas 
                           token={tableData.token} 
                           tableNumber={tableData.number}
@@ -207,9 +207,9 @@ export default function EditTable({
                     </div>
                   </FormItem>
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label>URL gọi món</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Link
                           href={getTableLink({
                             token: tableData.token,

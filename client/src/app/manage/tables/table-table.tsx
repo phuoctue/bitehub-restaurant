@@ -178,7 +178,7 @@ function AlertDialogDeleteTable({
             <span className="bg-foreground text-primary-foreground rounded px-1">
               {tableDelete?.number}
             </span>{" "}
-            sẽ bị xóa vĩnh viễn
+            sẽ bị xóa vĩnh viễn cùng với tất cả đơn hàng liên quan
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

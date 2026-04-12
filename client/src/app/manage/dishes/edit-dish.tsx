@@ -189,9 +189,9 @@ export default function EditDish({
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='name'>Tên món ăn</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input id='name' className='w-full' {...field} />
                         <FormMessage />
                       </div>
@@ -204,9 +204,9 @@ export default function EditDish({
                 name='price'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='price'>Giá</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Input
                           id='price'
                           className='w-full'
@@ -225,9 +225,9 @@ export default function EditDish({
                 name='description'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label htmlFor='description'>Mô tả</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Textarea id='description' className='w-full' {...field} />
                         <FormMessage />
                       </div>
@@ -240,9 +240,9 @@ export default function EditDish({
                 name='status'
                 render={({ field }) => (
                   <FormItem>
-                    <div className='grid grid-cols-4 items-center justify-items-start gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
                       <Label>Trạng thái</Label>
-                      <div className='col-span-3 w-full space-y-2'>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>

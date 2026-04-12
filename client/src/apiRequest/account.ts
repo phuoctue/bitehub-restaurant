@@ -1,4 +1,4 @@
-import http from '@/lib/http'
+import http from "@/lib/http";
 
 import {
   AccountListResType,
@@ -6,13 +6,15 @@ import {
   ChangePasswordBodyType,
   CreateEmployeeAccountBodyType,
   CreateGuestBodyType,
+  CreateGuestResType,
+  GetGuestListQueryParamsType,
+  GetListGuestsResType,
   UpdateEmployeeAccountBodyType,
-  UpdateMeBodyType
-} from '@/schemaValidations/account.schema'
-import { get } from 'http'
-import { de } from 'zod/v4/locales'
+  UpdateMeBodyType,
+} from "@/schemaValidations/account.schema";
+import queryString from "query-string";
 
-const prefix = '/accounts'
+const prefix = "/accounts";
 
 const accountApiRequest = {
   me: () => http.get<AccountResType>(`${prefix}/me`),
@@ -20,8 +22,8 @@ const accountApiRequest = {
   sMe: (accessToken: string) =>
     http.get<AccountResType>(`${prefix}/me`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
+        Authorization: `Bearer ${accessToken}`,
+      },
     }),
 
   updateMe: (body: UpdateMeBodyType) =>
@@ -34,9 +36,25 @@ const accountApiRequest = {
 
   addEmployee: (body: CreateEmployeeAccountBodyType) =>
     http.post<AccountResType>(`${prefix}`, body),
-  updateEmployee: (id: number, body: UpdateEmployeeAccountBodyType) => http.put<AccountResType>(`${prefix}/detail/${id}`, body),
-  getEmployee: (id: number) => http.get<AccountResType>(`${prefix}/detail/${id}`),
-  deleteEmployee: (id: number) => http.delete<AccountResType>(`${prefix}/detail/${id}`),
-}
+  updateEmployee: (id: number, body: UpdateEmployeeAccountBodyType) =>
+    http.put<AccountResType>(`${prefix}/detail/${id}`, body),
+  getEmployee: (id: number) =>
+    http.get<AccountResType>(`${prefix}/detail/${id}`),
+  deleteEmployee: (id: number) =>
+    http.delete<AccountResType>(`${prefix}/detail/${id}`),
 
-export default accountApiRequest
+  guestList: (queryParams: GetGuestListQueryParamsType) => {
+    return http.get<GetListGuestsResType>(
+      `${prefix}/guests?` +
+        queryString.stringify({
+          fromDate: queryParams.fromDate?.toISOString(),
+          toDate: queryParams.toDate?.toISOString(),
+        }),
+    );
+  },
+  createGuest: (body: CreateGuestBodyType) => {
+    return http.post<CreateGuestResType>(`${prefix}/guests`, body);
+  },
+};
+
+export default accountApiRequest;
