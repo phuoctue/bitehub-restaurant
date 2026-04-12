@@ -1,3 +1,9 @@
+import {
+  CreateOrdersBodyType,
+  CreateOrdersResType,
+  PayGuestOrdersBodyType,
+  PayGuestOrdersResType,
+} from "./../schemaValidations/order.schema";
 import http from "@/lib/http";
 import {
   GetOrderDetailResType,
@@ -8,8 +14,11 @@ import {
 } from "@/schemaValidations/order.schema";
 import { toDate } from "date-fns";
 import queryString from "query-string";
+import { number } from "zod";
 
 const orderApiRequest = {
+  createOrders: (body: CreateOrdersBodyType) =>
+    http.post<CreateOrdersResType>("/orders", body),
   getOrderList: (queryParams: GetOrdersQueryParamsType) =>
     http.get<GetOrdersResType>(
       "/orders?" +
@@ -22,6 +31,8 @@ const orderApiRequest = {
     http.put<UpdateOrderResType>(`/orders/${orderId}`, body),
   getOrderDetail: (orderId: number) =>
     http.get<GetOrderDetailResType>(`/orders/${orderId}`),
+  payGuestOrders: (body: PayGuestOrdersBodyType) =>
+    http.post<PayGuestOrdersResType>("/orders/pay", body),
 };
 
 export default orderApiRequest;

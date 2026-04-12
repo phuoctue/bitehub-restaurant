@@ -170,9 +170,9 @@ export default function EditOrder({
                 control={form.control}
                 name="dishId"
                 render={({ field }) => (
-                  <FormItem className="grid grid-cols-4 items-center justify-items-start gap-4">
+                  <FormItem className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                     <FormLabel>Món ăn</FormLabel>
-                    <div className="flex items-center col-span-2 space-x-4">
+                    <div className="flex items-center col-span-1 sm:col-span-2 space-x-4">
                       <Avatar className="aspect-square w-[50px] h-[50px] rounded-md object-cover">
                         <AvatarImage src={selectedDish?.image} />
                         <AvatarFallback className="rounded-none">
@@ -197,9 +197,9 @@ export default function EditOrder({
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="quantity">Số lượng</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input
                           id="quantity"
                           inputMode="numeric"
@@ -227,13 +227,13 @@ export default function EditOrder({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <FormLabel>Trạng thái</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <FormControl className="col-span-3">
+                        <FormControl className="col-span-1 sm:col-span-3">
                           <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Trạng thái" />
                           </SelectTrigger>

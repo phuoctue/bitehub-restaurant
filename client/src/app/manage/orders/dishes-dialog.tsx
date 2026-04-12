@@ -33,6 +33,7 @@ import {
   formatCurrency,
   getVietnameseDishStatus,
   simpleMatchText,
+  cn,
 } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -186,14 +187,19 @@ export function DishesDialog({
                 className="max-w-sm"
               />
             </div>
-            <div className="rounded-md border">
-              <Table>
+            <div className="rounded-md border overflow-x-auto">
+              <Table className="min-w-[600px] md:min-w-full">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => {
                         return (
-                          <TableHead key={header.id}>
+                          <TableHead
+                            key={header.id}
+                            className={cn({
+                              "hidden md:table-cell": header.id === "status",
+                            })}
+                          >
                             {header.isPlaceholder
                               ? null
                               : flexRender(
@@ -216,7 +222,13 @@ export function DishesDialog({
                         className="cursor-pointer"
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
+                          <TableCell
+                            key={cell.id}
+                            className={cn({
+                              "hidden md:table-cell":
+                                cell.column.id === "status",
+                            })}
+                          >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),

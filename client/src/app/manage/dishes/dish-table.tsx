@@ -37,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { formatCurrency, getVietnameseDishStatus, handleErrorApi } from '@/lib/utils'
+import { formatCurrency, getVietnameseDishStatus, handleErrorApi, cn } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
 import AutoPagination from '@/components/auto-pagination'
 import { DishListResType } from '@/schemaValidations/dish.schema'
@@ -253,13 +253,18 @@ export default function DishTable() {
             <AddDish />
           </div>
         </div>
-        <div className='rounded-md border'>
-          <Table>
+        <div className='rounded-md border overflow-x-auto'>
+          <Table className='min-w-[700px] md:min-w-full'>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className={cn({
+                        'hidden md:table-cell': header.id === 'id' || header.id === 'description'
+                      })}
+                    >
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
@@ -271,7 +276,14 @@ export default function DishTable() {
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                      <TableCell
+                        key={cell.id}
+                        className={cn({
+                          'hidden md:table-cell': cell.column.id === 'id' || cell.column.id === 'description'
+                        })}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))

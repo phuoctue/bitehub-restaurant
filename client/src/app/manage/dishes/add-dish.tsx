@@ -181,9 +181,9 @@ export default function AddDish() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="name">Tên món</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="name" className="w-full" {...field} />
                         <FormMessage />
                       </div>
@@ -198,9 +198,9 @@ export default function AddDish() {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="price">Giá (VNĐ)</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="price" type="number" className="w-full" {...field} />
                         <FormMessage />
                       </div>
@@ -215,9 +215,9 @@ export default function AddDish() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="description">Mô tả</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Textarea id="description" className="w-full" {...field} />
                         <FormMessage />
                       </div>
@@ -232,9 +232,9 @@ export default function AddDish() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="grid grid-cols-4 items-center justify-items-start gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label>Trạng thái</Label>
-                      <div className="col-span-3 w-full space-y-2">
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>

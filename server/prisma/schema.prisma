@@ -78,7 +78,7 @@ model Order {
   dishSnapshot   DishSnapshot @relation(fields: [dishSnapshotId], references: [id], onDelete: Cascade)
   guest          Guest?       @relation(fields: [guestId], references: [id], onUpdate: NoAction)
   orderHandler   Account?     @relation(fields: [orderHandlerId], references: [id], onUpdate: NoAction)
-  table          Table?       @relation(fields: [tableNumber], references: [number], onUpdate: NoAction)
+  table          Table?       @relation(fields: [tableNumber], references: [number], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model RefreshToken {

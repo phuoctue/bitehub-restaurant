@@ -56,7 +56,7 @@ import AutoPagination from "@/components/auto-pagination";
 import { useAccountList, useDeleteAccountMutation } from "@/queries/useAccount";
 import { set } from "zod";
 import { toast } from "sonner";
-import { handleErrorApi } from "@/lib/utils";
+import { handleErrorApi, cn } from "@/lib/utils";
 
 type AccountItem = AccountListResType["data"][0];
 
@@ -280,14 +280,20 @@ export default function AccountTable() {
             <AddEmployee />
           </div>
         </div>
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-[700px] md:min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className={cn({
+                          "hidden md:table-cell":
+                            header.id === "id" || header.id === "email",
+                        })}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -308,7 +314,14 @@ export default function AccountTable() {
                     data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={cn({
+                          "hidden md:table-cell":
+                            cell.column.id === "id" ||
+                            cell.column.id === "email",
+                        })}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),

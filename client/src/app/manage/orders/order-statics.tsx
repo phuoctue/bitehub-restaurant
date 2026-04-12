@@ -97,7 +97,7 @@ export default function OrderStatics({
           </div>
         </DialogContent>
       </Dialog>
-      <div className="flex justify-start items-stretch gap-4 flex-wrap py-4">
+      <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 py-4'>
         {tableList.map((table) => {
           const tableNumber: number = table.number;
           const tableStatics: Record<number, StatusCountObject> | undefined =
@@ -140,7 +140,7 @@ export default function OrderStatics({
             <div
               key={tableNumber}
               className={cn(
-                "text-sm flex items-stretch gap-2 border p-2 rounded-md",
+                "text-sm flex items-stretch gap-2 border p-2 rounded-md cursor-pointer transition-colors",
                 {
                   "bg-secondary": !isEmptyTable,
                   "border-transparent": !isEmptyTable,
@@ -156,7 +156,7 @@ export default function OrderStatics({
                 </div>
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger asChild>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         <span>{servingGuestCount}</span>
@@ -175,7 +175,7 @@ export default function OrderStatics({
                 })}
               />
               {isEmptyTable && (
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex flex-1 justify-center items-center text-sm">
                   Ready
                 </div>
               )}
@@ -183,7 +183,7 @@ export default function OrderStatics({
                 <div className="flex flex-col gap-2">
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
+                      <TooltipTrigger asChild>
                         <div className="flex gap-2 items-center">
                           <OrderStatusIcon.Pending className="w-4 h-4" />
                           <span>{countObject[OrderStatus.Pending] ?? 0}</span>
@@ -196,7 +196,7 @@ export default function OrderStatics({
                     </Tooltip>
 
                     <Tooltip>
-                      <TooltipTrigger>
+                      <TooltipTrigger asChild>
                         <div className="flex gap-2 items-center">
                           <OrderStatusIcon.Processing className="w-4 h-4" />
                           <span>
@@ -210,7 +210,7 @@ export default function OrderStatics({
                       </TooltipContent>
                     </Tooltip>
                     <Tooltip>
-                      <TooltipTrigger>
+                      <TooltipTrigger asChild>
                         <div className="flex gap-2 items-center">
                           <OrderStatusIcon.Delivered className="w-4 h-4" />
                           <span>{countObject[OrderStatus.Delivered] ?? 0}</span>
@@ -228,9 +228,9 @@ export default function OrderStatics({
           );
         })}
       </div>
-      <div className="flex justify-start items-end gap-4 flex-wrap py-4">
+      <div className='flex justify-start items-center gap-2 flex-wrap py-4'>
         {OrderStatusValues.map((status) => (
-          <Badge variant="secondary" key={status}>
+          <Badge variant='secondary' key={status} className='text-[10px] sm:text-xs'>
             {getVietnameseOrderStatus(status)}: {statics.status[status] ?? 0}
           </Badge>
         ))}

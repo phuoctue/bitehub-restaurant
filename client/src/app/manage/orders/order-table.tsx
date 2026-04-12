@@ -198,6 +198,14 @@ export default function OrderTable() {
       refetchOrderList();
     }
 
+    function onPayment(data: PayGuestOrdersResType["data"]) {
+      const { guest } = data[0];
+      toastSonner.success(
+        `${guest?.name} tại bàn ${guest?.tableNumber} thanh toán thành công ${data.length} đơn`,
+      );
+      refetchOrderList();
+    }
+
     if (socket.connected) {
       onConnect();
     }
@@ -206,12 +214,14 @@ export default function OrderTable() {
     socket.on("new-order", onNewOrder);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("payment", onPayment);
 
     return () => {
       socket.off("update-order", onUpdateOrder);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("new-order", onNewOrder);
+      socket.off("payment", onPayment);
     };
   }, [refetchOrderList]);
 
@@ -232,75 +242,66 @@ export default function OrderTable() {
             refetchOrderList();
           }}
         />
-        <div className=" flex items-center">
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center">
-              <span className="mr-2">Từ</span>
+        <div className='flex flex-col sm:flex-row sm:items-center gap-4 py-4'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <div className='flex items-center gap-2'>
+              <span className='text-sm whitespace-nowrap'>Từ</span>
               <Input
-                type="datetime-local"
-                placeholder="Từ ngày"
-                className="text-sm"
-                value={format(fromDate, "yyyy-MM-dd HH:mm").replace(" ", "T")}
+                type='datetime-local'
+                placeholder='Từ ngày'
+                className='text-sm w-[170px]'
+                value={format(fromDate, 'yyyy-MM-dd HH:mm').replace(' ', 'T')}
                 onChange={(event) => setFromDate(new Date(event.target.value))}
               />
             </div>
-            <div className="flex items-center">
-              <span className="mr-2">Đến</span>
+            <div className='flex items-center gap-2'>
+              <span className='text-sm whitespace-nowrap'>Đến</span>
               <Input
-                type="datetime-local"
-                placeholder="Đến ngày"
-                value={format(toDate, "yyyy-MM-dd HH:mm").replace(" ", "T")}
+                type='datetime-local'
+                placeholder='Đến ngày'
+                className='text-sm w-[170px]'
+                value={format(toDate, 'yyyy-MM-dd HH:mm').replace(' ', 'T')}
                 onChange={(event) => setToDate(new Date(event.target.value))}
               />
             </div>
-            <Button className="" variant={"outline"} onClick={resetDateFilter}>
+            <Button className='' variant={'outline'} onClick={resetDateFilter} size='sm'>
               Reset
             </Button>
           </div>
-          <div className="ml-auto">
+          <div className='ml-auto'>
             <AddOrder />
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-4 py-4">
+        <div className='flex flex-wrap items-center gap-2 py-4'>
           <Input
-            placeholder="Tên khách"
-            value={
-              (table.getColumn("guestName")?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event) =>
-              table.getColumn("guestName")?.setFilterValue(event.target.value)
-            }
-            className="max-w-[100px]"
+            placeholder='Tên khách'
+            value={(table.getColumn('guestName')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('guestName')?.setFilterValue(event.target.value)}
+            className='w-[140px]'
           />
           <Input
-            placeholder="Số bàn"
-            value={
-              (table.getColumn("tableNumber")?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event) =>
-              table.getColumn("tableNumber")?.setFilterValue(event.target.value)
-            }
-            className="max-w-[80px]"
+            placeholder='Số bàn'
+            value={(table.getColumn('tableNumber')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('tableNumber')?.setFilterValue(event.target.value)}
+            className='w-[80px]'
           />
           <Popover open={openStatusFilter} onOpenChange={setOpenStatusFilter}>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
-                role="combobox"
+                variant='outline'
+                role='combobox'
                 aria-expanded={openStatusFilter}
-                className="w-[150px] text-sm justify-between"
+                className='w-[150px] text-sm justify-between'
               >
-                {table.getColumn("status")?.getFilterValue()
+                {table.getColumn('status')?.getFilterValue()
                   ? getVietnameseOrderStatus(
-                      table
-                        .getColumn("status")
-                        ?.getFilterValue() as (typeof OrderStatusValues)[number],
+                      table.getColumn('status')?.getFilterValue() as (typeof OrderStatusValues)[number]
                     )
-                  : "Trạng thái"}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  : 'Trạng thái'}
+                <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
+            <PopoverContent className='w-[200px] p-0'>
               <Command>
                 <CommandGroup>
                   <CommandList>
@@ -310,23 +311,17 @@ export default function OrderTable() {
                         value={status}
                         onSelect={(currentValue) => {
                           table
-                            .getColumn("status")
+                            .getColumn('status')
                             ?.setFilterValue(
-                              currentValue ===
-                                table.getColumn("status")?.getFilterValue()
-                                ? ""
-                                : currentValue,
-                            );
-                          setOpenStatusFilter(false);
+                              currentValue === table.getColumn('status')?.getFilterValue() ? '' : currentValue
+                            )
+                          setOpenStatusFilter(false)
                         }}
                       >
                         <Check
                           className={cn(
-                            "mr-2 h-4 w-4",
-                            table.getColumn("status")?.getFilterValue() ===
-                              status
-                              ? "opacity-100"
-                              : "opacity-0",
+                            'mr-2 h-4 w-4',
+                            table.getColumn('status')?.getFilterValue() === status ? 'opacity-100' : 'opacity-0'
                           )}
                         />
                         {getVietnameseOrderStatus(status)}
@@ -345,22 +340,24 @@ export default function OrderTable() {
         />
         {orderListQuery.isPending && <TableSkeleton />}
         {!orderListQuery.isPending && (
-          <div className="rounded-md border">
-            <Table>
+          <div className='rounded-md border overflow-x-auto'>
+            <Table className='min-w-[900px] md:min-w-full'>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
-                        <TableHead key={header.id}>
+                        <TableHead
+                          key={header.id}
+                          className={cn({
+                            'hidden md:table-cell': header.id === 'orderHandlerName' || header.id === 'createdAt'
+                          })}
+                        >
                           {header.isPlaceholder
                             ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
+                            : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
-                      );
+                      )
                     })}
                   </TableRow>
                 ))}
@@ -368,26 +365,22 @@ export default function OrderTable() {
               <TableBody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
+                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                        <TableCell
+                          key={cell.id}
+                          className={cn({
+                            'hidden md:table-cell': cell.column.id === 'orderHandlerName' || cell.column.id === 'createdAt'
+                          })}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={orderTableColumns.length}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={orderTableColumns.length} className='h-24 text-center'>
                       No results.
                     </TableCell>
                   </TableRow>
