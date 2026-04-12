@@ -43,13 +43,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getVietnameseTableStatus, handleErrorApi } from "@/lib/utils";
+import { getVietnameseTableStatus, handleErrorApi, cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import AutoPagination from "@/components/auto-pagination";
 import { TableListResType } from "@/schemaValidations/table.schema";
 import EditTable from "@/app/manage/tables/edit-table";
 import AddTable from "@/app/manage/tables/add-table";
-import { useDeleteTableMutation, usegetTableListQuery } from "@/queries/useTable";
+import {
+  useDeleteTableMutation,
+  usegetTableListQuery,
+} from "@/queries/useTable";
 import QRCodeTable from "@/components/qrcode-table";
 import { toast } from "sonner";
 
@@ -76,9 +79,9 @@ export const columns: ColumnDef<TableItem>[] = [
     ),
     // THÊM: filterFn để hỗ trợ lọc kiểu số bằng input text
     filterFn: (row, columnId, filterValue) => {
-      if (!filterValue) return true
-      return String(row.getValue(columnId)).includes(String(filterValue))
-    }
+      if (!filterValue) return true;
+      return String(row.getValue(columnId)).includes(String(filterValue));
+    },
   },
   {
     accessorKey: "capacity",
@@ -99,7 +102,7 @@ export const columns: ColumnDef<TableItem>[] = [
     header: "QR Code",
     cell: ({ row }) => (
       <div>
-        <QRCodeTable 
+        <QRCodeTable
           token={row.getValue("token")}
           tableNumber={row.getValue("number")}
         />
@@ -145,19 +148,19 @@ function AlertDialogDeleteTable({
   tableDelete: TableItem | null;
   setTableDelete: (value: TableItem | null) => void;
 }) {
-  const { mutateAsync } = useDeleteTableMutation()
+  const { mutateAsync } = useDeleteTableMutation();
 
   const deleteTable = async () => {
     if (tableDelete) {
       try {
-        const result = await mutateAsync(tableDelete.number)
-        setTableDelete(null)
-        toast.success(result.payload.message)
+        const result = await mutateAsync(tableDelete.number);
+        setTableDelete(null);
+        toast.success(result.payload.message);
       } catch (error) {
-        handleErrorApi({ error })
+        handleErrorApi({ error });
       }
     }
-  }
+  };
   return (
     <AlertDialog
       open={Boolean(tableDelete)}
@@ -192,13 +195,13 @@ export default function TableTable() {
   const searchParam = useSearchParams();
   const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
   const pageIndex = page - 1;
-  
+
   const [tableIdEdit, setTableIdEdit] = useState<number | undefined>();
   const [tableDelete, setTableDelete] = useState<TableItem | null>(null);
-  
+
   const tableListQuery = usegetTableListQuery();
   const data = tableListQuery.data?.payload.data ?? [];
-  
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -251,7 +254,9 @@ export default function TableTable() {
           <Input
             placeholder="Lọc số bàn..."
             // Đảm bảo lấy giá trị filter từ đúng accessorKey "number"
-            value={(table.getColumn("number")?.getFilterValue() as string) ?? ""}
+            value={
+              (table.getColumn("number")?.getFilterValue() as string) ?? ""
+            }
             onChange={(event) =>
               table.getColumn("number")?.setFilterValue(event.target.value)
             }
@@ -261,14 +266,19 @@ export default function TableTable() {
             <AddTable />
           </div>
         </div>
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-[700px] md:min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className={cn({
+                          "hidden md:table-cell": header.id === "capacity",
+                        })}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -289,7 +299,12 @@ export default function TableTable() {
                     data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={cn({
+                          "hidden md:table-cell": cell.column.id === "capacity",
+                        })}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
