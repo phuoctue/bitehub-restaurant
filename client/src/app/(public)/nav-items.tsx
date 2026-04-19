@@ -59,7 +59,7 @@ const menuItems: {
 //do đã check đc trạng thái đăng nhập
 
 export default function NavItems({ className }: { className?: string }) {
-  const { role, setRole } = useAppContext();
+  const { role, setRole, disconnectSocket } = useAppContext();
   const logoutMutation = useLogoutMutation();
   const router = useRouter();
   const logout = async () => {
@@ -67,6 +67,7 @@ export default function NavItems({ className }: { className?: string }) {
     try {
       await logoutMutation.mutateAsync();
       setRole();
+      disconnectSocket();
       router.push("/");
       toast.success("Đăng xuất thành công");
     } catch (error) {

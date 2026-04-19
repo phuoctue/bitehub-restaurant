@@ -11,7 +11,7 @@ import React, { useEffect, useRef, Suspense } from "react";
 function LogoutContent() {
   const { mutateAsync } = useLogoutMutation();
   const router = useRouter();
-  const { setRole } = useAppContext();
+  const { setRole, disconnectSocket } = useAppContext();
   const searchParams = useSearchParams();
   const refreshTokenFromUrl = searchParams.get("refreshToken");
   const accessTokenFromUrl = searchParams.get("accessToken");
@@ -38,7 +38,8 @@ function LogoutContent() {
         // Dùng window.location.href để ép trình duyệt load lại hoàn toàn (đảm bảo xóa sạch cache/middleware state)
         // Hoặc router.push nếu bạn muốn nhanh hơn
         setRole();
-        router.push("/login");
+        disconnectSocket()
+        router.push("/login")
       }
     };
 
@@ -53,7 +54,14 @@ function LogoutContent() {
       // Nếu không có bất kỳ token nào, quay về trang chủ hoặc login luôn
       router.push("/");
     }
-  }, [mutateAsync, router, refreshTokenFromUrl, accessTokenFromUrl, setRole]);
+  }, [
+    mutateAsync,
+    router,
+    refreshTokenFromUrl,
+    accessTokenFromUrl,
+    setRole,
+    disconnectSocket,
+  ]);
 
   return (
     <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center">
