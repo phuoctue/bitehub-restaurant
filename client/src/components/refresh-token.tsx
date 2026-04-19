@@ -3,6 +3,8 @@
 import { checkAndRefreshToken } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAppContext } from "./app-provider";
+import { on } from "events";
 
 //Những page kh check refreshToken
 const UNAUTHENTICATED_PATH = ["/", "/login", "/logout", "/refresh-token"];
@@ -10,6 +12,7 @@ const UNAUTHENTICATED_PATH = ["/", "/login", "/logout", "/refresh-token"];
 export default function RefreshToken() {
   const pathName = usePathname();
   const router = useRouter();
+  const { socket, disconnectSocket } = useAppContext();
   useEffect(() => {
     if (UNAUTHENTICATED_PATH.includes(pathName)) return;
     const accessToken = localStorage.getItem("accessToken");
@@ -19,9 +22,7 @@ export default function RefreshToken() {
     console.log(refreshToken);
     const onRefreshTokenError = () => {
       clearInterval(interval);
-      // Xóa sạch token ở LocalStorage để tránh loop
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      disconnectSocket()
       router.push("/login"); // Chuyển hướng ngay lập tức
     };
 
@@ -39,7 +40,35 @@ export default function RefreshToken() {
         }),
       TIMEOUT,
     );
-    return () => clearInterval(interval);
-  }, [pathName, router]);
+
+    if (socket?.connected) {
+      onConnect();
+    }
+
+    function onConnect() {
+      console.log(socket?.id);
+    }
+
+    function onDisconnect() {
+      console.log("Disconnect");
+    }
+
+    function onRefreshTokenSocket() {
+      checkAndRefreshToken({
+        onError: onRefreshTokenError,
+      });
+    }
+
+    socket?.on("connect", onConnect);
+    socket?.on("disconnect", onDisconnect);
+    socket?.on("refresh-token", onRefreshTokenSocket);
+
+    return () => {
+      clearInterval(interval);
+      socket?.off("connect", onConnect);
+      socket?.off("disconnect", onDisconnect);
+      socket?.off("refresh-token", onRefreshTokenSocket);
+    };
+  }, [pathName, router, socket, disconnectSocket]);
   return null;
 }
