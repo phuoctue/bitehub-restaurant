@@ -22,16 +22,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock } from "lucide-react";
 import { useLoginMutation } from "@/queries/useAuth";
 import { toast } from "sonner";
-import { handleErrorApi } from "@/lib/utils";
+import { generateSocketInstance, handleErrorApi } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAppContext } from "@/components/app-provider";
+import { io } from "socket.io-client";
+import envConfig from "@/config";
 
 export default function LoginForm() {
   const loginMutation = useLoginMutation();
   const searchParams = useSearchParams();
   const clearTokens = searchParams.get("clearTokens");
-  const { setRole } = useAppContext();
+  const { setRole, setSocket } = useAppContext();
 
   const form = useForm<LoginBodyType>({
     resolver: zodResolver(LoginBody),
@@ -57,6 +59,9 @@ export default function LoginForm() {
       toast.success(result.payload.message);
       setRole(result.payload.data.account.role);
       router.push("/manage/dashboard");
+      setSocket(
+       generateSocketInstance(result.payload.data.accessToken)
+      );
     } catch (error) {
       handleErrorApi({
         error,

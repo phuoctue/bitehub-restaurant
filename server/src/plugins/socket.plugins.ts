@@ -43,6 +43,7 @@ export const socketPlugin = fastifyPlugin(async (fastify) => {
           }
         })
         socket.join(ManagerRoom)
+        socket.join(`user:${userId}`) // PHẢI THÊM DÒNG NÀY: Phòng riêng cho mỗi cá nhân
       }
       socket.handshake.auth.decodedAccessToken = decodedAccessToken
     } catch (error: any) {
@@ -52,5 +53,8 @@ export const socketPlugin = fastifyPlugin(async (fastify) => {
   })
   fastify.io.on('connection', async (socket) => {
     console.log(chalk.cyanBright('🔌 Socket connected:', socket.id))
+    socket.on('disconnect', async (reason) => {
+      console.log(chalk.redBright('🔌 Socket disconnected:', socket.id))
+    })
   })
 })

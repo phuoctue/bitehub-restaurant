@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { TokenPayload } from "@/types/jwt.types";
 import guestApiRequest from "@/apiRequest/guest";
 import { BookX, CookingPot, HandCoins, Loader, Truck } from "lucide-react";
+import { io } from "socket.io-client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -227,6 +228,14 @@ export const formatDateTimeToLocaleString = (date: string | Date) => {
 export const formatDateTimeToTimeString = (date: string | Date) => {
   return format(date instanceof Date ? date : new Date(date), "HH:mm:ss");
 };
+
+export const generateSocketInstance = (accessToken: string) => {
+   return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
+          auth: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+}
 
 export const OrderStatusIcon = {
   [OrderStatus.Pending]: Loader,

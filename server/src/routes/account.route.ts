@@ -159,6 +159,11 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
     async (request, reply) => {
       const accountId = request.params.id
       const account = await deleteEmployeeAccount(accountId)
+      // Gửi tín hiệu logout qua Socket tới Room của user bị xóa
+      // Cần đảm bảo server đã setup socket.io và decorate 'io' vào fastify
+      if (fastify.io) {
+        fastify.io.to(`user:${accountId}`).emit('logout')
+      }
       reply.send({
         data: account,
         message: 'Xóa thành công'

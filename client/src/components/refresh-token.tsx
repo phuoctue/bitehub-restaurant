@@ -8,6 +8,8 @@ import {
 } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAppContext } from "./app-provider";
+import { on } from "events";
 
 //Những page kh check refreshToken
 const UNAUTHENTICATED_PATH = ["/", "/login", "/logout", "/refresh-token"];
