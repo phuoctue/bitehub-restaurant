@@ -8,24 +8,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   UpdateEmployeeAccountBody,
-  UpdateEmployeeAccountBodyType,
 } from "@/schemaValidations/account.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import z from "zod";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useGetAccount, useUpdateAccountMutation } from "@/queries/useAccount";
 import { useUploadImageMutation } from "@/queries/useMedia";
 import { toast } from "sonner";
-import { on } from "events";
 import { handleErrorApi } from "@/lib/utils";
+import { Role, RoleValues } from "@/constants/type";
 
 export default function EditEmployee({
   id,
@@ -36,6 +43,9 @@ export default function EditEmployee({
   setId: (value: number | undefined) => void;
   onSubmitSuccess?: () => void;
 }) {
+  type UpdateEmployeeAccountInput = z.input<typeof UpdateEmployeeAccountBody>;
+  type UpdateEmployeeAccountOutput = z.output<typeof UpdateEmployeeAccountBody>;
+
   const [file, setFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const { data } = useGetAccount({
@@ -44,7 +54,7 @@ export default function EditEmployee({
   });
   const updateAccountMutation = useUpdateAccountMutation();
   const uploadImageMutation = useUploadImageMutation();
-  const form = useForm<UpdateEmployeeAccountBodyType>({
+  const form = useForm<UpdateEmployeeAccountInput, any, UpdateEmployeeAccountOutput>({
     resolver: zodResolver(UpdateEmployeeAccountBody),
     defaultValues: {
       name: "",
@@ -53,6 +63,8 @@ export default function EditEmployee({
       password: undefined,
       confirmPassword: undefined,
       changePassword: false,
+      role: Role.Employee
+      
     },
   });
   const avatar = form.watch("avatar");
@@ -67,7 +79,7 @@ export default function EditEmployee({
 
   useEffect(() => {
     if (data) {
-      const { name, email, avatar } = data.payload.data;
+      const { name, email, avatar, role } = data.payload.data;
       form.reset({
         name,
         email,
@@ -75,15 +87,16 @@ export default function EditEmployee({
         changePassword: form.getValues("changePassword"),
         password: form.getValues("password"),
         confirmPassword: form.getValues("confirmPassword"),
+        role: role === Role.Owner ? Role.Owner : Role.Employee,
       });
     }
   }, [data, form]);
 
-  const onSubmit = async (values: UpdateEmployeeAccountBodyType) => {
+  const onSubmit = async (values: UpdateEmployeeAccountOutput) => {
     if (updateAccountMutation.isPending) return;
 
     try {
-      let body: UpdateEmployeeAccountBodyType & { id: number } = {
+      let body: UpdateEmployeeAccountOutput & { id: number } = {
         id: id as number,
         ...values,
       };
@@ -210,6 +223,34 @@ export default function EditEmployee({
                       <Label htmlFor="email">Email</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="email" className="w-full" {...field} />
+                        <FormMessage />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
+                      <Label>Vai trò</Label>
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn vai trò" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {RoleValues.filter((role) => role !== Role.Guest).map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </div>
                     </div>
