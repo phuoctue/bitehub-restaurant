@@ -1,4 +1,4 @@
-import { Role } from '@/constants/type'
+import { ManagerRoom, Role } from '@/constants/type'
 import {
   changePasswordController,
   createEmployeeAccount,
@@ -36,6 +36,7 @@ import {
   UpdateMeBody,
   UpdateMeBodyType
 } from '@/schemaValidations/account.schema'
+import prisma from '@/database'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function accountRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
@@ -118,6 +119,25 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
       const accountId = request.params.id
       const body = request.body
       const account = await updateEmployeeAccount(accountId, body)
+
+      const targetSocket = await prisma.socket.findFirst({
+        where: {
+          accountId
+        }
+      })
+
+      if (targetSocket?.socketId) {
+        fastify.io.to(targetSocket.socketId).emit('refresh-token', {
+          reason: 'account-updated',
+          accountId
+        })
+      }
+
+      fastify.io.to(ManagerRoom).emit('refresh-token', {
+        reason: 'account-updated',
+        accountId
+      })
+
       reply.send({
         data: account,
         message: 'Cập nhật thành công'

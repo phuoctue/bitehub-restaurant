@@ -3,7 +3,7 @@ import { HttpError } from "@/lib/http";
 import { jwtDecode } from "jwt-decode";
 import guestApiRequest from "@/apiRequest/guest";
 
-export async function POST(request: Request) {
+async function handleRefreshToken() {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("refreshToken")?.value;
   if (!refreshToken) {
@@ -66,4 +66,12 @@ export async function POST(request: Request) {
       );
     }
   }
+}
+
+export async function POST() {
+  return handleRefreshToken();
+}
+
+export async function GET() {
+  return handleRefreshToken();
 }

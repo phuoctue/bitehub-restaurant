@@ -168,9 +168,8 @@ export default function OrderTable() {
   };
 
   useEffect(() => {
-
-    if (socket?.connected) {
-      onConnect()
+    if (socket.connected) {
+      onConnect();
     }
 
     function onConnect() {
@@ -185,7 +184,7 @@ export default function OrderTable() {
       const now = new Date();
       if (now >= fromDate && now <= toDate) {
         refetchOrderList();
-      }
+      } 
     }
 
     function onUpdateOrder(data: UpdateOrderResType["data"]) {

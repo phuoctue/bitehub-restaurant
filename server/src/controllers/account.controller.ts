@@ -117,6 +117,7 @@ export const updateEmployeeAccount = async (accountId: number, body: UpdateEmplo
           name: body.name,
           email: body.email,
           avatar: body.avatar,
+          role: body.role,
           password: hashedPassword
         }
       })
@@ -129,7 +130,8 @@ export const updateEmployeeAccount = async (accountId: number, body: UpdateEmplo
         data: {
           name: body.name,
           email: body.email,
-          avatar: body.avatar
+          avatar: body.avatar,
+          role: body.role
         }
       })
       return account
