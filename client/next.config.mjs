@@ -16,6 +16,9 @@ const nextConfig = {
     ],
     qualities: [75, 100],
     dangerouslyAllowLocalIP: true
+  },
+  turbopack: {
+    root: '.'
   }
 };
 
