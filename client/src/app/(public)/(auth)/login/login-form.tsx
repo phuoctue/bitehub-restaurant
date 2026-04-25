@@ -19,21 +19,41 @@ import {
 } from "@/components/ui/form";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react"; // Bỏ Link icon ở đây nếu không dùng
 import { useLoginMutation } from "@/queries/useAuth";
 import { toast } from "sonner";
 import { generateSocketInstance, handleErrorApi } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAppContext } from "@/components/app-provider";
-import { io } from "socket.io-client";
 import envConfig from "@/config";
+import Link from "next/link"; // Import Link từ next/link
+
+const getOauthGoogleUrl = () => {
+  const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+  const options = {
+    redirect_uri: envConfig.NEXT_PUBLIC_GOOGLE_AUTHORIZED_REDIRECT_URI,
+    client_id: envConfig.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    access_type: "offline",
+    response_type: "code",
+    prompt: "consent",
+    scope: [
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ].join(" "),
+  };
+  const qs = new URLSearchParams(options);
+  return `${rootUrl}?${qs.toString()}`;
+};
+
+const googleOauthUrl = getOauthGoogleUrl();
 
 export default function LoginForm() {
   const loginMutation = useLoginMutation();
   const searchParams = useSearchParams();
   const clearTokens = searchParams.get("clearTokens");
   const { setRole, setSocket } = useAppContext();
+  const router = useRouter();
 
   const form = useForm<LoginBodyType>({
     resolver: zodResolver(LoginBody),
@@ -43,7 +63,6 @@ export default function LoginForm() {
     },
   });
 
-  const router = useRouter();
   useEffect(() => {
     if (clearTokens) {
       setRole();
@@ -51,17 +70,13 @@ export default function LoginForm() {
   }, [clearTokens, setRole]);
 
   const onSubmit = async (data: LoginBodyType) => {
-    //khi nhấn submit thì React hook form sẽ validate cái form bằng zod schema ở client trươc1
-    //nếu không pass qua vòng này thì sẽ không gọi API
     if (loginMutation.isPending) return;
     try {
       const result = await loginMutation.mutateAsync(data);
       toast.success(result.payload.message);
       setRole(result.payload.data.account.role);
       router.push("/manage/dashboard");
-      setSocket(
-       generateSocketInstance(result.payload.data.accessToken)
-      );
+      setSocket(generateSocketInstance(result.payload.data.accessToken));
     } catch (error) {
       handleErrorApi({
         error,
@@ -101,7 +116,6 @@ export default function LoginForm() {
                         type="email"
                         placeholder="name@example.com"
                         className="pl-10"
-                        required
                         {...field}
                       />
                     </div>
@@ -117,12 +131,12 @@ export default function LoginForm() {
                 <FormItem>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Mật khẩu</Label>
-                    <a
-                      href="#"
+                    <Link
+                      href="/forgot-password"
                       className="text-sm font-medium text-primary hover:underline"
                     >
                       Quên mật khẩu?
-                    </a>
+                    </Link>
                   </div>
                   <FormControl>
                     <div className="relative">
@@ -131,7 +145,6 @@ export default function LoginForm() {
                         id="password"
                         type="password"
                         className="pl-10"
-                        required
                         {...field}
                       />
                     </div>
@@ -140,9 +153,10 @@ export default function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full font-semibold py-6">
-              Đăng nhập
+            <Button type="submit" className="w-full font-semibold py-6" disabled={loginMutation.isPending}>
+              {loginMutation.isPending ? "Đang xử lý..." : "Đăng nhập"}
             </Button>
+            
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -153,27 +167,26 @@ export default function LoginForm() {
                 </span>
               </div>
             </div>
+
+            {/* Sửa lại phần Link Google ở đây */}
             <Button
               variant="outline"
-              className="w-full flex items-center justify-center gap-2 py-6"
+              className="w-full p-0"
               type="button"
+              asChild
             >
-              <svg
-                className="h-4 w-4"
-                aria-hidden="true"
-                focusable="false"
-                data-prefix="fab"
-                data-icon="google"
-                role="img"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 488 512"
+              <Link
+                href={googleOauthUrl}
+                className="flex items-center justify-center gap-2 py-6 w-full"
               >
-                <path
-                  fill="currentColor"
-                  d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                ></path>
-              </svg>
-              Google
+                <svg className="h-4 w-4" viewBox="0 0 488 512">
+                  <path
+                    fill="currentColor"
+                    d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                  />
+                </svg>
+                Google
+              </Link>
             </Button>
           </form>
         </Form>
