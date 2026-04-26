@@ -8,7 +8,7 @@ import {
 } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAppContext } from "./app-provider";
+import { useAppStore } from "./app-provider";
 import { on } from "events";
 
 //Những page kh check refreshToken

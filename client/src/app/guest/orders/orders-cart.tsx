@@ -11,12 +11,14 @@ import {
   UpdateOrderResType,
 } from "@/schemaValidations/order.schema";
 import { toast } from "sonner";
-import { useAppContext } from "@/components/app-provider";
+import { useAppStore } from "@/components/app-provider";
 
 export default function OrdersCart() {
   const { data, refetch } = useGuestGetOrderListQuery();
   const orders = useMemo(() => data?.payload.data ?? [], [data]);
-  const { socket } = useAppContext();
+   const  socket = useAppStore(state => state.socket);
+
+
   const { totalPrice, totalQuantity } = useMemo(() => {
     return orders.reduce(
       (total, order) => {
