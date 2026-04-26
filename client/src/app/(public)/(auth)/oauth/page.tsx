@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppContext } from "@/components/app-provider";
+import { useAppStore } from "@/components/app-provider";
 import { decodeToken, generateSocketInstance } from "@/lib/utils"; // Thêm import hàm socket
 import { useSetTokenToCookieMutation } from "@/queries/useAuth";
 import { useSearchParams, useRouter } from "next/navigation"; // Dùng useRouter từ next/navigation
@@ -10,7 +10,8 @@ import { toast } from "sonner";
 export default function AuthPage() {
   const { mutateAsync } = useSetTokenToCookieMutation();
   const count = useRef(0);
-  const { setRole, setSocket } = useAppContext();
+  const setRole = useAppStore((state) => state.setRole);
+  const setSocket = useAppStore((state) => state.setSocket);
   const searchParams = useSearchParams();
   const router = useRouter(); // Sử dụng hook useRouter
 

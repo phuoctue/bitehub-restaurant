@@ -59,9 +59,9 @@ export default function EditEmployee({
     defaultValues: {
       name: "",
       email: "",
-      avatar: undefined,
-      password: undefined,
-      confirmPassword: undefined,
+      avatar: "",
+      password: "",
+      confirmPassword: "",
       changePassword: false,
       role: Role.Employee
       
@@ -83,10 +83,10 @@ export default function EditEmployee({
       form.reset({
         name,
         email,
-        avatar: avatar ?? undefined,
+        avatar: avatar ?? "",
         changePassword: form.getValues("changePassword"),
-        password: form.getValues("password"),
-        confirmPassword: form.getValues("confirmPassword"),
+        password: form.getValues("password") ?? "",
+        confirmPassword: form.getValues("confirmPassword") ?? "",
         role: role === Role.Owner ? Role.Owner : Role.Employee,
       });
     }
@@ -156,7 +156,7 @@ export default function EditEmployee({
             noValidate
             className="grid auto-rows-max items-start gap-4 md:gap-8"
             id="edit-employee-form"
-            onSubmit={form.handleSubmit(onSubmit, console.log)}
+            onSubmit={form.handleSubmit(onSubmit)}
           >
             <div className="grid gap-4 py-4">
               <FormField
@@ -179,9 +179,7 @@ export default function EditEmployee({
                           const file = e.target.files?.[0];
                           if (file) {
                             setFile(file);
-                            field.onChange(
-                              "http://localhost:3000/" + file.name,
-                            );
+                            field.onChange("");
                           }
                         }}
                         className="hidden"

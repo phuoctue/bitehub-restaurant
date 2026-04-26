@@ -6,6 +6,11 @@ const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.ComponentProps<"textarea">
 >(({ className, ...props }, ref) => {
+  const normalizedProps =
+    "value" in props && props.value == null
+      ? { ...props, value: "" }
+      : props
+
   return (
     <textarea
       className={cn(
@@ -13,7 +18,7 @@ const Textarea = React.forwardRef<
         className
       )}
       ref={ref}
-      {...props}
+      {...normalizedProps}
     />
   )
 })

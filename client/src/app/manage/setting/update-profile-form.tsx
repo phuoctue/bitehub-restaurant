@@ -41,7 +41,7 @@ export default function UpdateProfileForm() {
       return URL.createObjectURL(file)
     }
     // Nếu không có file mới, dùng avatar từ server hoặc ảnh mặc định
-    return avatar || '/default-avatar.png' 
+    return avatar || undefined
   }, [file, avatar])
 
   // Fix Bài 44: Thu hồi URL tạm để tránh rò rỉ bộ nhớ

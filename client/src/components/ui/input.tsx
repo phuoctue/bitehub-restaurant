@@ -7,6 +7,11 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
+    const normalizedProps =
+      "value" in props && props.value == null
+        ? { ...props, value: "" }
+        : props
+
     return (
       <input
         type={type}
@@ -15,7 +20,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className
         )}
         ref={ref}
-        {...props}
+        {...normalizedProps}
       />
     )
   }

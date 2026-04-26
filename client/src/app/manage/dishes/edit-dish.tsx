@@ -144,7 +144,7 @@ export default function EditDish({
             noValidate
             className='grid auto-rows-max items-start gap-4 md:gap-8'
             id='edit-dish-form'
-            onSubmit={form.handleSubmit(onSubmit, console.log)}
+            onSubmit={form.handleSubmit(onSubmit)}
           >
             <div className='grid gap-4 py-4'>
               <FormField
@@ -165,7 +165,7 @@ export default function EditDish({
                           const file = e.target.files?.[0]
                           if (file) {
                             setFile(file)
-                            field.onChange('http://localhost:3000/' + file.name)
+                            field.onChange('')
                           }
                         }}
                         className='hidden'

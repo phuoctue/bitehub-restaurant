@@ -1,11 +1,18 @@
 import { DishStatusValues } from '@/constants/type'
 import z from 'zod'
 
+const optionalUrlString = z.preprocess((value) => {
+  if (value === '') {
+    return undefined
+  }
+  return value
+}, z.string().url().optional())
+
 export const CreateDishBody = z.object({
   name: z.string().min(1).max(256),
   price: z.coerce.number().positive(),
   description: z.string().max(10000),
-  image: z.string().url(),
+  image: optionalUrlString,
   status: z.enum(DishStatusValues).optional()
 })
 

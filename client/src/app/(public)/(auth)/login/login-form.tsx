@@ -51,6 +51,7 @@ const googleOauthUrl = getOauthGoogleUrl();
 
 export default function LoginForm() {
   const loginMutation = useLoginMutation();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const clearTokens = searchParams.get("clearTokens");
   const  setRole = useAppStore(state => state.setRole);

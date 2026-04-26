@@ -1,6 +1,20 @@
 import { Role, RoleValues } from '@/constants/type'
 import z from 'zod'
 
+const optionalUrlString = z.preprocess((value) => {
+  if (value === '') {
+    return undefined
+  }
+  return value
+}, z.string().url().optional())
+
+const optionalPasswordString = z.preprocess((value) => {
+  if (value === '') {
+    return undefined
+  }
+  return value
+}, z.string().min(6).max(100).optional())
+
 export const AccountSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -31,7 +45,7 @@ export const CreateEmployeeAccountBody = z
   .object({
     name: z.string().trim().min(2).max(256),
     email: z.string().email(),
-    avatar: z.string().url().optional(),
+    avatar: optionalUrlString,
     password: z.string().min(6).max(100),
     confirmPassword: z.string().min(6).max(100)
   })
@@ -52,10 +66,10 @@ export const UpdateEmployeeAccountBody = z
   .object({
     name: z.string().trim().min(2).max(256),
     email: z.string().email(),
-    avatar: z.string().url().optional(),
+    avatar: optionalUrlString,
     changePassword: z.boolean().optional(),
-    password: z.string().min(6).max(100).optional(),
-    confirmPassword: z.string().min(6).max(100).optional(),
+    password: optionalPasswordString,
+    confirmPassword: optionalPasswordString,
     role: z.enum([Role.Owner, Role.Employee]).optional().default(Role.Employee)
   })
   .strict()
@@ -82,7 +96,7 @@ export type UpdateEmployeeAccountBodyType = z.TypeOf<typeof UpdateEmployeeAccoun
 export const UpdateMeBody = z
   .object({
     name: z.string().trim().min(2).max(256),
-    avatar: z.string().url().optional()
+    avatar: optionalUrlString
   })
   .strict()
 

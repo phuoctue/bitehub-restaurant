@@ -133,7 +133,7 @@ export default function AddDish() {
             noValidate
             className="grid auto-rows-max items-start gap-4 md:gap-8"
             id="add-dish-form"
-            onSubmit={form.handleSubmit(onSubmit, (e) => console.log(e))}
+            onSubmit={form.handleSubmit(onSubmit)}
             onReset={reset}
           >
             <div className="grid gap-4 py-4">
@@ -156,7 +156,7 @@ export default function AddDish() {
                           const file = e.target.files?.[0];
                           if (file) {
                             setFile(file);
-                            field.onChange("http://localhost:3000/" + file.name);
+                            field.onChange("");
                           }
                         }}
                         className="hidden"

@@ -35,7 +35,7 @@ export default function AddEmployee() {
     defaultValues: {
       name: '',
       email: '',
-      avatar: undefined,
+      avatar: '',
       password: '',
       confirmPassword: ''
     }
@@ -128,7 +128,7 @@ export default function AddEmployee() {
                           const file = e.target.files?.[0]
                           if (file) {
                             setFile(file)
-                            field.onChange('http://localhost:3000/' + file.name)
+                            field.onChange('')
                           }
                         }}
                         className='hidden'
