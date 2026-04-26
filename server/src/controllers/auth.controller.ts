@@ -1,9 +1,12 @@
+import envConfig from '@/config'
 import prisma from '@/database'
 import { LoginBodyType } from '@/schemaValidations/auth.schema'
 import { RoleType, TokenPayload } from '@/types/jwt.types'
 import { comparePassword } from '@/utils/crypto'
 import { AuthError, EntityError } from '@/utils/errors'
+import axios from 'axios'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '@/utils/jwt'
+import { Role } from '@prisma/client'
 
 export const logoutController = async (refreshToken: string) => {
   await prisma.refreshToken.delete({
@@ -50,6 +53,62 @@ export const loginController = async (body: LoginBodyType) => {
     accessToken,
     refreshToken
   }
+}
+
+export const loginGoogleController = async (code: string) => {
+  // 1. Đổi code lấy id_token từ Google API
+  const response = await axios.post('https://oauth2.googleapis.com/token', {
+    code,
+    client_id: envConfig.GOOGLE_CLIENT_ID,
+    client_secret: envConfig.GOOGLE_CLIENT_SECRET,
+    redirect_uri: 'http://localhost:4000/auth/login/google', // Phải khớp với Google Console
+    grant_type: 'authorization_code'
+  })
+
+  const { id_token } = response.data
+
+  // 2. Lấy thông tin user từ id_token (decode không cần verify vì lấy trực tiếp từ Google)
+  const googleUser = JSON.parse(Buffer.from(id_token.split('.')[1], 'base64').toString())
+
+  // 3. Kiểm tra hoặc Tạo tài khoản trong DB
+  let account = await prisma.account.findUnique({
+    where: { email: googleUser.email }
+  })
+
+  if (!account) {
+    account = await prisma.account.create({
+      data: {
+        email: googleUser.email,
+        name: googleUser.name || googleUser.email.split('@')[0],
+        role: Role.Employee, // Mặc định là Employee
+        password: '' // Không dùng mật khẩu cho Google login
+      }
+    })
+  }
+
+  // 4. Tạo bộ Token hệ thống
+  const accessToken = signAccessToken({
+    userId: account.id,
+    role: account.role as RoleType
+  })
+  const refreshToken = signRefreshToken({
+    userId: account.id,
+    role: account.role as RoleType
+  })
+
+  const decodedRefreshToken = verifyRefreshToken(refreshToken)
+  const refreshTokenExpiresAt = new Date(decodedRefreshToken.exp * 1000)
+
+  // 5. Lưu Refresh Token vào DB
+  await prisma.refreshToken.create({
+    data: {
+      accountId: account.id,
+      token: refreshToken,
+      expiresAt: refreshTokenExpiresAt
+    }
+  })
+
+  return { accessToken, refreshToken }
 }
 
 export const refreshTokenController = async (refreshToken: string) => {

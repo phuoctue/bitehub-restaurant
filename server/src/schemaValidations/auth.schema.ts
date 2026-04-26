@@ -1,4 +1,5 @@
 import { RoleValues } from '@/constants/type'
+import { Type, Static } from '@sinclair/typebox'
 import z from 'zod'
 
 export const LoginBody = z
@@ -51,3 +52,8 @@ export const LogoutBody = z
   .strict()
 
 export type LogoutBodyType = z.TypeOf<typeof LogoutBody>
+
+export const LoginGoogleQuery = z.object({
+  code: z.string()
+})
+export type LoginGoogleQueryType = z.infer<typeof LoginGoogleQuery>

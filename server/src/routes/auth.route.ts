@@ -1,8 +1,15 @@
-import { loginController, logoutController, refreshTokenController } from '@/controllers/auth.controller'
+import envConfig from '@/config'
+import {
+  loginController,
+  loginGoogleController,
+  logoutController,
+  refreshTokenController
+} from '@/controllers/auth.controller'
 import { requireLoginedHook } from '@/hooks/auth.hooks'
 import {
   LoginBody,
   LoginBodyType,
+  LoginGoogleQuery,
   LoginRes,
   LoginResType,
   LogoutBody,
@@ -14,6 +21,7 @@ import {
 } from '@/schemaValidations/auth.schema'
 import { MessageRes, MessageResType } from '@/schemaValidations/common.schema'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import queryString from 'query-string'
 
 export default async function authRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.post<{ Reply: MessageResType; Body: LogoutBodyType }>(
@@ -57,6 +65,34 @@ export default async function authRoutes(fastify: FastifyInstance, options: Fast
       })
     }
   )
+
+  fastify.get(
+    '/login/google',
+    {
+      schema: {
+        querystring: LoginGoogleQuery
+      }
+    },
+    async (request, reply) => {
+      const { code } = request.query as { code: string }
+      try {
+        const { accessToken, refreshToken } = await loginGoogleController(code)
+        const qs = queryString.stringify({
+          accessToken,
+          refreshToken,
+          status: 200
+        })
+        return reply.redirect(`${envConfig.GOOGLE_REDIRECT_CLIENT_URL}?${qs}`)
+      } catch (error: any) {
+        const qs = queryString.stringify({
+          message: error.message || 'Lỗi đăng nhập Google',
+          status: 500
+        })
+        return reply.redirect(`${envConfig.GOOGLE_REDIRECT_CLIENT_URL}?${qs}`)
+      }
+    }
+  )
+
   fastify.post<{
     Reply: RefreshTokenResType
     Body: RefreshTokenBodyType
