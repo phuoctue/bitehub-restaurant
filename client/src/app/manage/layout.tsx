@@ -3,7 +3,7 @@ import DarkModeToggle from '@/components/dark-mode-toggle'
 import DropdownAvatar from '@/app/manage/dropdown-avatar'
 import NavLinks from '@/app/manage/nav-links'
 import MobileNavLinks from '@/app/manage/mobile-nav-links'
-import { useAppContext } from '@/components/app-provider'
+import { useAppStore } from '@/components/app-provider'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -12,7 +12,7 @@ export default function Layout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const { isAuth } = useAppContext()
+  const  isAuth = useAppStore(state => state.isAuth);
   const router = useRouter()
 
   useEffect(() => {
