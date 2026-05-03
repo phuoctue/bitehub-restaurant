@@ -1,11 +1,10 @@
 "use client";
 import {
   getRefreshTokenFromLocalStorage,
-  getAccessTokenFromLocalStorage,
   checkAndRefreshToken,
 } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useRef, Suspense } from "react";
+import React, { useEffect, Suspense } from "react";
 
 function RefreshTokenPage() {
   const router = useRouter();
@@ -19,6 +18,7 @@ function RefreshTokenPage() {
       refreshTokenFromUrl === getRefreshTokenFromLocalStorage()
     ) {
       checkAndRefreshToken({
+        force: true,
         onSuccess: () => {
           router.push(redirectPathName || "/");
         },
@@ -27,7 +27,7 @@ function RefreshTokenPage() {
         },
       });
     } else {
-      router.push("/"); // Nếu URL không có token hoặc không khớp thì về login luôn
+      router.push("/");
     }
   }, [router, refreshTokenFromUrl, redirectPathName]);
 
@@ -36,16 +36,16 @@ function RefreshTokenPage() {
       <div className="text-center">
         <h1 className="text-xl font-semibold mb-2">Refresh token...</h1>
         <p className="text-muted-foreground animate-pulse">
-          Vui lòng chờ trong giây lát
+          Vui long cho trong giay lat
         </p>
       </div>
     </div>
   );
 }
 
-export default function LogoutPage() {
+export default function RefreshTokenScreen() {
   return (
-    <Suspense fallback={<div>Đang tải...</div>}>
+    <Suspense fallback={<div>Dang tai...</div>}>
       <RefreshTokenPage />
     </Suspense>
   );

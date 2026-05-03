@@ -1,6 +1,6 @@
-
 import { cookies } from "next/headers";
 import { HttpError } from "@/lib/http";
+import authApiRequest from "@/apiRequest/auth";
 import { jwtDecode } from "jwt-decode";
 
 export async function POST(request: Request) {
@@ -11,39 +11,48 @@ export async function POST(request: Request) {
 
   const { accessToken, refreshToken } = body;
   const cookieStore = await cookies();
+  const isProduction = process.env.NODE_ENV === "production";
+
   try {
     const decodedAccessToken = jwtDecode(accessToken) as { exp: number };
     const decodedRefreshToken = jwtDecode(refreshToken) as { exp: number };
 
-    // Lưu vào Cookie phía Next.js Server
     cookieStore.set("accessToken", accessToken, {
       path: "/",
-      httpOnly: true, //chỉ server đọc, không JS client
-      sameSite: "lax", //Bảo mật CSRF
-      secure: true, // Chỉ HTTPS
-      expires: decodedAccessToken.exp * 1000, // Chuyển từ seconds sang ms
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProduction,
+      expires: decodedAccessToken.exp * 1000,
     });
+
     cookieStore.set("refreshToken", refreshToken, {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: isProduction,
       expires: decodedRefreshToken.exp * 1000,
     });
 
-    return Response.json(body)
-} catch (error) {
-  if (error instanceof HttpError) {
-    return Response.json(error.payload, {
-      status: error.status
-    })
-  } else {
     return Response.json({
-      message: 'Có lỗi xảy ra',
-    }, {
-      status: 500
-    })
+      message: "Set token thanh cong",
+      accessToken,
+      refreshToken,
+    });
+  } catch (error: any) {
+    if (error instanceof HttpError) {
+      return Response.json(error.payload, {
+        status: error.status,
+      });
+    }
+
+    return Response.json(
+      {
+        message: error.message || "Loi he thong",
+      },
+      {
+        status: error.status || 500,
+      },
+    );
   }
 }
 
-}

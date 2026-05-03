@@ -8,18 +8,19 @@ import {
 } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAppStore } from "./app-provider";
-import { on } from "events";
 
-//Những page kh check refreshToken
-const UNAUTHENTICATED_PATH = ["/", "/login", "/logout", "/refresh-token"];
+const AUTH_REQUIRED_PREFIXES = ["/manage", "/guest"];
 
 export default function RefreshToken() {
   const pathName = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    if (UNAUTHENTICATED_PATH.includes(pathName)) return;
+    const shouldRefreshToken = AUTH_REQUIRED_PREFIXES.some((path) =>
+      pathName.startsWith(path),
+    );
+
+    if (!shouldRefreshToken) return;
 
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -56,12 +57,9 @@ export default function RefreshToken() {
       });
     };
 
-    // Gọi force refresh ngay lần đầu để đồng bộ token tức thì.
     syncSocketAuthAndConnect();
     onRefreshToken(true);
 
-    //TImeout interval phải bé hơn thời gian hết hạn của access token
-    //vd time hết hạn của access token là 10s thì cứ 1s sẽ cho check 1 lần
     const TIMEOUT = 1000;
     intervalId = setInterval(() => onRefreshToken(), TIMEOUT);
 
