@@ -7,23 +7,26 @@ export async function POST() {
   const refreshToken = cookieStore.get("refreshToken")?.value;
 
   if (!accessToken || !refreshToken) {
+    cookieStore.delete("accessToken");
+    cookieStore.delete("refreshToken");
     return Response.json(
-      { message: "Không tìm thấy token" },
+      { message: "Khong tim thay token, da xoa cookie con sot lai" },
       {
         status: 200,
       },
     );
   }
+
   try {
     await guestApiRequest.sLogout();
   } catch (error) {
     console.log(error);
-    // Nếu logout ở server backend lỗi thì vẫn tiếp tục xóa cookie ở client
+    // Neu logout o server backend loi thi van tiep tuc xoa cookie o client
   } finally {
     cookieStore.delete("accessToken");
     cookieStore.delete("refreshToken");
     return Response.json({
-      message: "Đăng xuất thành công",
+      message: "Dang xuat thanh cong",
     });
   }
 }

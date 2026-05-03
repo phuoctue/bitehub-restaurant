@@ -82,7 +82,7 @@ export const removeTokensFromLocalStorage = () => {
 export const checkAndRefreshToken = async (param?: {
   onError?: () => void;
   onSuccess?: () => void;
-  force ?: boolean; // Thêm tham số force để ép buộc refresh token
+  force?: boolean; // Thêm tham số force để ép buộc refresh token
 }) => {
   //khong nen dua logic lay access va refresh token ra khỏi func nay
   //vi de moi lan ma func nay dc goi thi chung ta se co 1 access va refresh token moi
@@ -112,9 +112,11 @@ export const checkAndRefreshToken = async (param?: {
   //thoi gian còn lại sẽ đc tính dựa trên cong thức: decodedAccessToken.exp - now
   //thoi gian hết hạn của access token dựa trên cong thuc:  decodedAccessToken.exp - decodedAccessToken.iat (time hết hạn - time khởi tạo)
   // Nếu Access Token còn hạn lâu (chưa quá 1/3) -> Vẫn coi là thành công để cho user vào tiếp
-  if (!param?.force && (decodedAccessToken.exp - now >=
-    (decodedAccessToken.exp - decodedAccessToken.iat) / 3
-  )) {
+  if (
+    !param?.force &&
+    decodedAccessToken.exp - now >=
+      (decodedAccessToken.exp - decodedAccessToken.iat) / 3
+  ) {
     param?.onSuccess && param.onSuccess();
     return;
   }
@@ -230,12 +232,12 @@ export const formatDateTimeToTimeString = (date: string | Date) => {
 };
 
 export const generateSocketInstance = (accessToken: string) => {
-   return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
-          auth: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-}
+  return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
+    auth: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+};
 
 export const OrderStatusIcon = {
   [OrderStatus.Pending]: Loader,
@@ -243,4 +245,16 @@ export const OrderStatusIcon = {
   [OrderStatus.Rejected]: BookX,
   [OrderStatus.Delivered]: Truck,
   [OrderStatus.Paid]: HandCoins,
+};
+
+export const wrapServerApi = async <T>(fn: () => Promise<T>) => {
+  let result = null;
+  try {
+    result = await fn();
+  } catch (error: any) {
+    if (error.digest?.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
+  }
+  return result;
 };

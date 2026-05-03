@@ -2,6 +2,7 @@ import dishApiRequest from "@/apiRequest/dish";
 import { formatCurrency } from "@/lib/utils";
 import { DishListResType } from "@/schemaValidations/dish.schema";
 import Image from "next/image";
+import Link from "next/link";
 
 export const revalidate = 60;
 
@@ -44,7 +45,8 @@ export default async function Home() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {dishList.map((dish) => (
-            <div
+            <Link
+              href={`/dishes/${dish.id}`}
               className="flex gap-4 bg-card p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
               key={dish.id}
             >
@@ -69,7 +71,7 @@ export default async function Home() {
                   {formatCurrency(dish.price)}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
