@@ -19,10 +19,11 @@ export const useUpdateOrderMutation = () => {
   });
 };
 
-export const useGetOrderListQuery = (queryParams: GetOrdersQueryParamsType) => {
+export const useGetOrderListQuery = (queryParams: GetOrdersQueryParamsType, enabled: boolean = true) => {
   return useQuery({
     queryFn: () => orderApiRequest.getOrderList(queryParams),
     queryKey: ["orders", queryParams],
+    enabled,
   });
 };
 

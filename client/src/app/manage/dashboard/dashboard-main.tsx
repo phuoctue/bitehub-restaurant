@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RevenueLineChart } from "@/app/manage/dashboard/revenue-line-chart";
 import { DishBarChart } from "@/app/manage/dashboard/dish-bar-chart";
+import { InvoiceRecent } from "@/app/manage/dashboard/invoice-recent";
 import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -166,6 +167,13 @@ export default function DashboardMain() {
           <DishBarChart data={dishIndicator} />
         </div>
       </div>
+
+      {/* Hóa đơn gần đây */}
+      <div className="grid gap-4">
+        <InvoiceRecent />
+      </div>
     </div>
   );
+
+
 }

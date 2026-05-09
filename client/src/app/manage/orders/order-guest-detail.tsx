@@ -9,6 +9,8 @@ import {
   getVietnameseOrderStatus,
   handleErrorApi,
 } from "@/lib/utils";
+import { invoiceApiRequest } from "@/apiRequest/invoice";
+import orderApiRequest from "@/apiRequest/order";
 import { usePayForGuestMuattion } from "@/queries/useOrder";
 import { GetOrdersResType } from "@/schemaValidations/order.schema";
 import Image from "next/image";
@@ -37,9 +39,21 @@ export default function OrderGuestDetail({
   const pay = async () => {
     if (payForGuestMutation.isPending || !guest) return;
     try {
-      await payForGuestMutation.mutateAsync({
+      const result = await payForGuestMutation.mutateAsync({
         guestId: guest.id,
       });
+
+      const invoiceUrlFromPay = result.payload.invoice?.invoiceUrl;
+      if (invoiceUrlFromPay) {
+        invoiceApiRequest.printInvoice(invoiceUrlFromPay);
+        return;
+      }
+
+      const paidOrders = result.payload.data;
+      if (paidOrders.length > 0) {
+        const invoiceResult = await orderApiRequest.getOrderInvoice(paidOrders[0].id);
+        invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl);
+      }
     } catch (error) {
       handleErrorApi({
         error,

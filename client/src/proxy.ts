@@ -3,8 +3,8 @@ import type { NextRequest } from "next/server";
 import { decodeToken } from "./lib/utils";
 import { Role } from "./constants/type";
 
-// Cấu hình các đường dẫn
-const managePaths = ["/manage/dashboard", "/manage/dishes", "/manage/orders"];
+// Cấu hình các đường dẫn theo prefix để bao phủ toàn bộ trang con
+const managePaths = ["/manage"];
 const guestPaths = ["/guest"];
 const privatePaths = [...managePaths, ...guestPaths];
 const unAuthPaths = ["/login", "/oauth"]; // Thêm /oauth vào đây

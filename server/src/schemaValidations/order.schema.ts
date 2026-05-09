@@ -87,7 +87,25 @@ export const PayGuestOrdersBody = z.object({
 
 export type PayGuestOrdersBodyType = z.TypeOf<typeof PayGuestOrdersBody>
 
-export const PayGuestOrdersRes = GetOrdersRes
+export const InvoiceSchema = z.object({
+  invoiceNumber: z.string(),
+  invoiceUrl: z.string()
+})
+
+export type InvoiceSchemaType = z.TypeOf<typeof InvoiceSchema>
+
+export const GetOrderInvoiceRes = z.object({
+  message: z.string(),
+  data: InvoiceSchema
+})
+
+export type GetOrderInvoiceResType = z.TypeOf<typeof GetOrderInvoiceRes>
+
+export const PayGuestOrdersRes = z.object({
+  message: z.string(),
+  data: z.array(OrderSchema),
+  invoice: InvoiceSchema.nullable().optional()
+})
 
 export type PayGuestOrdersResType = z.TypeOf<typeof PayGuestOrdersRes>
 

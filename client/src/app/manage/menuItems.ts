@@ -46,7 +46,7 @@ const menuItems: MenuItem[] = [
     title: "Nhân viên",
     Icon: Users2,
     href: "/manage/accounts",
-    roles: [Role.Owner]
+    roles: [Role.Owner, Role.Employee]
   },
 ];
 

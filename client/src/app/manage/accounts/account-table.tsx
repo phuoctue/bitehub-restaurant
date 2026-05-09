@@ -57,6 +57,8 @@ import { useAccountList, useDeleteAccountMutation } from "@/queries/useAccount";
 import { set } from "zod";
 import { toast } from "sonner";
 import { handleErrorApi, cn } from "@/lib/utils";
+import { useAppStore } from "@/components/app-provider";
+import { Role } from "@/constants/type";
 
 type AccountItem = AccountListResType["data"][0];
 
@@ -200,6 +202,8 @@ function AlertDialogDeleteAccount({
 // Số lượng item trên 1 trang
 const PAGE_SIZE = 10;
 export default function AccountTable() {
+  const role = useAppStore((state) => state.role);
+  const canManageEmployees = role === Role.Owner;
   const searchParam = useSearchParams();
   const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
   const pageIndex = page - 1;
@@ -210,6 +214,9 @@ export default function AccountTable() {
   );
   const accountListQuery = useAccountList();
   const data = accountListQuery.data?.payload.data ?? [];
+  const displayColumns = canManageEmployees
+    ? columns
+    : columns.filter((column) => column.id !== "actions");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -221,7 +228,7 @@ export default function AccountTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: displayColumns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -258,15 +265,19 @@ export default function AccountTable() {
       }}
     >
       <div className="w-full">
-        <EditEmployee
-          id={employeeIdEdit}
-          setId={setEmployeeIdEdit}
-          onSubmitSuccess={() => {}}
-        />
-        <AlertDialogDeleteAccount
-          employeeDelete={employeeDelete}
-          setEmployeeDelete={setEmployeeDelete}
-        />
+        {canManageEmployees && (
+          <EditEmployee
+            id={employeeIdEdit}
+            setId={setEmployeeIdEdit}
+            onSubmitSuccess={() => {}}
+          />
+        )}
+        {canManageEmployees && (
+          <AlertDialogDeleteAccount
+            employeeDelete={employeeDelete}
+            setEmployeeDelete={setEmployeeDelete}
+          />
+        )}
         <div className="flex items-center py-4">
           <Input
             placeholder="Filter emails..."
@@ -276,9 +287,11 @@ export default function AccountTable() {
             }
             className="max-w-sm"
           />
-          <div className="ml-auto flex items-center gap-2">
-            <AddEmployee />
-          </div>
+          {canManageEmployees && (
+            <div className="ml-auto flex items-center gap-2">
+              <AddEmployee />
+            </div>
+          )}
         </div>
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-[700px] md:min-w-full">
@@ -333,7 +346,7 @@ export default function AccountTable() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={displayColumns.length}
                     className="h-24 text-center"
                   >
                     No results.

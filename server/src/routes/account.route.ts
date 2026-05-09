@@ -11,7 +11,7 @@ import {
   updateEmployeeAccount,
   updateMeController
 } from '@/controllers/account.controller'
-import { requireLoginedHook, requireOwnerHook } from '@/hooks/auth.hooks'
+import { requireLoginedHook, requireOwnerHook, requireStaffHook } from '@/hooks/auth.hooks'
 import {
   AccountIdParam,
   AccountIdParamType,
@@ -49,7 +49,7 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
           200: AccountListRes
         }
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireStaffHook])
     },
     async (request, reply) => {
       const ownerAccountId = request.decodedAccessToken?.userId as number
@@ -242,7 +242,7 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
         },
         body: CreateGuestBody
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireStaffHook])
     },
     async (request, reply) => {
       const result = await createGuestController(request.body)
@@ -261,7 +261,7 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
         },
         querystring: GetGuestListQueryParams
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireStaffHook])
     },
     async (request, reply) => {
       const result = await getGuestList({

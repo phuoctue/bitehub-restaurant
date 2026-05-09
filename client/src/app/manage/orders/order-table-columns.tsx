@@ -14,13 +14,21 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { GetOrdersResType } from '@/schemaValidations/order.schema'
 import { useContext } from 'react'
-import { formatCurrency, formatDateTimeToLocaleString, getVietnameseOrderStatus, simpleMatchText, cn } from '@/lib/utils'
+import {
+  formatCurrency,
+  formatDateTimeToLocaleString,
+  getVietnameseOrderStatus,
+  handleErrorApi,
+  simpleMatchText
+} from '@/lib/utils'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { OrderStatus, OrderStatusValues } from '@/constants/type'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { OrderTableContext } from '@/app/manage/orders/order-table'
 import OrderGuestDetail from '@/app/manage/orders/order-guest-detail'
+import { useInvoice } from '@/queries/useInvoice'
+import orderApiRequest from '@/apiRequest/order'
 
 type OrderItem = GetOrdersResType['data'][0]
 const orderTableColumns: ColumnDef<OrderItem>[] = [
@@ -163,6 +171,55 @@ const orderTableColumns: ColumnDef<OrderItem>[] = [
         </div>
       </div>
     )
+  },
+  {
+    id: 'invoice',
+    header: 'Hóa đơn',
+    cell: function InvoiceCell({ row }) {
+      const { printInvoice, downloadInvoice, isDownloading } = useInvoice()
+      const isPaid = row.original.status === 'Paid'
+
+      if (!isPaid) {
+        return <span className='text-muted-foreground text-sm'>-</span>
+      }
+
+      return (
+        <div className='flex gap-1'>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={async () => {
+              try {
+                const invoiceResult = await orderApiRequest.getOrderInvoice(row.original.id)
+                downloadInvoice(invoiceResult.payload.data.invoiceUrl)
+              } catch (error) {
+                handleErrorApi({ error })
+              }
+            }}
+            disabled={isDownloading}
+            title='Tải hóa đơn'
+          >
+            📥
+          </Button>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={async () => {
+              try {
+                const invoiceResult = await orderApiRequest.getOrderInvoice(row.original.id)
+                printInvoice(invoiceResult.payload.data.invoiceUrl)
+              } catch (error) {
+                handleErrorApi({ error })
+              }
+            }}
+            disabled={isDownloading}
+            title='In hóa đơn'
+          >
+            🖨️
+          </Button>
+        </div>
+      )
+    }
   },
   {
     id: 'actions',
