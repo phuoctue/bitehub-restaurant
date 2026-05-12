@@ -14,7 +14,7 @@ export default function Layout({
   modal,
 }: Readonly<{
   children: React.ReactNode;
-  modal: React.ReactNode;
+  modal?: React.ReactNode;
 }>) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {

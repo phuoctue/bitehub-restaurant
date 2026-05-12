@@ -28,7 +28,7 @@ export default function UpdateProfileForm() {
   const uploadImageMutation = useUploadImageMutation();
 
   const form = useForm<UpdateMeBodyType>({
-    resolver: zodResolver(UpdateMeBody),
+    resolver: zodResolver(UpdateMeBody) as any,
     defaultValues: { name: "", avatar: "" }
   });
 
@@ -55,7 +55,7 @@ export default function UpdateProfileForm() {
   const onSubmit = async (values: UpdateMeBodyType) => {
     if (updateMeMutation.isPending) return;
     try {
-      let body = values;
+      let body: UpdateMeBodyType = values;
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -110,7 +110,7 @@ export default function UpdateProfileForm() {
                           const selected = e.target.files?.[0];
                           if (selected) {
                             setFile(selected);
-                            field.onChange(URL.createObjectURL(selected));
+                            field.onChange("");
                           }
                         }}
                       />
