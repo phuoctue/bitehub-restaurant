@@ -1,53 +1,54 @@
 import dishApiRequest from "@/apiRequest/dish";
 import { formatCurrency } from "@/lib/utils";
 import { DishListResType } from "@/schemaValidations/dish.schema";
+import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 
 export const revalidate = 60;
 
 export default async function Home() {
+  const t = await getTranslations("PublicHome");
+
   let dishList: DishListResType["data"] = [];
   try {
     const result = await dishApiRequest.list();
     const {
-      payload: { data },
+      payload: { data }
     } = result;
     dishList = data;
-  } catch (error) {
-    return <div>Error loading dishes</div>;
+  } catch {
+    return <div>{t("loadingError")}</div>;
   }
 
   return (
     <div className="w-full">
       <section className="relative z-10">
-        <span className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-10"></span>
+        <span className="absolute top-0 left-0 z-10 h-full w-full bg-black opacity-50"></span>
         <Image
           src="/banner.png"
           width={400}
           height={200}
           quality={75}
           alt="Banner"
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute top-0 left-0 h-full w-full object-cover"
         />
-        <div className="z-20 relative py-10 md:py-20 px-4 sm:px-10 md:px-20">
-          <h1 className="text-center text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-white">
-            Nhà hàng BiteHub
+        <div className="relative z-20 px-4 py-10 sm:px-10 md:px-20 md:py-20">
+          <h1 className="text-center text-xl font-bold text-white sm:text-2xl md:text-4xl lg:text-5xl">
+            {t("heroTitle")}
           </h1>
-          <p className="text-center text-sm sm:text-base mt-4 text-white">
-            Vị ngon, trọn khoảnh khắc
+          <p className="mt-4 text-center text-sm text-white sm:text-base">
+            {t("heroSubtitle")}
           </p>
         </div>
       </section>
-      <section className="py-16 container mx-auto px-4">
-        <h2 className="text-center text-2xl font-bold mb-10">
-          Đa dạng các món ăn
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <section className="container mx-auto px-4 py-16">
+        <h2 className="mb-10 text-center text-2xl font-bold">{t("sectionTitle")}</h2>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {dishList.map((dish) => (
             <Link
               href={`/dishes/${dish.id}`}
-              className="flex gap-4 bg-card p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+              className="flex gap-4 rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
               key={dish.id}
             >
               <div className="flex-shrink-0">
@@ -57,19 +58,13 @@ export default async function Home() {
                   height={150}
                   quality={75}
                   alt={dish.name}
-                  className="object-cover w-[120px] h-[120px] rounded-md"
+                  className="h-[120px] w-[120px] rounded-md object-cover"
                 />
               </div>
-              <div className="space-y-1 flex-1">
-                <h3 className="text-lg font-semibold line-clamp-1">
-                  {dish.name}
-                </h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {dish.description}
-                </p>
-                <p className="font-bold text-primary mt-2">
-                  {formatCurrency(dish.price)}
-                </p>
+              <div className="flex-1 space-y-1">
+                <h3 className="line-clamp-1 text-lg font-semibold">{dish.name}</h3>
+                <p className="line-clamp-2 text-sm text-muted-foreground">{dish.description}</p>
+                <p className="mt-2 font-bold text-primary">{formatCurrency(dish.price)}</p>
               </div>
             </Link>
           ))}
