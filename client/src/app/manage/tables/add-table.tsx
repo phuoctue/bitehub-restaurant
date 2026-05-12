@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { Resolver, useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import {
   Form,
   FormControl,
@@ -38,6 +39,7 @@ import { useAddTableMutation } from "@/queries/useTable";
 import { toast } from "sonner";
 
 export default function AddTable() {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const addTableMutation = useAddTableMutation();
   const form = useForm<CreateTableBodyType>({
@@ -58,7 +60,7 @@ export default function AddTable() {
     try {
       // Đảm bảo price là number (giống cách xử lý values trong AddEmployee)
       const result = await addTableMutation.mutateAsync(values);
-
+      t("ManageTables.addTable");
       toast.success(result.payload.message || "Thêm món ăn thành công");
       reset();
       setOpen(false);
@@ -79,7 +81,7 @@ export default function AddTable() {
         <Button size="sm" className="h-7 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Thêm bàn
+            {t("ManageTables.addTable")}
           </span>
         </Button>
       </DialogTrigger>
@@ -88,7 +90,7 @@ export default function AddTable() {
         onCloseAutoFocus={() => form.reset()}
       >
         <DialogHeader>
-          <DialogTitle>Thêm bàn</DialogTitle>
+          <DialogTitle>{t("ManageTables.addTable")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -105,7 +107,9 @@ export default function AddTable() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="name">Số hiệu bàn</Label>
+                      <Label htmlFor="name">
+                        {t("ManageTables.tableNumber")}
+                      </Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input
                           id="number"
@@ -125,7 +129,9 @@ export default function AddTable() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="price">Lượng khách cho phép</Label>
+                      <Label htmlFor="price">
+                        {t("ManageTables.allowedCapacity")}
+                      </Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input
                           id="capacity"
@@ -145,7 +151,9 @@ export default function AddTable() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="description">Trạng thái</Label>
+                      <Label htmlFor="description">
+                        {t("ManageTables.statusLabel")}
+                      </Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Select
                           onValueChange={field.onChange}
@@ -153,7 +161,9 @@ export default function AddTable() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn trạng thái" />
+                              <SelectValue
+                                placeholder={t("ManageTables.chooseStatus")}
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -176,7 +186,7 @@ export default function AddTable() {
         </Form>
         <DialogFooter>
           <Button type="submit" form="add-table-form">
-            Thêm
+            {t("ManageTables.add")}
           </Button>
         </DialogFooter>
       </DialogContent>

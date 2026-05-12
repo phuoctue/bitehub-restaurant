@@ -83,8 +83,13 @@ export const columns: ColumnDef<GuestItem>[] = [
 ];
 
 const PAGE_SIZE = 10;
-const initFromDate = startOfDay(new Date());
-const initToDate = endOfDay(new Date());
+const createDefaultDateRange = () => {
+  const now = new Date();
+  return {
+    fromDate: startOfDay(now),
+    toDate: endOfDay(now)
+  };
+};
 
 export default function GuestsDialog({
   onChoose,
@@ -92,8 +97,8 @@ export default function GuestsDialog({
   onChoose: (guest: GuestItem) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [fromDate, setFromDate] = useState(initFromDate);
-  const [toDate, setToDate] = useState(initToDate);
+  const [fromDate, setFromDate] = useState(() => createDefaultDateRange().fromDate);
+  const [toDate, setToDate] = useState(() => createDefaultDateRange().toDate);
   const guestListQuery = useGetGuestListQuery({
     fromDate,
     toDate,
@@ -143,8 +148,9 @@ export default function GuestsDialog({
   };
 
   const resetDateFilter = () => {
-    setFromDate(initFromDate);
-    setToDate(initToDate);
+    const { fromDate: nextFromDate, toDate: nextToDate } = createDefaultDateRange();
+    setFromDate(nextFromDate);
+    setToDate(nextToDate);
   };
 
   return (

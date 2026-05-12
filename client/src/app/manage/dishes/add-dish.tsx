@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { Resolver, useForm } from "react-hook-form";
 import {
@@ -41,6 +42,7 @@ import { useAddDishMutation, useGetDishListQuery } from "@/queries/useDish";
 import { toast } from "sonner";
 
 export default function AddDish() {
+  const t = useTranslations();
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
   const addDishMutation = useAddDishMutation();
@@ -79,11 +81,11 @@ export default function AddDish() {
     try {
       // Kiểm tra tên món ăn trùng
       const isNameExist = dishList.some(
-        (dish) => dish.name.toLowerCase() === values.name.toLowerCase()
+        (dish) => dish.name.toLowerCase() === values.name.toLowerCase(),
       );
       if (isNameExist) {
         form.setError("name", {
-          message: "Tên món ăn đã tồn tại",
+          message: t("ManageDishes.dishNameExists"),
         });
         return;
       }
@@ -92,17 +94,18 @@ export default function AddDish() {
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
-        const uploadImageResult = await uploadImageMutation.mutateAsync(formData);
+        const uploadImageResult =
+          await uploadImageMutation.mutateAsync(formData);
         body.image = uploadImageResult.payload.data;
       }
-      
+
       // Đảm bảo price là number (giống cách xử lý values trong AddEmployee)
       const result = await addDishMutation.mutateAsync({
         ...body,
-        price: Number(body.price)
+        price: Number(body.price),
       });
 
-      toast.success(result.payload.message || "Thêm món ăn thành công");
+      toast.success(result.payload.message || t("ManageDishes.addDishSuccess"));
       reset();
       setOpen(false);
     } catch (error) {
@@ -111,8 +114,8 @@ export default function AddDish() {
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onOpenChange={(value) => {
         setOpen(value);
         if (!value) reset();
@@ -121,12 +124,14 @@ export default function AddDish() {
       <DialogTrigger asChild>
         <Button size="sm" className="h-7 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Thêm món ăn</span>
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            {t("ManageDishes.addDish")}
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-screen overflow-auto">
         <DialogHeader>
-          <DialogTitle>Thêm món ăn mới</DialogTitle>
+          <DialogTitle>{t("ManageDishes.addNewDish")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -146,7 +151,9 @@ export default function AddDish() {
                     <div className="flex gap-2 items-start justify-start">
                       <Avatar className="aspect-square w-[100px] h-[100px] rounded-md object-cover">
                         <AvatarImage src={previewAvatarFromFile} />
-                        <AvatarFallback className="rounded-none">{name || "Ảnh"}</AvatarFallback>
+                        <AvatarFallback className="rounded-none">
+                          {name || t("ManageDishes.image")}
+                        </AvatarFallback>
                       </Avatar>
                       <input
                         type="file"
@@ -201,7 +208,12 @@ export default function AddDish() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="price">Giá (VNĐ)</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                        <Input id="price" type="number" className="w-full" {...field} />
+                        <Input
+                          id="price"
+                          type="number"
+                          className="w-full"
+                          {...field}
+                        />
                         <FormMessage />
                       </div>
                     </div>
@@ -218,7 +230,11 @@ export default function AddDish() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label htmlFor="description">Mô tả</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                        <Textarea id="description" className="w-full" {...field} />
+                        <Textarea
+                          id="description"
+                          className="w-full"
+                          {...field}
+                        />
                         <FormMessage />
                       </div>
                     </div>
@@ -235,7 +251,10 @@ export default function AddDish() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
                       <Label>Trạng thái</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Chọn trạng thái" />
@@ -259,10 +278,12 @@ export default function AddDish() {
           </form>
         </Form>
         <DialogFooter>
-          <Button 
-            type="submit" 
-            form="add-dish-form" 
-            disabled={addDishMutation.isPending || uploadImageMutation.isPending}
+          <Button
+            type="submit"
+            form="add-dish-form"
+            disabled={
+              addDishMutation.isPending || uploadImageMutation.isPending
+            }
           >
             {addDishMutation.isPending ? "Đang lưu..." : "Thêm món ăn"}
           </Button>
