@@ -1,11 +1,5 @@
 import { Role } from "@/constants/type";
-import {
-  Home,
-  ShoppingCart,
-  Users2,
-  Salad,
-  Table,
-} from "lucide-react";
+import { Home, Salad, ShoppingCart, Table, Users2 } from "lucide-react";
 
 type MenuItem = {
   title: string;
@@ -14,40 +8,37 @@ type MenuItem = {
   roles: Array<(typeof Role)[keyof typeof Role]>;
 };
 
-const menuItems: MenuItem[] = [
-  {
-    title: "Dashboard",
-    Icon: Home,
-    href: "/manage/dashboard",
-    roles: [Role.Owner, Role.Employee]
-  },
-  {
-    title: "Đơn hàng",
-    Icon: ShoppingCart,
-    href: "/manage/orders",
-    roles: [Role.Owner, Role.Employee]
-
-  },
-  {
-    title: "Bàn ăn",
-    Icon: Table,
-    href: "/manage/tables",
-    roles: [Role.Owner, Role.Employee]
-
-  },
-  {
-    title: "Món ăn",
-    Icon: Salad,
-    href: "/manage/dishes",
-    roles: [Role.Owner, Role.Employee]
-  },
-
-  {
-    title: "Nhân viên",
-    Icon: Users2,
-    href: "/manage/accounts",
-    roles: [Role.Owner]
-  },
-];
-
-export default menuItems;
+export function getMenuItems(t: (key: string) => string): MenuItem[] {
+  return [
+    {
+      title: t("dashboard"),
+      Icon: Home,
+      href: "/manage/dashboard",
+      roles: [Role.Owner, Role.Employee]
+    },
+    {
+      title: t("orders"),
+      Icon: ShoppingCart,
+      href: "/manage/orders",
+      roles: [Role.Owner, Role.Employee]
+    },
+    {
+      title: t("tables"),
+      Icon: Table,
+      href: "/manage/tables",
+      roles: [Role.Owner, Role.Employee]
+    },
+    {
+      title: t("dishes"),
+      Icon: Salad,
+      href: "/manage/dishes",
+      roles: [Role.Owner, Role.Employee]
+    },
+    {
+      title: t("employees"),
+      Icon: Users2,
+      href: "/manage/accounts",
+      roles: [Role.Owner]
+    }
+  ];
+}

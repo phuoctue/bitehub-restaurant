@@ -2,7 +2,7 @@
 import { getTableLink } from "@/lib/utils";
 import QRCode from "qrcode";
 import { useEffect, useRef } from "react";
-
+import { useLocale } from "next-intl";
 
 export default function QRCodeTable({
   token,
@@ -13,7 +13,10 @@ export default function QRCodeTable({
   tableNumber: number;
   width?: number;
 }) {
+  const locale = useLocale();
+  const isEn = locale === "en";
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current!;
     canvas.height = width + 70;
@@ -25,27 +28,27 @@ export default function QRCodeTable({
     canvasContext.textAlign = "center";
     canvasContext.fillStyle = "black";
     canvasContext.fillText(
-      `Bàn số ${tableNumber}`,
+      isEn ? `Table ${tableNumber}` : `Bàn số ${tableNumber}`,
       canvas.width / 2,
       canvas.width + 20,
-    )
-
-     canvasContext.fillText(
-      `Quét mã QR để gọi món`,
+    );
+    canvasContext.fillText(
+      isEn ? "Scan QR to order" : "Quét mã QR để gọi món",
       canvas.width / 2,
       canvas.width + 50,
-    )
-    const virtalCanvas = document.createElement("canvas")
+    );
+    const virtalCanvas = document.createElement("canvas");
     QRCode.toCanvas(
-        virtalCanvas, 
-        getTableLink({
-            token,
-            tableNumber
-        }),
-    function (error) {
-        if (error) console.error(error)
+      virtalCanvas,
+      getTableLink({
+        token,
+        tableNumber,
+      }),
+      function (error) {
+        if (error) console.error(error);
         canvasContext.drawImage(virtalCanvas, 0, 0, width, width);
-    })
-  }, [token, width, tableNumber]);
+      },
+    );
+  }, [token, width, tableNumber, isEn]);
   return <canvas ref={canvasRef} />;
 }

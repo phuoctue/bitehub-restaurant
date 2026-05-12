@@ -1,13 +1,13 @@
-import React from "react";
+import { getTranslations } from "next-intl/server";
 
-export default function Analytics() {
+export default async function Analytics() {
+  const t = await getTranslations("ManageCommon");
+
   return (
     <div className="space-y-4 p-6">
       <div>
-        <h1 className="text-3xl font-bold">Phân tích</h1>
-        <p className="text-gray-500 mt-2">
-          Trang phân tích đang được phát triển
-        </p>
+        <h1 className="text-3xl font-bold">{t("analytics")}</h1>
+        <p className="mt-2 text-gray-500">{t("analyticsInProgress")}</p>
       </div>
     </div>
   );
