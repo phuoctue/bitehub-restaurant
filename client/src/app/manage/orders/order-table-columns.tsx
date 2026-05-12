@@ -1,9 +1,10 @@
 'use client'
 
-import { DotsHorizontalIcon } from '@radix-ui/react-icons'
-import { ColumnDef } from '@tanstack/react-table'
+import orderApiRequest from '@/apiRequest/order'
+import OrderGuestDetail from '@/app/manage/orders/order-guest-detail'
+import { OrderTableContext } from '@/app/manage/orders/order-table'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,20 +13,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { GetOrdersResType } from '@/schemaValidations/order.schema'
-import { useContext } from 'react'
-import { formatCurrency, formatDateTimeToLocaleString, simpleMatchText } from '@/lib/utils'
-import Image from 'next/image'
-import { Badge } from '@/components/ui/badge'
-import { OrderStatus, OrderStatusValues } from '@/constants/type'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { OrderTableContext } from '@/app/manage/orders/order-table'
-import OrderGuestDetail from '@/app/manage/orders/order-guest-detail'
-import { useTranslations } from 'next-intl'
-import { TranslationValues } from 'next-intl'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { OrderStatus, OrderStatusValues } from '@/constants/type'
+import { formatCurrency, formatDateTimeToLocaleString, handleErrorApi, simpleMatchText } from '@/lib/utils'
+import { useInvoice } from '@/queries/useInvoice'
+import { GetOrdersResType } from '@/schemaValidations/order.schema'
+import { DotsHorizontalIcon } from '@radix-ui/react-icons'
+import { ColumnDef } from '@tanstack/react-table'
+import Image from 'next/image'
+import { TranslationValues, useTranslations } from 'next-intl'
+import { useContext } from 'react'
 
 type OrderItem = GetOrdersResType['data'][0]
-
 type TOrder = (key: string, values?: TranslationValues) => string
 
 function statusLabel(status: (typeof OrderStatusValues)[number], t: TOrder) {
@@ -52,11 +52,7 @@ export default function orderTableColumns(t: TOrder): ColumnDef<OrderItem>[] {
         const tLocal = useTranslations('ManageOrders')
         return (
           <div>
-            {!guest && (
-              <div>
-                <span>{tLocal('deleted')}</span>
-              </div>
-            )}
+            {!guest && <span>{tLocal('deleted')}</span>}
             {guest && (
               <Popover>
                 <PopoverTrigger>
@@ -114,7 +110,7 @@ export default function orderTableColumns(t: TOrder): ColumnDef<OrderItem>[] {
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
               <span>{row.original.dishSnapshot.name}</span>
-              <Badge className='px-1' variant={'secondary'}>
+              <Badge className='px-1' variant='secondary'>
                 x{row.original.quantity}
               </Badge>
             </div>
@@ -129,17 +125,17 @@ export default function orderTableColumns(t: TOrder): ColumnDef<OrderItem>[] {
       cell: function Cell({ row }) {
         const { changeStatus } = useContext(OrderTableContext)
         const tLocal = useTranslations('ManageOrders')
-        const changeOrderStatus = async (status: (typeof OrderStatusValues)[number]) => {
-          changeStatus({
-            orderId: row.original.id,
-            dishId: row.original.dishSnapshot.dishId!,
-            status,
-            quantity: row.original.quantity
-          })
-        }
+
         return (
           <Select
-            onValueChange={(value: (typeof OrderStatusValues)[number]) => changeOrderStatus(value)}
+            onValueChange={(value: (typeof OrderStatusValues)[number]) => {
+              changeStatus({
+                orderId: row.original.id,
+                dishId: row.original.dishSnapshot.dishId!,
+                status: value,
+                quantity: row.original.quantity
+              })
+            }}
             defaultValue={OrderStatus.Pending}
             value={row.getValue('status')}
           >
@@ -171,6 +167,55 @@ export default function orderTableColumns(t: TOrder): ColumnDef<OrderItem>[] {
           <div className='flex items-center space-x-4'>{formatDateTimeToLocaleString(row.original.updatedAt as unknown as string)}</div>
         </div>
       )
+    },
+    {
+      id: 'invoice',
+      header: t('invoice'),
+      cell: function InvoiceCell({ row }) {
+        const { printInvoice, downloadInvoice, isDownloading } = useInvoice()
+        const isPaid = row.original.status === OrderStatus.Paid
+
+        if (!isPaid) {
+          return <span className='text-muted-foreground text-sm'>-</span>
+        }
+
+        return (
+          <div className='flex gap-1'>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={async () => {
+                try {
+                  const invoiceResult = await orderApiRequest.getOrderInvoice(row.original.id)
+                  downloadInvoice(invoiceResult.payload.data.invoiceUrl)
+                } catch (error) {
+                  handleErrorApi({ error })
+                }
+              }}
+              disabled={isDownloading}
+              title={t('downloadInvoice')}
+            >
+              PDF
+            </Button>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={async () => {
+                try {
+                  const invoiceResult = await orderApiRequest.getOrderInvoice(row.original.id)
+                  printInvoice(invoiceResult.payload.data.invoiceUrl)
+                } catch (error) {
+                  handleErrorApi({ error })
+                }
+              }}
+              disabled={isDownloading}
+              title={t('printInvoice')}
+            >
+              Print
+            </Button>
+          </div>
+        )
+      }
     },
     {
       id: 'actions',

@@ -128,10 +128,26 @@ export const checkAndRefreshToken = async (param?: {
     //goi api refresh token
     try {
       const role = decodedRefreshToken.role;
-      const res =
-        role === Role.Guest
-          ? await guestApiRequest.refreshToken()
-          : await authApiRequest.refreshToken();
+      let res;
+      if (role === Role.Guest) {
+        res = await guestApiRequest.refreshToken();
+      } else {
+        try {
+          res = await authApiRequest.refreshToken();
+        } catch (error) {
+          // Fallback for environments where Next API route `/api/auth/refresh-token`
+          // is not available (404). Refresh directly from backend, then sync cookies.
+          if (error instanceof HttpError && error.status === 404) {
+            res = await authApiRequest.sRefreshToken({ refreshToken });
+            await authApiRequest.setTokenToCookie({
+              accessToken: res.payload.data.accessToken,
+              refreshToken: res.payload.data.refreshToken,
+            });
+          } else {
+            throw error;
+          }
+        }
+      }
       setAccessTokenToLocalStorage(res.payload.data.accessToken);
       setRefreshTokenToLocalStorage(res.payload.data.refreshToken);
       param?.onSuccess && param.onSuccess();

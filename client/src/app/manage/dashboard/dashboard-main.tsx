@@ -1,6 +1,7 @@
 "use client";
 
 import { DishBarChart } from "@/app/manage/dashboard/dish-bar-chart";
+import { InvoiceRecent } from "@/app/manage/dashboard/invoice-recent";
 import { RevenueLineChart } from "@/app/manage/dashboard/revenue-line-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ const createDefaultDateRange = () => {
   const now = new Date();
   return {
     fromDate: startOfDay(now),
-    toDate: endOfDay(now)
+    toDate: endOfDay(now),
   };
 };
 
@@ -24,7 +25,7 @@ export default function DashboardMain() {
   const [toDate, setToDate] = useState(() => createDefaultDateRange().toDate);
   const { data } = useDashboardIndicator({
     fromDate,
-    toDate
+    toDate,
   });
 
   const revenue = data?.payload.data.revenue ?? 0;
@@ -127,6 +128,10 @@ export default function DashboardMain() {
         <div className="lg:col-span-3">
           <DishBarChart data={dishIndicator} />
         </div>
+      </div>
+
+      <div className="grid gap-4">
+        <InvoiceRecent />
       </div>
     </div>
   );

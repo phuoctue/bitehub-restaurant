@@ -52,6 +52,8 @@ import AutoPagination from "@/components/auto-pagination";
 import { useAccountList, useDeleteAccountMutation } from "@/queries/useAccount";
 import { toast } from "sonner";
 import { handleErrorApi, cn } from "@/lib/utils";
+import { useAppStore } from "@/components/app-provider";
+import { Role } from "@/constants/type";
 import { TranslationValues, useTranslations } from "next-intl";
 
 type AccountItem = AccountListResType["data"][0];
@@ -132,6 +134,7 @@ function AlertDialogDeleteAccount({
 }) {
   const t = useTranslations("ManageAccounts");
   const { mutateAsync } = useDeleteAccountMutation();
+
   const deleteAccount = async () => {
     if (!employeeDelete) return;
     try {
@@ -149,9 +152,7 @@ function AlertDialogDeleteAccount({
         <AlertDialogHeader>
           <AlertDialogTitle>{t("deleteEmployeeTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("account")}{" "}
-            <span className="bg-foreground text-primary-foreground rounded px-1">{employeeDelete?.name}</span>{" "}
-            {t("deleteEmployeeDescription")}
+            {t("account")} <span className="bg-foreground text-primary-foreground rounded px-1">{employeeDelete?.name}</span> {t("deleteEmployeeDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -166,7 +167,10 @@ function AlertDialogDeleteAccount({
 const PAGE_SIZE = 10;
 export default function AccountTable() {
   const t = useTranslations("ManageAccounts");
+  const role = useAppStore((state) => state.role);
+  const canManageEmployees = role === Role.Owner;
   const columns = useMemo(() => createColumns(t), [t]);
+
   const searchParam = useSearchParams();
   const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
   const pageIndex = page - 1;
@@ -175,6 +179,7 @@ export default function AccountTable() {
   const [employeeDelete, setEmployeeDelete] = useState<AccountItem | null>(null);
   const accountListQuery = useAccountList();
   const data = accountListQuery.data?.payload.data ?? [];
+  const displayColumns = canManageEmployees ? columns : columns.filter((column) => column.id !== "actions");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -186,7 +191,7 @@ export default function AccountTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: displayColumns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -216,8 +221,8 @@ export default function AccountTable() {
   return (
     <AccountTableContext.Provider value={{ employeeIdEdit, setEmployeeIdEdit, employeeDelete, setEmployeeDelete }}>
       <div className="w-full">
-        <EditEmployee id={employeeIdEdit} setId={setEmployeeIdEdit} onSubmitSuccess={() => {}} />
-        <AlertDialogDeleteAccount employeeDelete={employeeDelete} setEmployeeDelete={setEmployeeDelete} />
+        {canManageEmployees && <EditEmployee id={employeeIdEdit} setId={setEmployeeIdEdit} onSubmitSuccess={() => {}} />}
+        {canManageEmployees && <AlertDialogDeleteAccount employeeDelete={employeeDelete} setEmployeeDelete={setEmployeeDelete} />}
         <div className="flex items-center py-4">
           <Input
             placeholder={t("filterEmails")}
@@ -225,9 +230,11 @@ export default function AccountTable() {
             onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
             className="max-w-sm"
           />
-          <div className="ml-auto flex items-center gap-2">
-            <AddEmployee />
-          </div>
+          {canManageEmployees && (
+            <div className="ml-auto flex items-center gap-2">
+              <AddEmployee />
+            </div>
+          )}
         </div>
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-[700px] md:min-w-full">
@@ -255,7 +262,7 @@ export default function AccountTable() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell colSpan={displayColumns.length} className="h-24 text-center">
                     {t("noResults")}
                   </TableCell>
                 </TableRow>
@@ -265,8 +272,7 @@ export default function AccountTable() {
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="text-xs text-muted-foreground py-4 flex-1 ">
-            {t("showing")} <strong>{table.getPaginationRowModel().rows.length}</strong> {t("of")}{" "}
-            <strong>{data.length}</strong> {t("results")}
+            {t("showing")} <strong>{table.getPaginationRowModel().rows.length}</strong> {t("of")} <strong>{data.length}</strong> {t("results")}
           </div>
           <div>
             <AutoPagination page={table.getState().pagination.pageIndex + 1} pageSize={table.getPageCount()} pathname="/manage/accounts" />

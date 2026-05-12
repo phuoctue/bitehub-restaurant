@@ -1,6 +1,7 @@
 import { DishStatus, OrderStatus, TableStatus } from '@/constants/type'
 import prisma from '@/database'
 import { CreateOrdersBodyType, UpdateOrderBodyType } from '@/schemaValidations/order.schema'
+import { generateInvoiceFromOrdersController } from '@/controllers/invoice.controller'
 
 export const createOrdersController = async (orderHandlerId: number, body: CreateOrdersBodyType) => {
   const { guestId, orders } = body
@@ -154,10 +155,67 @@ export const payOrdersController = async ({ guestId, orderHandlerId }: { guestId
       }
     })
   ])
+
+  // Generate invoice PDF
+  let invoice = null
+  try {
+    invoice = generateInvoiceFromOrdersController(ordersResult)
+  } catch (error) {
+    console.error('Failed to generate invoice:', error)
+    // Continue without invoice if generation fails
+  }
+
   return {
     orders: ordersResult,
-    socketId: sockerRecord?.socketId
+    socketId: sockerRecord?.socketId,
+    invoice
   }
+}
+
+export const getOrderInvoiceController = async (orderId: number) => {
+  const selectedOrder = await prisma.order.findUniqueOrThrow({
+    where: {
+      id: orderId
+    },
+    include: {
+      dishSnapshot: true,
+      guest: true
+    }
+  })
+
+  if (selectedOrder.status !== OrderStatus.Paid) {
+    throw new Error('Đơn hàng chưa thanh toán, không thể in hóa đơn')
+  }
+
+  if (!selectedOrder.guestId) {
+    throw new Error('Không tìm thấy khách hàng của đơn hàng này')
+  }
+
+  const fromDate = new Date(selectedOrder.createdAt)
+  fromDate.setHours(0, 0, 0, 0)
+  const toDate = new Date(selectedOrder.createdAt)
+  toDate.setHours(23, 59, 59, 999)
+
+  const relatedPaidOrders = await prisma.order.findMany({
+    where: {
+      guestId: selectedOrder.guestId,
+      status: OrderStatus.Paid,
+      tableNumber: selectedOrder.tableNumber,
+      createdAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    },
+    include: {
+      dishSnapshot: true,
+      guest: true
+    },
+    orderBy: {
+      createdAt: 'asc'
+    }
+  })
+
+  return generateInvoiceFromOrdersController(relatedPaidOrders)
 }
 
 export const getOrderDetailController = (orderId: number) => {

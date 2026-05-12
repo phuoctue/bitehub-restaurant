@@ -1,12 +1,13 @@
 import { ManagerRoom } from '@/constants/type'
 import {
   createOrdersController,
+  getOrderInvoiceController,
   getOrderDetailController,
   getOrdersController,
   payOrdersController,
   updateOrderController
 } from '@/controllers/order.controller'
-import { requireLoginedHook, requireOwnerHook } from '@/hooks/auth.hooks'
+import { requireLoginedHook, requireStaffHook } from '@/hooks/auth.hooks'
 import {
   CreateOrdersBody,
   CreateOrdersBodyType,
@@ -14,6 +15,8 @@ import {
   CreateOrdersResType,
   GetOrderDetailRes,
   GetOrderDetailResType,
+  GetOrderInvoiceRes,
+  GetOrderInvoiceResType,
   GetOrdersQueryParams,
   GetOrdersQueryParamsType,
   GetOrdersRes,
@@ -42,7 +45,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
         },
         body: CreateOrdersBody
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
       const { socketId, orders } = await createOrdersController(
@@ -69,7 +72,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
         },
         querystring: GetOrdersQueryParams
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
       const result = await getOrdersController({
@@ -83,6 +86,26 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
     }
   )
 
+  fastify.get<{ Reply: GetOrderInvoiceResType; Params: OrderParamType }>(
+    '/:orderId/invoice',
+    {
+      schema: {
+        response: {
+          200: GetOrderInvoiceRes
+        },
+        params: OrderParam
+      },
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
+    },
+    async (request, reply) => {
+      const result = await getOrderInvoiceController(request.params.orderId)
+      reply.send({
+        message: 'Tạo hóa đơn thành công',
+        data: result as GetOrderInvoiceResType['data']
+      })
+    }
+  )
+
   fastify.get<{ Reply: GetOrderDetailResType; Params: OrderParamType }>(
     '/:orderId',
     {
@@ -92,7 +115,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
         },
         params: OrderParam
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
       const result = await getOrderDetailController(request.params.orderId)
@@ -113,7 +136,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
         body: UpdateOrderBody,
         params: OrderParam
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
       const result = await updateOrderController(request.params.orderId, {
@@ -141,7 +164,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
         },
         body: PayGuestOrdersBody
       },
-      preValidation: fastify.auth([requireOwnerHook])
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
       const result = await payOrdersController({
@@ -155,7 +178,8 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       }
       reply.send({
         message: `Thanh toán thành công ${result.orders.length} đơn`,
-        data: result.orders as PayGuestOrdersResType['data']
+        data: result.orders as PayGuestOrdersResType['data'],
+        invoice: result.invoice || null
       })
     }
   )

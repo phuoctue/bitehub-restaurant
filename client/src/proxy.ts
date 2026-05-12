@@ -4,7 +4,7 @@ import { decodeToken } from "./lib/utils";
 import { Role } from "./constants/type";
 import { routing } from "./i18n/routing";
 
-const managePaths = ["/manage/dashboard", "/manage/dishes", "/manage/orders"];
+const managePaths = ["/manage"];
 const guestPaths = ["/guest"];
 const privatePaths = [...managePaths, ...guestPaths];
 const unAuthPaths = ["/login", "/oauth"];
@@ -20,9 +20,7 @@ function parseLocaleAndPath(pathname: string, localeFromCookie?: string) {
   const locale = localeFromPrefix ?? localeFromStoredCookie ?? routing.defaultLocale;
 
   const hasLocalePrefix = Boolean(localeFromPrefix);
-  const normalizedPath = hasLocalePrefix
-    ? pathname.slice(locale.length + 1) || "/"
-    : pathname;
+  const normalizedPath = hasLocalePrefix ? pathname.slice(locale.length + 1) || "/" : pathname;
 
   return { locale, normalizedPath, hasLocalePrefix };
 }
