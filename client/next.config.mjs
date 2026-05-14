@@ -1,7 +1,18 @@
 import createNextIntlPlugin from "next-intl/plugin";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
+  experimental: {
+    optimizePackageImports: ["date-fns", "lucide-react", "@hugeicons/react"],
+  },
   images: {
     remotePatterns: [
       {
@@ -16,12 +27,9 @@ const nextConfig = {
         pathname: '/**'
       }
     ],
-    qualities: [75, 100],
-    dangerouslyAllowLocalIP: true
+    qualities: [75],
+    dangerouslyAllowLocalIP: true,
   },
-  turbopack: {
-    root: '.'
-  }
 };
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");

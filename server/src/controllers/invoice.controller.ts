@@ -5,59 +5,58 @@ import {
   calculateInvoiceTotals,
   InvoiceItem,
   InvoiceData,
-  ensureInvoicesDirectory
+  ensureInvoicesDirectory,
+  InvoiceLocale
 } from '@/utils/invoice'
 
-/**
- * Prepare invoice data from paid orders
- */
-export const prepareInvoiceDataFromOrders = (orders: (Order & { dishSnapshot: any; guest: any })[]): InvoiceData => {
+export const prepareInvoiceDataFromOrders = (
+  orders: (Order & { dishSnapshot: any; guest: any })[],
+  locale: InvoiceLocale = 'vi'
+): InvoiceData => {
   ensureInvoicesDirectory()
 
   const invoiceNumber = generateInvoiceNumber()
   const firstOrder = orders[0]
+  const invoiceCreatedAt =
+    [...orders]
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()
+      )[0]?.updatedAt || firstOrder.createdAt
 
-  // Convert orders to invoice items
   const items: InvoiceItem[] = orders.map((order) => ({
     name: order.dishSnapshot.name,
     quantity: order.quantity,
     price: order.dishSnapshot.price
   }))
 
-  // Calculate totals
   const { subtotal, tax, total } = calculateInvoiceTotals(items)
 
-  const invoiceData: InvoiceData = {
+  return {
     invoiceNumber,
-    guestName: firstOrder.guest?.name || 'Khách hàng',
+    guestName: firstOrder.guest?.name || (locale === 'en' ? 'Customer' : 'Khách hàng'),
     tableNumber: firstOrder.tableNumber || 0,
     items,
     subtotal,
     tax,
     total,
-    createdAt: new Date(),
+    createdAt: invoiceCreatedAt,
     restaurantName: 'BiteHub Restaurant',
-    restaurantAddress: '123 Đường ABC, TP. HCM',
-    restaurantPhone: '0123 456 789'
+    restaurantAddress: '123 Duong ABC, TP. HCM',
+    restaurantPhone: '0123 456 789',
+    locale
   }
-
-  return invoiceData
 }
 
-/**
- * Generate invoice PDF from paid orders
- */
 export const generateInvoiceFromOrdersController = (
-  orders: (Order & { dishSnapshot: any; guest: any })[]
+  orders: (Order & { dishSnapshot: any; guest: any })[],
+  locale: InvoiceLocale = 'vi'
 ): { invoiceNumber: string; invoiceUrl: string } => {
   if (orders.length === 0) {
-    throw new Error('Không có đơn hàng nào để tạo hóa đơn')
+    throw new Error(locale === 'en' ? 'No orders found to generate invoice' : 'Không có đơn hàng nào để tạo hóa đơn')
   }
 
-  // Prepare invoice data
-  const invoiceData = prepareInvoiceDataFromOrders(orders)
-
-  // Generate PDF
+  const invoiceData = prepareInvoiceDataFromOrders(orders, locale)
   const invoiceUrl = generatePdfInvoice(invoiceData)
 
   return {

@@ -2,6 +2,7 @@ import { DishStatus, OrderStatus, TableStatus } from '@/constants/type'
 import prisma from '@/database'
 import { CreateOrdersBodyType, UpdateOrderBodyType } from '@/schemaValidations/order.schema'
 import { generateInvoiceFromOrdersController } from '@/controllers/invoice.controller'
+import { InvoiceLocale } from '@/utils/invoice'
 
 export const createOrdersController = async (orderHandlerId: number, body: CreateOrdersBodyType) => {
   const { guestId, orders } = body
@@ -106,7 +107,15 @@ export const getOrdersController = async ({ fromDate, toDate }: { fromDate?: Dat
 }
 
 // Controller thanh toán các hóa đơn dựa trên guestId
-export const payOrdersController = async ({ guestId, orderHandlerId }: { guestId: number; orderHandlerId: number }) => {
+export const payOrdersController = async ({
+  guestId,
+  orderHandlerId,
+  locale
+}: {
+  guestId: number
+  orderHandlerId: number
+  locale?: InvoiceLocale
+}) => {
   const orders = await prisma.order.findMany({
     where: {
       guestId,
@@ -159,7 +168,7 @@ export const payOrdersController = async ({ guestId, orderHandlerId }: { guestId
   // Generate invoice PDF
   let invoice = null
   try {
-    invoice = generateInvoiceFromOrdersController(ordersResult)
+    invoice = generateInvoiceFromOrdersController(ordersResult, locale || 'vi')
   } catch (error) {
     console.error('Failed to generate invoice:', error)
     // Continue without invoice if generation fails
@@ -172,7 +181,7 @@ export const payOrdersController = async ({ guestId, orderHandlerId }: { guestId
   }
 }
 
-export const getOrderInvoiceController = async (orderId: number) => {
+export const getOrderInvoiceController = async (orderId: number, locale: InvoiceLocale = 'vi') => {
   const selectedOrder = await prisma.order.findUniqueOrThrow({
     where: {
       id: orderId
@@ -215,7 +224,7 @@ export const getOrderInvoiceController = async (orderId: number) => {
     }
   })
 
-  return generateInvoiceFromOrdersController(relatedPaidOrders)
+  return generateInvoiceFromOrdersController(relatedPaidOrders, locale)
 }
 
 export const getOrderDetailController = (orderId: number) => {

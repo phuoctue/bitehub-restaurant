@@ -15,34 +15,19 @@ import { PlusCircle, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { Resolver, useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getVietnameseDishStatus, handleErrorApi } from "@/lib/utils";
-import {
-  CreateDishBody,
-  CreateDishBodyType,
-} from "@/schemaValidations/dish.schema";
+import { handleErrorApi } from "@/lib/utils";
+import { CreateDishBody, CreateDishBodyType } from "@/schemaValidations/dish.schema";
 import { DishStatus, DishStatusValues } from "@/constants/type";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUploadImageMutation } from "@/queries/useMedia";
 import { useAddDishMutation, useGetDishListQuery } from "@/queries/useDish";
 import { toast } from "sonner";
 
 export default function AddDish() {
-  const t = useTranslations();
+  const t = useTranslations("ManageDishes");
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
   const addDishMutation = useAddDishMutation();
@@ -79,13 +64,10 @@ export default function AddDish() {
   const onSubmit = async (values: CreateDishBodyType) => {
     if (addDishMutation.isPending || uploadImageMutation.isPending) return;
     try {
-      // Kiểm tra tên món ăn trùng
-      const isNameExist = dishList.some(
-        (dish) => dish.name.toLowerCase() === values.name.toLowerCase(),
-      );
+      const isNameExist = dishList.some((dish) => dish.name.toLowerCase() === values.name.toLowerCase());
       if (isNameExist) {
         form.setError("name", {
-          message: t("ManageDishes.dishNameExists"),
+          message: t("dishNameExists"),
         });
         return;
       }
@@ -94,18 +76,16 @@ export default function AddDish() {
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
-        const uploadImageResult =
-          await uploadImageMutation.mutateAsync(formData);
+        const uploadImageResult = await uploadImageMutation.mutateAsync(formData);
         body.image = uploadImageResult.payload.data;
       }
 
-      // Đảm bảo price là number (giống cách xử lý values trong AddEmployee)
       const result = await addDishMutation.mutateAsync({
         ...body,
         price: Number(body.price),
       });
 
-      toast.success(result.payload.message || t("ManageDishes.addDishSuccess"));
+      toast.success(result.payload.message || t("addDishSuccess"));
       reset();
       setOpen(false);
     } catch (error) {
@@ -124,14 +104,12 @@ export default function AddDish() {
       <DialogTrigger asChild>
         <Button size="sm" className="h-7 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            {t("ManageDishes.addDish")}
-          </span>
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">{t("addDish")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-screen overflow-auto">
         <DialogHeader>
-          <DialogTitle>{t("ManageDishes.addNewDish")}</DialogTitle>
+          <DialogTitle>{t("addNewDish")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -142,7 +120,6 @@ export default function AddDish() {
             onReset={reset}
           >
             <div className="grid gap-4 py-4">
-              {/* Field: Image/Avatar */}
               <FormField
                 control={form.control}
                 name="image"
@@ -151,18 +128,16 @@ export default function AddDish() {
                     <div className="flex gap-2 items-start justify-start">
                       <Avatar className="aspect-square w-[100px] h-[100px] rounded-md object-cover">
                         <AvatarImage src={previewAvatarFromFile} />
-                        <AvatarFallback className="rounded-none">
-                          {name || t("ManageDishes.image")}
-                        </AvatarFallback>
+                        <AvatarFallback className="rounded-none">{name || t("image")}</AvatarFallback>
                       </Avatar>
                       <input
                         type="file"
                         accept="image/*"
                         ref={imageInputRef}
                         onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setFile(file);
+                          const selectedFile = e.target.files?.[0];
+                          if (selectedFile) {
+                            setFile(selectedFile);
                             field.onChange("");
                           }
                         }}
@@ -182,14 +157,13 @@ export default function AddDish() {
                 )}
               />
 
-              {/* Field: Name */}
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="name">Tên món</Label>
+                      <Label htmlFor="name">{t("dishName")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="name" className="w-full" {...field} />
                         <FormMessage />
@@ -199,21 +173,15 @@ export default function AddDish() {
                 )}
               />
 
-              {/* Field: Price */}
               <FormField
                 control={form.control}
                 name="price"
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="price">Giá (VNĐ)</Label>
+                      <Label htmlFor="price">{t("priceVnd")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                        <Input
-                          id="price"
-                          type="number"
-                          className="w-full"
-                          {...field}
-                        />
+                        <Input id="price" type="number" className="w-full" {...field} />
                         <FormMessage />
                       </div>
                     </div>
@@ -221,20 +189,15 @@ export default function AddDish() {
                 )}
               />
 
-              {/* Field: Description */}
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="description">Mô tả</Label>
+                      <Label htmlFor="description">{t("description")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                        <Textarea
-                          id="description"
-                          className="w-full"
-                          {...field}
-                        />
+                        <Textarea id="description" className="w-full" {...field} />
                         <FormMessage />
                       </div>
                     </div>
@@ -242,28 +205,24 @@ export default function AddDish() {
                 )}
               />
 
-              {/* Field: Status */}
               <FormField
                 control={form.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label>Trạng thái</Label>
+                      <Label>{t("statusLabel")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn trạng thái" />
+                              <SelectValue placeholder={t("chooseStatus")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {DishStatusValues.map((status) => (
                               <SelectItem key={status} value={status}>
-                                {getVietnameseDishStatus(status)}
+                                {t(`status.${status}`)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -278,14 +237,8 @@ export default function AddDish() {
           </form>
         </Form>
         <DialogFooter>
-          <Button
-            type="submit"
-            form="add-dish-form"
-            disabled={
-              addDishMutation.isPending || uploadImageMutation.isPending
-            }
-          >
-            {addDishMutation.isPending ? "Đang lưu..." : "Thêm món ăn"}
+          <Button type="submit" form="add-dish-form" disabled={addDishMutation.isPending || uploadImageMutation.isPending}>
+            {addDishMutation.isPending ? t("saving") : t("addDish")}
           </Button>
         </DialogFooter>
       </DialogContent>

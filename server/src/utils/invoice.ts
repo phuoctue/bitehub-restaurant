@@ -3,6 +3,8 @@ import fs from 'fs'
 import path from 'path'
 import { formatDate } from './helpers'
 
+export type InvoiceLocale = 'vi' | 'en'
+
 export interface InvoiceItem {
   name: string
   quantity: number
@@ -21,11 +23,9 @@ export interface InvoiceData {
   restaurantName?: string
   restaurantAddress?: string
   restaurantPhone?: string
+  locale?: InvoiceLocale
 }
 
-/**
- * Create invoices directory if it doesn't exist
- */
 export const ensureInvoicesDirectory = () => {
   const invoicesDir = path.join(process.cwd(), 'uploads/invoices')
   if (!fs.existsSync(invoicesDir)) {
@@ -34,10 +34,6 @@ export const ensureInvoicesDirectory = () => {
   return invoicesDir
 }
 
-/**
- * Resolve a Unicode font with Vietnamese support for PDF rendering.
- * Priority: custom fonts in project -> common Windows fonts.
- */
 const resolveInvoiceFonts = () => {
   const regularCandidates = [
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans.ttf'),
@@ -58,177 +54,196 @@ const resolveInvoiceFonts = () => {
   const bold = boldCandidates.find((fontPath) => fs.existsSync(fontPath))
 
   if (!regular || !bold) {
-    throw new Error('Không tìm thấy font Unicode hỗ trợ tiếng Việt để tạo hóa đơn PDF')
+    throw new Error('Cannot find Unicode fonts for PDF invoice rendering')
   }
 
   return { regular, bold }
 }
 
-/**
- * Generate a unique invoice number
- */
 export const generateInvoiceNumber = (): string => {
   const timestamp = Date.now()
   const random = Math.floor(Math.random() * 10000)
   return `INV-${timestamp}-${random}`
 }
 
-/**
- * Format currency to Vietnamese Dong
- */
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', {
+export const formatCurrency = (amount: number, locale: InvoiceLocale = 'vi'): string => {
+  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     style: 'currency',
-    currency: 'VND'
+    currency: 'VND',
+    maximumFractionDigits: 0
   }).format(amount)
 }
 
-/**
- * Generate PDF invoice and save to disk
- */
+const getInvoiceText = (locale: InvoiceLocale) => {
+  if (locale === 'en') {
+    return {
+      title: 'INVOICE',
+      invoiceNumber: 'Invoice No.',
+      date: 'Date',
+      customer: 'Customer',
+      table: 'Table',
+      dish: 'Dish',
+      quantity: 'Qty',
+      unitPrice: 'Unit Price',
+      amount: 'Amount',
+      subtotal: 'Subtotal',
+      tax: 'Tax (10%)',
+      total: 'TOTAL',
+      footer1: 'Thank you for dining with us!',
+      footer2: 'Please keep this invoice for any future reference.'
+    }
+  }
+
+  return {
+    title: 'HÓA ĐƠN',
+    invoiceNumber: 'Số HĐ',
+    date: 'Ngày',
+    customer: 'Khách hàng',
+    table: 'Bàn số',
+    dish: 'Món ăn',
+    quantity: 'SL',
+    unitPrice: 'Đơn giá',
+    amount: 'Thành tiền',
+    subtotal: 'Tổng cộng',
+    tax: 'Thuế (10%)',
+    total: 'TỔNG CỘNG',
+    footer1: 'Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!',
+    footer2: 'Vui lòng lưu lại hóa đơn này để đối chiếu khi cần.'
+  }
+}
+
+const formatInvoiceDate = (date: Date, locale: InvoiceLocale) => {
+  if (locale === 'en') {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date)
+  }
+  return formatDate(date)
+}
+
 export const generatePdfInvoice = (invoiceData: InvoiceData): string => {
   const invoicesDir = ensureInvoicesDirectory()
   const fonts = resolveInvoiceFonts()
+  const locale: InvoiceLocale = invoiceData.locale === 'en' ? 'en' : 'vi'
+  const t = getInvoiceText(locale)
 
-  // Create new PDF document
-  const doc = new PDFDocument({
-    size: 'A4',
-    margin: 50
-  })
-
-  // Generate filename
+  const doc = new PDFDocument({ size: 'A4', margin: 48 })
   const fileName = `${invoiceData.invoiceNumber}.pdf`
   const filePath = path.join(invoicesDir, fileName)
-
-  // Pipe to file
   const stream = fs.createWriteStream(filePath)
   doc.pipe(stream)
+
   doc.registerFont('InvoiceRegular', fonts.regular)
   doc.registerFont('InvoiceBold', fonts.bold)
 
-  // Restaurant Header
-  doc.fontSize(20).font('InvoiceBold').text(invoiceData.restaurantName || 'BiteHub', {
+  const pageWidth = doc.page.width
+  const margin = 48
+  const contentWidth = pageWidth - margin * 2
+  const rightEdge = pageWidth - margin
+
+  doc.fillColor('#111827').font('InvoiceBold').fontSize(30).text(invoiceData.restaurantName || 'BiteHub', margin, 48, {
+    width: contentWidth,
+    align: 'center'
+  })
+  doc.font('InvoiceRegular').fontSize(11).fillColor('#4b5563')
+  doc.text(invoiceData.restaurantAddress || '', margin, 86, { width: contentWidth, align: 'center' })
+  doc.text(invoiceData.restaurantPhone || '', margin, 102, { width: contentWidth, align: 'center' })
+
+  doc.moveTo(margin, 126).lineTo(rightEdge, 126).lineWidth(1).strokeColor('#e5e7eb').stroke()
+
+  doc.fillColor('#111827').font('InvoiceBold').fontSize(20).text(t.title, margin, 140, {
+    width: contentWidth,
     align: 'center'
   })
 
-  doc.fontSize(11).font('InvoiceRegular').text(invoiceData.restaurantAddress || '', {
-    align: 'center'
+  const infoTop = 180
+  const leftInfoX = margin
+  const rightInfoX = margin + contentWidth / 2
+  const lineGap = 22
+
+  const drawInfo = (x: number, y: number, label: string, value: string) => {
+    doc.font('InvoiceRegular').fontSize(10).fillColor('#6b7280').text(label, x, y, { width: 120 })
+    doc.font('InvoiceBold').fontSize(11).fillColor('#111827').text(value, x + 72, y, { width: contentWidth / 2 - 72 })
+  }
+
+  drawInfo(leftInfoX, infoTop, `${t.invoiceNumber}:`, invoiceData.invoiceNumber)
+  drawInfo(leftInfoX, infoTop + lineGap, `${t.customer}:`, invoiceData.guestName)
+  drawInfo(rightInfoX, infoTop, `${t.date}:`, formatInvoiceDate(invoiceData.createdAt, locale))
+  drawInfo(rightInfoX, infoTop + lineGap, `${t.table}:`, `${invoiceData.tableNumber}`)
+
+  const tableTop = infoTop + 64
+  const colDish = margin + 10
+  const qtyWidth = 44
+  const priceWidth = 92
+  const amountWidth = 92
+  const colAmount = rightEdge - amountWidth - 8
+  const colUnitPrice = colAmount - priceWidth - 10
+  const colQty = colUnitPrice - qtyWidth - 10
+
+  doc.rect(margin, tableTop, contentWidth, 30).fill('#f3f4f6')
+  doc.fillColor('#111827').font('InvoiceBold').fontSize(11)
+  doc.text(t.dish, colDish, tableTop + 8, { width: 280 })
+  doc.text(t.quantity, colQty, tableTop + 8, { width: qtyWidth, align: 'right' })
+  doc.text(t.unitPrice, colUnitPrice, tableTop + 8, { width: priceWidth, align: 'right' })
+  doc.text(t.amount, colAmount, tableTop + 8, { width: amountWidth, align: 'right' })
+
+  let rowY = tableTop + 34
+  doc.font('InvoiceRegular').fontSize(11).fillColor('#111827')
+
+  invoiceData.items.forEach((item, index) => {
+    const amount = item.quantity * item.price
+    if (index % 2 === 0) {
+      doc.rect(margin, rowY - 4, contentWidth, 24).fill('#fafafa')
+      doc.fillColor('#111827')
+    }
+
+    const dishWidth = colQty - colDish - 16
+    doc.text(item.name, colDish, rowY, { width: dishWidth, ellipsis: true })
+    doc.text(String(item.quantity), colQty, rowY, { width: qtyWidth, align: 'right' })
+    doc.text(formatCurrency(item.price, locale), colUnitPrice, rowY, { width: priceWidth, align: 'right' })
+    doc.text(formatCurrency(amount, locale), colAmount, rowY, { width: amountWidth, align: 'right' })
+
+    rowY += 24
   })
 
-  doc.fontSize(11).text(invoiceData.restaurantPhone || '', {
-    align: 'center'
-  })
+  doc.moveTo(margin, rowY + 2).lineTo(rightEdge, rowY + 2).lineWidth(1).strokeColor('#e5e7eb').stroke()
 
-  // Invoice Title
-  doc.moveDown(0.5)
-  doc.fontSize(14).font('InvoiceBold').text('HÓA ĐƠN', {
-    align: 'center'
-  })
-  doc.moveDown(0.5)
+  const totalsTop = rowY + 18
+  const totalsValueWidth = 120
+  const totalsLabelWidth = 130
+  const valueX = rightEdge - totalsValueWidth
+  const labelX = valueX - totalsLabelWidth - 10
 
-  // Invoice Info Section
-  doc.fontSize(10).font('InvoiceRegular')
+  const drawTotalRow = (label: string, value: string, y: number, bold = false) => {
+    doc.font(bold ? 'InvoiceBold' : 'InvoiceRegular').fontSize(bold ? 15 : 12).fillColor('#111827')
+    doc.text(`${label}:`, labelX, y, { width: totalsLabelWidth, align: 'right' })
+    doc.text(value, valueX, y, { width: totalsValueWidth, align: 'right' })
+  }
 
-  doc.text('Số HĐ:', { continued: true }).font('InvoiceBold').text(invoiceData.invoiceNumber)
-  doc.font('InvoiceRegular').text('Ngày:', { continued: true }).font('InvoiceBold').text(formatDate(invoiceData.createdAt))
+  drawTotalRow(t.subtotal, formatCurrency(invoiceData.subtotal, locale), totalsTop)
+  drawTotalRow(t.tax, formatCurrency(invoiceData.tax, locale), totalsTop + 24)
 
-  doc.font('InvoiceRegular').text('Khách hàng:', { continued: true }).font('InvoiceBold').text(invoiceData.guestName)
-  doc.font('InvoiceRegular').text('Bàn số:', { continued: true }).font('InvoiceBold').text(invoiceData.tableNumber.toString())
+  doc.moveTo(labelX - 10, totalsTop + 52).lineTo(rightEdge, totalsTop + 52).lineWidth(1).strokeColor('#e5e7eb').stroke()
+  drawTotalRow(t.total, formatCurrency(invoiceData.total, locale), totalsTop + 62, true)
 
-  // Divider
-  doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke()
+  const footerY = totalsTop + 118
+  doc.moveTo(margin, footerY).lineTo(rightEdge, footerY).lineWidth(1).strokeColor('#e5e7eb').stroke()
+  doc.font('InvoiceRegular').fontSize(10).fillColor('#4b5563')
+  doc.text(t.footer1, margin, footerY + 18, { width: contentWidth, align: 'center' })
+  doc.text(t.footer2, margin, footerY + 34, { width: contentWidth, align: 'center' })
 
-  // Table Header
-  const tableTop = doc.y + 10
-  const itemCol = 50
-  const quantityCol = 350
-  const priceCol = 420
-  const amountCol = 480
-
-  doc.fontSize(10).font('InvoiceBold')
-  doc.text('Món ăn', itemCol, tableTop)
-  doc.text('SL', quantityCol, tableTop, { width: 50, align: 'right' })
-  doc.text('Đơn giá', priceCol, tableTop, { width: 50, align: 'right' })
-  doc.text('Thành tiền', amountCol, tableTop, { width: 50, align: 'right' })
-
-  // Divider
-  doc.moveTo(itemCol, doc.y + 5).lineTo(550, doc.y + 5).stroke()
-
-  // Table Items
-  let tableItemTop = doc.y + 10
-  doc.fontSize(10).font('InvoiceRegular')
-
-  invoiceData.items.forEach((item) => {
-    const itemAmount = item.quantity * item.price
-
-    // Item name with wrapping
-    const itemNameLines = doc.heightOfString(item.name, {
-      width: 280,
-      align: 'left'
-    })
-
-    doc.text(item.name, itemCol, tableItemTop, { width: 280, align: 'left' })
-    doc.text(item.quantity.toString(), quantityCol, tableItemTop, { width: 50, align: 'right' })
-    doc.text(formatCurrency(item.price), priceCol, tableItemTop, { width: 50, align: 'right' })
-    doc.text(formatCurrency(itemAmount), amountCol, tableItemTop, { width: 50, align: 'right' })
-
-    tableItemTop = doc.y + 5
-  })
-
-  // Divider
-  doc.moveTo(itemCol, doc.y + 5).lineTo(550, doc.y + 5).stroke()
-
-  // Totals Section
-  const totalTop = doc.y + 10
-  const labelCol = 350
-  const valueCol = 480
-
-  doc.fontSize(10).font('InvoiceRegular')
-  doc.text('Tổng cộng:', labelCol, totalTop, { width: 100, align: 'right' })
-  doc.text(formatCurrency(invoiceData.subtotal), valueCol, totalTop, { width: 50, align: 'right' })
-
-  doc.text('Thuế (10%):', labelCol, doc.y, { width: 100, align: 'right' })
-  doc.text(formatCurrency(invoiceData.tax), valueCol, doc.y, { width: 50, align: 'right' })
-
-  // Total Amount
-  doc.fontSize(12).font('InvoiceBold')
-  const totalLineY = doc.y + 10
-  doc.text('TỔNG CỘNG:', labelCol, totalLineY, { width: 100, align: 'right' })
-  doc.text(formatCurrency(invoiceData.total), valueCol, totalLineY, { width: 50, align: 'right' })
-
-  // Divider
-  doc.moveTo(itemCol, doc.y + 10).lineTo(550, doc.y + 10).stroke()
-
-  // Footer
-  doc.fontSize(9).font('InvoiceRegular').text('Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!', 50, doc.y + 20, {
-    align: 'center',
-    width: 500
-  })
-
-  doc.text('Vui lòng lưu lại hóa đơn này để khi có tranh chấp.', {
-    align: 'center',
-    width: 500
-  })
-
-  // Finalize PDF
   doc.end()
-
-  // Return path for accessing the invoice via HTTP
-  // Files are served from /static/ route which maps to UPLOAD_FOLDER
   return `/static/invoices/${fileName}`
 }
 
-/**
- * Calculate tax and total for invoice items
- */
 export const calculateInvoiceTotals = (items: InvoiceItem[], taxPercentage: number = 10) => {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const tax = Math.round(subtotal * (taxPercentage / 100))
   const total = subtotal + tax
 
-  return {
-    subtotal,
-    tax,
-    total
-  }
+  return { subtotal, tax, total }
 }

@@ -33,6 +33,17 @@ import {
   UpdateOrderResType
 } from '@/schemaValidations/order.schema'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { InvoiceLocale } from '@/utils/invoice'
+
+const resolveInvoiceLocale = (headers: Record<string, any>): InvoiceLocale => {
+  const explicitLocale = String(headers['x-locale'] || '').toLowerCase()
+  if (explicitLocale.startsWith('en')) return 'en'
+  if (explicitLocale.startsWith('vi')) return 'vi'
+
+  const acceptLanguage = String(headers['accept-language'] || '').toLowerCase()
+  if (acceptLanguage.includes('en')) return 'en'
+  return 'vi'
+}
 
 export default async function orderRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.addHook('preValidation', fastify.auth([requireLoginedHook]))
@@ -98,7 +109,8 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
-      const result = await getOrderInvoiceController(request.params.orderId)
+      const locale = resolveInvoiceLocale(request.headers as Record<string, any>)
+      const result = await getOrderInvoiceController(request.params.orderId, locale)
       reply.send({
         message: 'Tạo hóa đơn thành công',
         data: result as GetOrderInvoiceResType['data']
@@ -167,9 +179,11 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
+      const locale = resolveInvoiceLocale(request.headers as Record<string, any>)
       const result = await payOrdersController({
         guestId: request.body.guestId,
-        orderHandlerId: request.decodedAccessToken?.userId as number
+        orderHandlerId: request.decodedAccessToken?.userId as number,
+        locale
       })
       if (result.socketId) {
         fastify.io.to(result.socketId).to(ManagerRoom).emit('payment', result.orders)

@@ -1,15 +1,6 @@
 "use client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import RefreshToken from "./refresh-token";
+import { useEffect, useRef } from "react";
 import {
   decodeToken,
   generateSocketInstance,
@@ -18,11 +9,19 @@ import {
 } from "@/lib/utils";
 import { RoleType } from "@/types/jwt.types";
 import type { Socket } from "socket.io-client";
-import ListenLogoutSocket from "@/components/listen-logout-socket";
-import {create} from 'zustand'
-import socket from "@/lib/socket";
-import { disconnect } from "process";
-import { set } from "zod/v3";
+import { create } from "zustand";
+import dynamic from "next/dynamic";
+
+const ReactQueryDevtools = dynamic(
+  () =>
+    import("@tanstack/react-query-devtools").then(
+      (module) => module.ReactQueryDevtools,
+    ),
+  { ssr: false },
+);
+const ClientRuntimeEffects = dynamic(() => import("./client-runtime-effects"), {
+  ssr: false,
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,36 +41,31 @@ const queryClient = new QueryClient({
 //   disconnectSocket: () => {},
 // });
 type appStoreType = {
-  isAuth : boolean,
-  role: RoleType | undefined,
-  setRole: (role?: RoleType | undefined) => void,
-  socket: Socket | undefined,
-  setSocket: (socket?: Socket | undefined) => void,
-  disconnectSocket: () => void,
-}
+  isAuth: boolean;
+  role: RoleType | undefined;
+  setRole: (role?: RoleType | undefined) => void;
+  socket: Socket | undefined;
+  setSocket: (socket?: Socket | undefined) => void;
+  disconnectSocket: () => void;
+};
 
-
-
- export const useAppStore = create<appStoreType>((set) => ({
-  isAuth : false ,
+export const useAppStore = create<appStoreType>((set) => ({
+  isAuth: false,
   role: undefined as RoleType | undefined,
   setRole: (role?: RoleType | undefined) => {
-    
-    set({role, isAuth: Boolean(role)});
+    set({ role, isAuth: Boolean(role) });
     if (!role) {
       removeTokensFromLocalStorage();
     }
   },
   socket: undefined as Socket | undefined,
-  setSocket : (socket?: Socket | undefined) => set({socket}),
-  disconnectSocket: () => 
-    set((state ) =>{
+  setSocket: (socket?: Socket | undefined) => set({ socket }),
+  disconnectSocket: () =>
+    set((state) => {
     state.socket?.disconnect();
-    return {socket: undefined}
-  })
-})
-
-)
+      return { socket: undefined };
+    }),
+}));
 
 // export const useContext = () => {
 //   return useContext(AppContext);
@@ -81,8 +75,8 @@ export default function AppProvider({
 }: {
   children: React.ReactNode;
 }) {
-    const  setRole = useAppStore(state => state.setRole);
-    const setSocket = useAppStore(state => state.setSocket);
+  const setRole = useAppStore((state) => state.setRole);
+  const setSocket = useAppStore((state) => state.setSocket);
 
 
 
@@ -97,10 +91,9 @@ export default function AppProvider({
         setRole(role);
         setSocket(generateSocketInstance(accessToken));
       }
-      count.current ++
+      count.current++;
     }
-    
-  }, [setRole, setSocket  ]);
+  }, [setRole, setSocket]);
 
   // const disconnectSocket = useCallback(() => {
   //   socket?.disconnect();
@@ -119,9 +112,10 @@ export default function AppProvider({
     // <AppContext value={{ role, setRole, isAuth, socket, setSocket, disconnectSocket }}>
       <QueryClientProvider client={queryClient}>
         {children}
-        <RefreshToken />
-        <ListenLogoutSocket />
-        <ReactQueryDevtools initialIsOpen={false} />
+        <ClientRuntimeEffects />
+        {process.env.NODE_ENV === "development" ? (
+          <ReactQueryDevtools initialIsOpen={false} />
+        ) : null}
       </QueryClientProvider>
     // </AppContext>
   )
