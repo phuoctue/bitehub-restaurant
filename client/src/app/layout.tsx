@@ -7,6 +7,8 @@ import { Toaster } from "sonner";
 import AppProvider from "@/components/app-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import RouteLoader from "@/components/loaders/route-loader";
+import { getDefaultOgImage, getSiteUrl } from "@/lib/seo";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -20,8 +22,42 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "BiteHub Restaurant",
-  description: "The best restaurnt in the world",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: "BiteHub Restaurant",
+    template: "%s | BiteHub Restaurant",
+  },
+  description: "Fresh dishes, modern restaurant experience, and fast ordering.",
+  alternates: {
+    canonical: "/",
+    languages: {
+      vi: "/vi",
+      en: "/en",
+    },
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "BiteHub Restaurant",
+    title: "BiteHub Restaurant",
+    description: "Fresh dishes, modern restaurant experience, and fast ordering.",
+    locale: "vi_VN",
+    alternateLocale: ["en_US"],
+    images: [
+      {
+        url: getDefaultOgImage(),
+        width: 1200,
+        height: 630,
+        alt: "BiteHub Restaurant",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BiteHub Restaurant",
+    description: "Fresh dishes, modern restaurant experience, and fast ordering.",
+    images: [getDefaultOgImage()],
+  },
 };
 
 export default async function RootLayout({
@@ -49,6 +85,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <AppProvider>
+              <RouteLoader />
               {children}
               <Toaster richColors closeButton position="top-right" />
             </AppProvider>

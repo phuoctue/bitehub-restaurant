@@ -13,12 +13,13 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Role } from "@/constants/type";
+import { withLocalePath } from "@/lib/locale-path";
 import { cn, handleErrorApi } from "@/lib/utils";
 import { useLogoutMutation } from "@/queries/useAuth";
 import { RoleType } from "@/types/jwt.types";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -55,7 +56,7 @@ export default function NavItems({ className }: { className?: string }) {
       await logoutMutation.mutateAsync();
       setRole();
       disconnectSocket();
-      router.push("/");
+      router.push(withLocalePath("/"));
       toast.success(t("logoutSuccess"));
     } catch (error) {
       handleErrorApi({ error });

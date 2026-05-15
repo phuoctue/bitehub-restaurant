@@ -11,12 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { withLocalePath } from "@/lib/locale-path";
 import { handleErrorApi } from "@/lib/utils";
 import { useAccountMe } from "@/queries/useAccount";
 import { useLogoutMutation } from "@/queries/useAuth";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+
 
 export default function DropdownAvatar() {
   const logoutMutation = useLogoutMutation();
@@ -34,7 +35,7 @@ export default function DropdownAvatar() {
       await logoutMutation.mutateAsync();
       setRole();
       disconnectSocket();
-      router.push("/");
+      router.push(withLocalePath("/"));
     } catch (error) {
       handleErrorApi({ error });
     }

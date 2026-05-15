@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { TokenPayload } from "@/types/jwt.types";
 import guestApiRequest from "@/apiRequest/guest";
 import { BookX, CookingPot, HandCoins, Loader, Truck } from "lucide-react";
-import { io } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -247,7 +247,8 @@ export const formatDateTimeToTimeString = (date: string | Date) => {
   return format(date instanceof Date ? date : new Date(date), "HH:mm:ss");
 };
 
-export const generateSocketInstance = (accessToken: string) => {
+export const generateSocketInstance = async (accessToken: string): Promise<Socket> => {
+  const { io } = await import("socket.io-client");
   return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
     auth: {
       Authorization: `Bearer ${accessToken}`,

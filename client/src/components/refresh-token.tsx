@@ -1,11 +1,13 @@
 "use client";
 
-import socket from "@/lib/socket";
+import { useAppStore } from "@/components/app-provider";
 import {
   checkAndRefreshToken,
   decodeToken,
+  generateSocketInstance,
   getAccessTokenFromLocalStorage,
 } from "@/lib/utils";
+import { withLocalePath } from "@/lib/locale-path";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -14,6 +16,8 @@ const AUTH_REQUIRED_PREFIXES = ["/manage", "/guest"];
 export default function RefreshToken() {
   const pathName = usePathname();
   const router = useRouter();
+  const socket = useAppStore((state) => state.socket);
+  const setSocket = useAppStore((state) => state.setSocket);
 
   useEffect(() => {
     const shouldRefreshToken = AUTH_REQUIRED_PREFIXES.some((path) =>
@@ -23,36 +27,53 @@ export default function RefreshToken() {
     if (!shouldRefreshToken) return;
 
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let isActive = true;
 
-    const syncSocketAuthAndConnect = () => {
+    const ensureSocket = async () => {
+      if (socket) return socket;
+      const accessToken = getAccessTokenFromLocalStorage();
+      if (!accessToken) return null;
+      const nextSocket = await generateSocketInstance(accessToken);
+      if (isActive) {
+        setSocket(nextSocket);
+      } else {
+        nextSocket.disconnect();
+      }
+      return nextSocket;
+    };
+
+    const syncSocketAuthAndConnect = async () => {
+      const resolvedSocket = await ensureSocket();
+      if (!resolvedSocket) return;
       const accessToken = getAccessTokenFromLocalStorage();
       if (!accessToken) return;
 
-      socket.auth = {
-        ...socket.auth,
+      resolvedSocket.auth = {
+        ...resolvedSocket.auth,
         Authorization: `Bearer ${accessToken}`,
       };
 
-      if (!socket.connected) {
-        socket.connect();
+      if (!resolvedSocket.connected) {
+        resolvedSocket.connect();
       }
     };
 
     const onRefreshToken = (force?: boolean) => {
       checkAndRefreshToken({
         force,
-        onSuccess: () => {
-          syncSocketAuthAndConnect();
-          if (force && socket.connected) {
-            socket.disconnect();
-            socket.connect();
+        onSuccess: async () => {
+          await syncSocketAuthAndConnect();
+          const resolvedSocket = await ensureSocket();
+          if (force && resolvedSocket?.connected) {
+            resolvedSocket.disconnect();
+            resolvedSocket.connect();
           }
         },
         onError: () => {
           if (intervalId) {
             clearInterval(intervalId);
           }
-          router.push("/login");
+          router.push(withLocalePath("/login", pathName));
         },
       });
     };
@@ -63,12 +84,8 @@ export default function RefreshToken() {
     const TIMEOUT = 1000;
     intervalId = setInterval(() => onRefreshToken(), TIMEOUT);
 
-    if (socket.connected) {
-      onConnect();
-    }
-
     function onConnect() {
-      console.log(socket.id);
+      console.log("socket connected");
     }
 
     function onDisconnect() {
@@ -85,19 +102,26 @@ export default function RefreshToken() {
       onRefreshToken(true);
     };
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("refresh-token", onRefreshTokenSocket);
+    ensureSocket().then((resolvedSocket) => {
+      if (!resolvedSocket) return;
+      if (resolvedSocket.connected) {
+        onConnect();
+      }
+      resolvedSocket.on("connect", onConnect);
+      resolvedSocket.on("disconnect", onDisconnect);
+      resolvedSocket.on("refresh-token", onRefreshTokenSocket);
+    });
 
     return () => {
+      isActive = false;
       if (intervalId) {
         clearInterval(intervalId);
       }
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("refresh-token", onRefreshTokenSocket);
+      socket?.off("connect", onConnect);
+      socket?.off("disconnect", onDisconnect);
+      socket?.off("refresh-token", onRefreshTokenSocket);
     };
-  }, [pathName, router]);
+  }, [pathName, router, setSocket, socket]);
 
   return null;
 }

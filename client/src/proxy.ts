@@ -73,7 +73,6 @@ export default function middleware(request: NextRequest) {
 
     if ((isPrivatePath || isUnAuthPath) && !accessToken) {
       const url = new URL(withLocalePrefix("/refresh-token", locale), request.url);
-      url.searchParams.set("refreshToken", refreshToken);
       url.searchParams.set("redirect", normalizedPath);
       return NextResponse.redirect(url);
     }

@@ -9,6 +9,7 @@ import { GuestCreateOrdersBodyType } from "@/schemaValidations/guest.schema";
 import { useGuestOrderMuatation } from "@/queries/useGuest";
 import { useRouter } from "next/navigation";
 import { DishStatus } from "@/constants/type";
+import { withLocalePath } from "@/lib/locale-path";
 
 export default function MenuOrder() {
   const { data } = useGetDishListQuery();
@@ -48,7 +49,7 @@ export default function MenuOrder() {
   const handleOrder = async () => {
     try {
       await mutateAsync(orders);
-      router.push("/guest/orders");
+      router.push(withLocalePath("/guest/orders"));
     } catch (error) {
       handleErrorApi({
         error,

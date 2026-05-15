@@ -1,15 +1,23 @@
 "use client";
 
-import { DishBarChart } from "@/app/manage/dashboard/dish-bar-chart";
 import { InvoiceRecent } from "@/app/manage/dashboard/invoice-recent";
-import { RevenueLineChart } from "@/app/manage/dashboard/revenue-line-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { useDashboardIndicator } from "@/queries/useIndicator";
 import { endOfDay, format, startOfDay } from "date-fns";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+
+const RevenueLineChart = dynamic(
+  () => import("@/app/manage/dashboard/revenue-line-chart").then((module) => module.RevenueLineChart),
+  { ssr: false },
+);
+const DishBarChart = dynamic(
+  () => import("@/app/manage/dashboard/dish-bar-chart").then((module) => module.DishBarChart),
+  { ssr: false },
+);
 
 const createDefaultDateRange = () => {
   const now = new Date();

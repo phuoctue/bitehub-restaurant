@@ -20,9 +20,11 @@ export const useUpdateOrderMutation = () => {
 };
 
 export const useGetOrderListQuery = (queryParams: GetOrdersQueryParamsType, enabled: boolean = true) => {
+  const fromDate = queryParams.fromDate?.toISOString() ?? "";
+  const toDate = queryParams.toDate?.toISOString() ?? "";
   return useQuery({
     queryFn: () => orderApiRequest.getOrderList(queryParams),
-    queryKey: ["orders", queryParams],
+    queryKey: ["orders", fromDate, toDate],
     enabled,
   });
 };

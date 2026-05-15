@@ -14,6 +14,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useGuestLoginMutation } from "@/queries/useGuest";
 import { useAppStore } from "@/components/app-provider";
+import { withLocalePath } from "@/lib/locale-path";
 import { generateSocketInstance, handleErrorApi } from "@/lib/utils";
 
 export default function GuestLoginForm() {
@@ -38,7 +39,7 @@ export default function GuestLoginForm() {
 
   useEffect(() => {
     if (!token) {
-      router.push("/");
+      router.push(withLocalePath("/"));
     }
   }, [token, router]);
 
@@ -56,8 +57,8 @@ export default function GuestLoginForm() {
     try {
       const result = await loginMutation.mutateAsync(values);
       setRole(result.payload.data.guest.role);
-      setSocket(generateSocketInstance(result.payload.data.accessToken));
-      router.push("/guest/menu");
+      setSocket(await generateSocketInstance(result.payload.data.accessToken));
+      router.push(withLocalePath("/guest/menu"));
     } catch (error) {
       handleErrorApi({
         error,

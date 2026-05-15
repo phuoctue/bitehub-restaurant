@@ -69,7 +69,16 @@
     "topDishesDescription": "Most ordered dishes",
     "successOrderStats": "Statistics by successful orders",
     "soldQuantity": "Sold quantity",
-    "revenueLegend": "Revenue"
+    "revenueLegend": "Revenue",
+    "recentInvoices": {
+      "title": "Recent invoices",
+      "description": "List of 5 latest invoices (last 7 days)",
+      "empty": "No invoices yet",
+      "guestFallback": "Customer",
+      "meta": "Table {table} • {count} dishes • {dateTime}",
+      "downloadTitle": "Download invoice",
+      "printTitle": "Print invoice"
+    }
   },
   "ManageSetting": {
     "profileTitle": "Profile information",

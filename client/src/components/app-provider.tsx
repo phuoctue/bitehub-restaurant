@@ -89,7 +89,9 @@ export default function AppProvider({
       if (accessToken) {
         const role = decodeToken(accessToken).role;
         setRole(role);
-        setSocket(generateSocketInstance(accessToken));
+        generateSocketInstance(accessToken).then((nextSocket) => {
+          setSocket(nextSocket);
+        });
       }
       count.current++;
     }

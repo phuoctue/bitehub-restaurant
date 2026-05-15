@@ -1,12 +1,13 @@
 // src/components/listen-logout-socket.tsx
 "use client"
 import { useAppStore } from '@/components/app-provider'
+import { withLocalePath } from '@/lib/locale-path'
 import { handleErrorApi } from '@/lib/utils'
 import { useLogoutMutation } from '@/queries/useAuth'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-const UNAUTHENTICATED_PATH = ['/login', '/logout', '/refresh-token']
+const UNAUTHENTICATED_PATH_SUFFIXES = ["/login", "/refresh-token"];
 
 export default function ListenLogoutSocket() {
   const pathname = usePathname()
@@ -18,14 +19,14 @@ export default function ListenLogoutSocket() {
   const socket = useAppStore(state => state.socket);
 
   useEffect(() => {
-    if (UNAUTHENTICATED_PATH.includes(pathname)) return
+    if (UNAUTHENTICATED_PATH_SUFFIXES.some((suffix) => pathname.endsWith(suffix))) return
 
     async function onLogout() {
       // Ưu tiên xử lý Local trước để "văng" ngay lập tức
       try {
         setRole() // Hàm này của Trí đã bao gồm xóa tokens
         disconnectSocket()
-        router.push('/')
+        router.push(withLocalePath("/"))
         
         // Sau đó mới gọi API để xóa session trên server (nếu account chưa bị xóa hẳn)
         await mutateAsync()

@@ -5,8 +5,8 @@ import { useAppStore } from "@/components/app-provider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+
 import { Package2, Settings } from "lucide-react";
 
 export default function NavLinks() {

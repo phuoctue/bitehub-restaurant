@@ -1,35 +1,35 @@
 "use client";
-import {
-  getRefreshTokenFromLocalStorage,
-  checkAndRefreshToken,
-} from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import authApiRequest from "@/apiRequest/auth";
+import { withLocalePath } from "@/lib/locale-path";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, Suspense } from "react";
 
 function RefreshTokenPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const refreshTokenFromUrl = searchParams.get("refreshToken");
   const redirectPathName = searchParams.get("redirect");
 
   useEffect(() => {
-    if (
-      refreshTokenFromUrl &&
-      refreshTokenFromUrl === getRefreshTokenFromLocalStorage()
-    ) {
-      checkAndRefreshToken({
-        force: true,
-        onSuccess: () => {
-          router.push(redirectPathName || "/");
-        },
-        onError: () => {
-          router.push("/login");
-        },
-      });
-    } else {
-      router.push("/");
-    }
-  }, [router, refreshTokenFromUrl, redirectPathName]);
+    let cancelled = false;
+
+    const refreshAndRedirect = async () => {
+      try {
+        // Refresh through Next API route so server cookie and client localStorage stay in sync.
+        await authApiRequest.refreshToken();
+        if (cancelled) return;
+        router.replace(withLocalePath(redirectPathName || "/", pathname));
+      } catch {
+        if (cancelled) return;
+        router.replace(withLocalePath("/login?clearTokens=1", pathname));
+      }
+    };
+
+    refreshAndRedirect();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, redirectPathName, router]);
 
   return (
     <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center">

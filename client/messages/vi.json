@@ -69,7 +69,16 @@
     "topDishesDescription": "Món ăn được gọi nhiều nhất",
     "successOrderStats": "Thống kê theo đơn hàng thành công",
     "soldQuantity": "Số lượng bán",
-    "revenueLegend": "Doanh thu"
+    "revenueLegend": "Doanh thu",
+    "recentInvoices": {
+      "title": "Hóa đơn gần đây",
+      "description": "Danh sách 5 hóa đơn mới nhất (7 ngày qua)",
+      "empty": "Chưa có hóa đơn nào",
+      "guestFallback": "Khách hàng",
+      "meta": "Bàn {table} • {count} món • {dateTime}",
+      "downloadTitle": "Tải hóa đơn",
+      "printTitle": "In hóa đơn"
+    }
   },
   "ManageSetting": {
     "profileTitle": "Thông tin cá nhân",

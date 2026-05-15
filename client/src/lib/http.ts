@@ -1,4 +1,5 @@
 import envConfig from "@/config";
+import { withLocalePath } from "@/lib/locale-path";
 import {
   getAccessTokenFromLocalStorage,
   normalizePath,
@@ -147,17 +148,13 @@ const request = async <Response>(
             // Nếu không đc xử lý đúng cách
             // Vì nếu rơi vào trường hợp tại trang login, chúng ta gọi các api đến access Token
             // Mã access Token đã bị hết hạn sẽ nhảy vào đây, và cử thế sẽ bị loop
-            location.href = "/login";
+            location.href = withLocalePath("/login");
           }
         }
       } else {
-        const authHeader = (
-          options?.headers as Record<string, string> | undefined
-        )?.Authorization;
-        //Đây là trường hop khi ma chúng ta vẫn còn accessToken còn hạn
+                //Đây là trường hop khi ma chúng ta vẫn còn accessToken còn hạn
         //Và chúng ta gọi API ở Next.js server (Route handler, Server component đến server backend)
-        const accessToken = authHeader ? authHeader.split("Bearer ")[1] : "";
-        redirect(`/logout?sessionToken=${accessToken}`);
+        redirect("/login?clearTokens=1");
       }
     } else {
       throw new HttpError(
@@ -227,3 +224,4 @@ const http = {
 };
 
 export default http;
+
