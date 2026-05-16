@@ -58,10 +58,8 @@ export default function AddTable() {
   const onSubmit = async (values: CreateTableBodyType) => {
     if (addTableMutation.isPending) return;
     try {
-      // Đảm bảo price là number (giống cách xử lý values trong AddEmployee)
       const result = await addTableMutation.mutateAsync(values);
-      t("ManageTables.addTable");
-      toast.success(result.payload.message || "Thêm món ăn thành công");
+      toast.success(result.payload.message || t("ManageTables.addTable"));
       reset();
       setOpen(false);
     } catch (error) {

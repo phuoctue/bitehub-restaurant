@@ -4,6 +4,7 @@
   },
   "dependencies": {
     "croner": "^10.0.1",
-    "next-intl": "^4.11.1"
+    "next-intl": "^4.11.1",
+    "xlsx": "^0.18.5"
   }
 }

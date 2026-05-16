@@ -52,14 +52,18 @@ export default async function Home() {
               key={dish.id}
             >
               <div className="flex-shrink-0">
-                <Image
-                  src={dish.image}
-                  width={150}
-                  height={150}
-                  quality={75}
-                  alt={dish.name}
-                  className="h-[120px] w-[120px] rounded-md object-cover"
-                />
+                {dish.image ? (
+                  <Image
+                    src={dish.image}
+                    width={150}
+                    height={150}
+                    quality={75}
+                    alt={dish.name}
+                    className="h-[120px] w-[120px] rounded-md object-cover"
+                  />
+                ) : (
+                  <div className="h-[120px] w-[120px] rounded-md bg-muted" />
+                )}
               </div>
               <div className="flex-1 space-y-1">
                 <h3 className="line-clamp-1 text-lg font-semibold">{dish.name}</h3>

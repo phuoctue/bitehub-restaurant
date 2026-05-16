@@ -36,6 +36,27 @@ export const DishListRes = z.object({
 
 export type DishListResType = z.TypeOf<typeof DishListRes>
 
+const ImportDishFailure = z.object({
+  rowNumber: z.number(),
+  message: z.string()
+})
+
+export const ImportDishSummary = z.object({
+  totalRows: z.number(),
+  successRows: z.number(),
+  failedRows: z.number(),
+  failures: z.array(ImportDishFailure)
+})
+
+export type ImportDishSummaryType = z.TypeOf<typeof ImportDishSummary>
+
+export const ImportDishRes = z.object({
+  data: ImportDishSummary,
+  message: z.string()
+})
+
+export type ImportDishResType = z.TypeOf<typeof ImportDishRes>
+
 export const UpdateDishBody = CreateDishBody
 export type UpdateDishBodyType = CreateDishBodyType
 export const DishParams = z.object({

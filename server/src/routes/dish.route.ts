@@ -1,4 +1,4 @@
-import { createDish, deleteDish, getDishDetail, getDishList, updateDish } from '@/controllers/dish.controller'
+import { createDish, deleteDish, getDishDetail, getDishList, importDishesFromExcel, updateDish } from '@/controllers/dish.controller'
 import { requireLoginedHook } from '@/hooks/auth.hooks'
 import {
   CreateDishBody,
@@ -9,12 +9,18 @@ import {
   DishParamsType,
   DishRes,
   DishResType,
+  ImportDishRes,
+  ImportDishResType,
   UpdateDishBody,
   UpdateDishBodyType
 } from '@/schemaValidations/dish.schema'
+import { assertExcelHeaders, readExcelHeaders } from '@/utils/excel-import'
+import fastifyMultipart from '@fastify/multipart'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function dishRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
+  fastify.register(fastifyMultipart)
+
   fastify.get<{
     Reply: DishListResType
   }>(
@@ -79,6 +85,53 @@ export default async function dishRoutes(fastify: FastifyInstance, options: Fast
       })
     }
   )
+
+    fastify.post<{
+      Reply: ImportDishResType
+    }>(
+      '/import',
+      {
+        schema: {
+          response: {
+            200: ImportDishRes
+          }
+        },
+        preValidation: fastify.auth([requireLoginedHook])
+      },
+      async (request, reply) => {
+        const file = await request.file({
+          limits: {
+            fileSize: 1024 * 1024 * 10,
+            fields: 1,
+            files: 1
+          }
+        })
+
+        if (!file) {
+          throw new Error('Không tìm thấy file Excel')
+        }
+
+        const filename = file.filename.toLowerCase()
+        if (!filename.endsWith('.xlsx') && !filename.endsWith('.xls')) {
+          throw new Error('Vui lòng chọn file Excel hợp lệ')
+        }
+
+        const buffer = await file.toBuffer()
+        assertExcelHeaders(readExcelHeaders(buffer), [
+          ['name', 'dishname', 'tenmonan', 'tên món ăn'],
+          ['price', 'pricevnd', 'gia', 'giá'],
+          ['description', 'mota', 'mô tả'],
+          ['image', 'anh'],
+          ['status', 'trangthai', 'trạng thái']
+        ], 'File món ăn')
+        const summary = await importDishesFromExcel(buffer)
+
+        reply.send({
+          data: summary,
+          message: `Đã nhập ${summary.successRows}/${summary.totalRows} món ăn, ${summary.failedRows} dòng lỗi`
+        })
+      }
+    )
 
   fastify.put<{
     Params: DishParamsType

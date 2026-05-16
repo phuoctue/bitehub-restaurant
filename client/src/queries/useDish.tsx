@@ -29,6 +29,18 @@ export const useAddDishMutation = () => {
   });
 };
 
+export const useImportDishMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: dishApiRequest.importExcel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["dishes"],
+      });
+    },
+  });
+};
+
 export const useUpdateDishMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({

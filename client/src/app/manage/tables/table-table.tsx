@@ -41,6 +41,7 @@ import AutoPagination from "@/components/auto-pagination";
 import { TableListResType } from "@/schemaValidations/table.schema";
 import EditTable from "@/app/manage/tables/edit-table";
 import AddTable from "@/app/manage/tables/add-table";
+import ImportTables from "@/app/manage/tables/import-tables";
 import { useDeleteTableMutation, usegetTableListQuery } from "@/queries/useTable";
 import QRCodeTable from "@/components/qrcode-table";
 import { toast } from "sonner";
@@ -201,6 +202,7 @@ export default function TableTable() {
             className="max-w-sm"
           />
           <div className="ml-auto flex items-center gap-2">
+            <ImportTables />
             <AddTable />
           </div>
         </div>

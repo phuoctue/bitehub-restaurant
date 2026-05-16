@@ -42,6 +42,7 @@ import AutoPagination from '@/components/auto-pagination'
 import { DishListResType } from '@/schemaValidations/dish.schema'
 import EditDish from '@/app/manage/dishes/edit-dish'
 import AddDish from '@/app/manage/dishes/add-dish'
+import ImportDishes from '@/app/manage/dishes/import-dishes'
 import { useGetDishListQuery, useDeleteDishMutation } from '@/queries/useDish'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -219,6 +220,7 @@ export default function DishTable() {
             className='max-w-sm'
           />
           <div className='ml-auto flex items-center gap-2'>
+            <ImportDishes />
             <AddDish />
           </div>
         </div>

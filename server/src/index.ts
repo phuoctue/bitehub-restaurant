@@ -24,7 +24,7 @@ import { socketPlugin } from '@/plugins/socket.plugins'
 import indicatorRoutes from './routes/indicator.route'
 
 const fastify = Fastify({
-  logger: false
+  logger: true
 })
 
 // Run the server!
