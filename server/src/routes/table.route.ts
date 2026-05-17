@@ -1,4 +1,4 @@
-import { createTable, deleteTable, getTableDetail, getTableList, updateTable } from '@/controllers/table.controller'
+import { createTable, deleteTable, getTableDetail, getTableList, importTablesFromExcel, updateTable } from '@/controllers/table.controller'
 import { requireLoginedHook } from '@/hooks/auth.hooks'
 import {
   CreateTableBody,
@@ -9,12 +9,18 @@ import {
   TableParamsType,
   TableRes,
   TableResType,
+  ImportTableRes,
+  ImportTableResType,
   UpdateTableBody,
   UpdateTableBodyType
 } from '@/schemaValidations/table.schema'
+import { assertExcelHeaders, readExcelHeaders } from '@/utils/excel-import'
+import fastifyMultipart from '@fastify/multipart'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function tablesRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
+  fastify.register(fastifyMultipart)
+
   fastify.get<{
     Reply: TableListResType
   }>(
@@ -79,6 +85,51 @@ export default async function tablesRoutes(fastify: FastifyInstance, options: Fa
       })
     }
   )
+
+    fastify.post<{
+      Reply: ImportTableResType
+    }>(
+      '/import',
+      {
+        schema: {
+          response: {
+            200: ImportTableRes
+          }
+        },
+        preValidation: fastify.auth([requireLoginedHook])
+      },
+      async (request, reply) => {
+        const file = await request.file({
+          limits: {
+            fileSize: 1024 * 1024 * 10,
+            fields: 1,
+            files: 1
+          }
+        })
+
+        if (!file) {
+          throw new Error('Không tìm thấy file Excel')
+        }
+
+        const filename = file.filename.toLowerCase()
+        if (!filename.endsWith('.xlsx') && !filename.endsWith('.xls')) {
+          throw new Error('Vui lòng chọn file Excel hợp lệ')
+        }
+
+        const buffer = await file.toBuffer()
+        assertExcelHeaders(readExcelHeaders(buffer), [
+          ['number', 'table', 'table number', 'số hiệu bàn'],
+          ['capacity', 'allowed capacity', 'lượng khách cho phép'],
+          ['status', 'trangthai', 'trạng thái']
+        ], 'File bàn')
+        const summary = await importTablesFromExcel(buffer)
+
+        reply.send({
+          data: summary,
+          message: `Đã nhập ${summary.successRows}/${summary.totalRows} bàn, ${summary.failedRows} dòng lỗi`
+        })
+      }
+    )
 
   fastify.put<{
     Params: TableParamsType

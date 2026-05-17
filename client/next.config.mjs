@@ -24,7 +24,27 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '1.bp.blogspot.com',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
         hostname: 'via.placeholder.com',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'th.bing.com',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'tse2.mm.bing.net',
+        pathname: '/**'
+      }
+      ,{
+        protocol: 'https',
+        hostname: 'image-us.eva.vn',
         pathname: '/**'
       }
     ],

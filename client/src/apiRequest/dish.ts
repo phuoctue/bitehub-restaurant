@@ -2,6 +2,7 @@ import http from "@/lib/http";
 import {
   CreateDishBodyType,
   DishListResType,
+  ImportDishResType,
   DishResType,
   UpdateDishBodyType,
 } from "@/schemaValidations/dish.schema";
@@ -12,6 +13,9 @@ const dishApiRequest = {
 
   add: (body: CreateDishBodyType) => 
     http.post<DishResType>("/dishes", body),
+
+  importExcel: (formData: FormData) =>
+    http.post<ImportDishResType>("/dishes/import", formData),
 
   getDish: (id: number) => 
     http.get<DishResType>(`/dishes/${id}`),

@@ -33,6 +33,18 @@ export const useAddTableMutation = () => {
   });
 };
 
+export const useImportTableMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: tableApiRequest.importExcel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["tables"],
+      });
+    },
+  });
+};
+
 // 4. Cập nhật bàn
 export const useUpdateTableMutation = () => {
   const queryClient = useQueryClient();

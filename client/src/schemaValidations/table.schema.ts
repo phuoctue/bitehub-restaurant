@@ -32,6 +32,27 @@ export const TableListRes = z.object({
 
 export type TableListResType = z.TypeOf<typeof TableListRes>
 
+const ImportTableFailure = z.object({
+  rowNumber: z.number(),
+  message: z.string()
+})
+
+export const ImportTableSummary = z.object({
+  totalRows: z.number(),
+  successRows: z.number(),
+  failedRows: z.number(),
+  failures: z.array(ImportTableFailure)
+})
+
+export type ImportTableSummaryType = z.TypeOf<typeof ImportTableSummary>
+
+export const ImportTableRes = z.object({
+  data: ImportTableSummary,
+  message: z.string()
+})
+
+export type ImportTableResType = z.TypeOf<typeof ImportTableRes>
+
 export const UpdateTableBody = z.object({
   changeToken: z.boolean(),
   capacity: z.coerce.number().positive(),
