@@ -61,7 +61,7 @@ export const loginGoogleController = async (code: string) => {
     code,
     client_id: envConfig.GOOGLE_CLIENT_ID,
     client_secret: envConfig.GOOGLE_CLIENT_SECRET,
-    redirect_uri: 'http://localhost:4000/auth/login/google', // Phải khớp với Google Console
+    redirect_uri: envConfig.GOOGLE_REDIRECT_URI ?? `${envConfig.PROTOCOL}://${envConfig.DOMAIN}:${envConfig.PORT}/auth/login/google`,
     grant_type: 'authorization_code'
   })
 
@@ -153,3 +153,4 @@ export const refreshTokenController = async (refreshToken: string) => {
     refreshToken: newRefreshToken
   }
 }
+

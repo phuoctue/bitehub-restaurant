@@ -1,17 +1,20 @@
-import dishApiRequest from "@/apiRequest/dish"; // Kiểm tra kỹ tên thư mục apiRequest hay apiRequests
+import dishApiRequest from "@/apiRequest/dish";
 import { UpdateDishBodyType } from "@/schemaValidations/dish.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
 
 export const useGetDishListQuery = () => {
+  const locale = useLocale();
   return useQuery({
-    queryKey: ["dishes"],
+    queryKey: ["dishes", locale],
     queryFn: dishApiRequest.list,
   });
 };
 
 export const useGetDishQuery = (id: number) => {
+  const locale = useLocale();
   return useQuery({
-    queryKey: ["dishes", id],
+    queryKey: ["dishes", locale, id],
     queryFn: () => dishApiRequest.getDish(id),
     enabled: !!id,
   });

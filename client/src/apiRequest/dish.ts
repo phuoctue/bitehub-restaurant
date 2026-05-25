@@ -7,9 +7,12 @@ import {
   UpdateDishBodyType,
 } from "@/schemaValidations/dish.schema";
 
+type DishRequestOptions = Omit<RequestInit, "method" | "body"> & {
+  baseUrl?: string | undefined;
+};
+
 const dishApiRequest = {
-  list: () =>
-    http.get<DishListResType>("/dishes"),
+  list: (options?: DishRequestOptions) => http.get<DishListResType>("/dishes", options),
 
   add: (body: CreateDishBodyType) => 
     http.post<DishResType>("/dishes", body),
@@ -17,8 +20,7 @@ const dishApiRequest = {
   importExcel: (formData: FormData) =>
     http.post<ImportDishResType>("/dishes/import", formData),
 
-  getDish: (id: number) => 
-    http.get<DishResType>(`/dishes/${id}`),
+  getDish: (id: number, options?: DishRequestOptions) => http.get<DishResType>(`/dishes/${id}`, options),
 
   updateDish: (id: number, body: UpdateDishBodyType) =>
     http.put<DishResType>(`/dishes/${id}`, body),

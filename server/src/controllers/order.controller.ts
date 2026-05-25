@@ -41,8 +41,10 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
           const dishSnapshot = await tx.dishSnapshot.create({
             data: {
               description: dish.description,
+              descriptionEn: dish.descriptionEn,
               image: dish.image,
               name: dish.name,
+              nameEn: dish.nameEn,
               price: dish.price,
               dishId: dish.id,
               status: dish.status
@@ -265,8 +267,10 @@ export const updateOrderController = async (
       const dishSnapshot = await tx.dishSnapshot.create({
         data: {
           description: dish.description,
+          descriptionEn: dish.descriptionEn,
           image: dish.image,
           name: dish.name,
+          nameEn: dish.nameEn,
           price: dish.price,
           dishId: dish.id,
           status: dish.status

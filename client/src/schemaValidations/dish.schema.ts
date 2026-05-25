@@ -8,10 +8,19 @@ const optionalUrlString = z.preprocess((value) => {
   return value
 }, z.string().url().optional())
 
+const optionalTextString = z.preprocess((value) => {
+  if (value === '') {
+    return undefined
+  }
+  return value
+}, z.string().max(10000).optional())
+
 export const CreateDishBody = z.object({
   name: z.string().min(1).max(256),
+  nameEn: z.string().max(256).optional(),
   price: z.coerce.number().positive(),
   description: z.string().max(10000),
+  descriptionEn: optionalTextString,
   image: optionalUrlString,
   status: z.enum(DishStatusValues).optional()
 })
@@ -21,8 +30,10 @@ export type CreateDishBodyType = z.TypeOf<typeof CreateDishBody>
 export const DishSchema = z.object({
   id: z.number(),
   name: z.string(),
+  nameEn: z.string().nullable().optional(),
   price: z.coerce.number(),
   description: z.string(),
+  descriptionEn: z.string().nullable().optional(),
   image: z.string(),
   status: z.enum(DishStatusValues),
   createdAt: z.date(),

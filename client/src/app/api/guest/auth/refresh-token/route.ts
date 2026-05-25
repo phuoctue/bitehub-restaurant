@@ -5,6 +5,7 @@ import guestApiRequest from "@/apiRequest/guest";
 
 async function handleRefreshToken() {
   const cookieStore = await cookies();
+  const isProduction = process.env.NODE_ENV === "production";
   const refreshToken = cookieStore.get("refreshToken")?.value;
   if (!refreshToken) {
     return Response.json(
@@ -31,14 +32,14 @@ async function handleRefreshToken() {
       path: "/",
       httpOnly: true, //chỉ server đọc, không JS client
       sameSite: "lax", //Bảo mật CSRF
-      secure: false, // Chỉ HTTP cho localhost
+      secure: isProduction,
       expires: decodedAccessToken.exp * 1000, // Chuyển từ seconds sang ms
     });
     cookieStore.set("refreshToken", payload.data.refreshToken, {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: false, // Chỉ HTTP cho localhost
+      secure: isProduction,
       expires: decodedRefreshToken.exp * 1000,
     });
 
@@ -75,3 +76,4 @@ export async function POST() {
 export async function GET() {
   return handleRefreshToken();
 }
+

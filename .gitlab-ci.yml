@@ -1,0 +1,20 @@
+stages:
+  - build
+
+build_server:
+  stage: build
+  image: node:20
+  before_script:
+    - cd server
+    - npm ci
+  script:
+    - npm run build
+
+build_client:
+  stage: build
+  image: node:20
+  before_script:
+    - cd client
+    - npm ci
+  script:
+    - npm run build

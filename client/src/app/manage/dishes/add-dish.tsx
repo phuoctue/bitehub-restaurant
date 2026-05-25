@@ -40,7 +40,9 @@ export default function AddDish() {
     resolver: zodResolver(CreateDishBody) as Resolver<CreateDishBodyType>,
     defaultValues: {
       name: "",
+      nameEn: "",
       description: "",
+      descriptionEn: "",
       price: 0,
       image: "",
       status: DishStatus.Unavailable,
@@ -191,6 +193,22 @@ export default function AddDish() {
 
               <FormField
                 control={form.control}
+                name="nameEn"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
+                      <Label htmlFor="nameEn">Dish Name (EN)</Label>
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
+                        <Input id="nameEn" className="w-full" {...field} />
+                        <FormMessage />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
@@ -198,6 +216,22 @@ export default function AddDish() {
                       <Label htmlFor="description">{t("description")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Textarea id="description" className="w-full" {...field} />
+                        <FormMessage />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="descriptionEn"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
+                      <Label htmlFor="descriptionEn">Description (EN)</Label>
+                      <div className="col-span-1 sm:col-span-3 w-full space-y-2">
+                        <Textarea id="descriptionEn" className="w-full" {...field} value={field.value ?? ""} />
                         <FormMessage />
                       </div>
                     </div>

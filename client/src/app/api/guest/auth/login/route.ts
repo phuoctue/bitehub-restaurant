@@ -7,6 +7,7 @@ import { GuestLoginBodyType } from "@/schemaValidations/guest.schema";
 export async function POST(request: Request) {
   const body = (await request.json()) as GuestLoginBodyType;
   const cookieStore = await cookies();
+  const isProduction = process.env.NODE_ENV === "production";
   try {
     const { payload } = await guestApiRequest.sLogin(body);
     const { accessToken, refreshToken } = payload.data;
@@ -18,14 +19,14 @@ export async function POST(request: Request) {
       path: "/",
       httpOnly: true, //chỉ server đọc, không JS client
       sameSite: "lax", //Bảo mật CSRF
-      secure: false, // Chỉ HTTP cho localhost
+      secure: isProduction,
       expires: decodedAccessToken.exp * 1000, // Chuyển từ seconds sang ms
     });
     cookieStore.set("refreshToken", refreshToken, {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: false, // Chỉ HTTP cho localhost
+      secure: isProduction,
       expires: decodedRefreshToken.exp * 1000,
     });
 
@@ -55,3 +56,4 @@ export async function POST(request: Request) {
     }
   }
 }
+

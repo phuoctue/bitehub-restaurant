@@ -7,7 +7,7 @@ const HTML_ENTITY_MAP: Record<string, string> = {
   "&gt;": ">",
 };
 
-const FALLBACK_SITE_URL = "http://localhost:3000";
+const FALLBACK_SITE_URL = "https://example.com";
 const DEFAULT_OG_IMAGE_PATH = "/banner.png";
 const SUPPORTED_LOCALES = ["vi", "en"] as const;
 

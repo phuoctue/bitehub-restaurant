@@ -21,7 +21,6 @@ import {
 } from '@/schemaValidations/auth.schema'
 import { MessageRes, MessageResType } from '@/schemaValidations/common.schema'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
-import queryString from 'query-string'
 
 export default async function authRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.post<{ Reply: MessageResType; Body: LogoutBodyType }>(
@@ -77,17 +76,17 @@ export default async function authRoutes(fastify: FastifyInstance, options: Fast
       const { code } = request.query as { code: string }
       try {
         const { accessToken, refreshToken } = await loginGoogleController(code)
-        const qs = queryString.stringify({
+        const qs = new URLSearchParams({
           accessToken,
           refreshToken,
-          status: 200
-        })
+          status: '200'
+        }).toString()
         return reply.redirect(`${envConfig.GOOGLE_REDIRECT_CLIENT_URL}?${qs}`)
       } catch (error: any) {
-        const qs = queryString.stringify({
+        const qs = new URLSearchParams({
           message: error.message || 'Lỗi đăng nhập Google',
-          status: 500
-        })
+          status: '500'
+        }).toString()
         return reply.redirect(`${envConfig.GOOGLE_REDIRECT_CLIENT_URL}?${qs}`)
       }
     }
@@ -115,3 +114,4 @@ export default async function authRoutes(fastify: FastifyInstance, options: Fast
     }
   )
 }
+

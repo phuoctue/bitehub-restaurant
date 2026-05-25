@@ -1,6 +1,7 @@
 import dishApiRequest from "@/apiRequest/dish";
 import { EntityError, HttpError } from "@/lib/http";
 import { wrapServerApi } from "@/lib/utils";
+import { getLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import Modal from "./modal";
 import DishDetail from "../../../dishes/[id]/dish-detail";
@@ -20,7 +21,14 @@ export default async function DishPage({
   }
 
   try {
-    const data = await wrapServerApi(() => dishApiRequest.getDish(dishId));
+    const locale = await getLocale();
+    const data = await wrapServerApi(() =>
+      dishApiRequest.getDish(dishId, {
+        headers: {
+          "x-locale": locale
+        }
+      })
+    );
     const dish = data?.payload?.data;
     return (
       <Modal>

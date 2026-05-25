@@ -16,11 +16,12 @@ import { useGuestLoginMutation } from "@/queries/useGuest";
 import { useAppStore } from "@/components/app-provider";
 import { withLocalePath } from "@/lib/locale-path";
 import { generateSocketInstance, handleErrorApi } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 export default function GuestLoginForm() {
-  
-  const  setRole = useAppStore(state => state.setRole);
-  const setSocket = useAppStore(state => state.setSocket);
+  const t = useTranslations("GuestLogin");
+  const setRole = useAppStore((state) => state.setRole);
+  const setSocket = useAppStore((state) => state.setSocket);
   const searchParams = useSearchParams();
   const params = useParams();
   const router = useRouter();
@@ -66,13 +67,12 @@ export default function GuestLoginForm() {
       });
     }
   }
+
   return (
     <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
       <Card className="mx-auto w-full max-w-sm shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-center font-bold">
-            Đăng nhập gọi món
-          </CardTitle>
+          <CardTitle className="text-2xl text-center font-bold">{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -88,11 +88,11 @@ export default function GuestLoginForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="grid gap-2">
-                        <Label htmlFor="name">Tên khách hàng</Label>
+                        <Label htmlFor="name">{t("customerName")}</Label>
                         <Input
                           id="name"
                           type="text"
-                          placeholder="Nhập tên của bạn"
+                          placeholder={t("namePlaceholder")}
                           required
                           {...field}
                         />
@@ -103,7 +103,7 @@ export default function GuestLoginForm() {
                 />
 
                 <Button type="submit" className="w-full font-semibold py-6">
-                  Đăng nhập
+                  {t("submit")}
                 </Button>
               </div>
             </form>

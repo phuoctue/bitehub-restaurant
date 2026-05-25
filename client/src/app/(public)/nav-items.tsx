@@ -13,7 +13,6 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Role } from "@/constants/type";
-import { withLocalePath } from "@/lib/locale-path";
 import { cn, handleErrorApi } from "@/lib/utils";
 import { useLogoutMutation } from "@/queries/useAuth";
 import { RoleType } from "@/types/jwt.types";
@@ -56,7 +55,7 @@ export default function NavItems({ className }: { className?: string }) {
       await logoutMutation.mutateAsync();
       setRole();
       disconnectSocket();
-      router.push(withLocalePath("/"));
+      router.push("/");
       toast.success(t("logoutSuccess"));
     } catch (error) {
       handleErrorApi({ error });

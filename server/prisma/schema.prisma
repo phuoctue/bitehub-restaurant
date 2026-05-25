@@ -1,16 +1,14 @@
-generator dbml {
-  provider = "prisma-dbml-generator"
-}
+
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-
 model Account {
   id           Int            @id @default(autoincrement())
   name         String
@@ -31,8 +29,10 @@ model Account {
 model Dish {
   id            Int            @id @default(autoincrement())
   name          String
+  nameEn        String?
   price         Int
   description   String
+  descriptionEn String?
   image         String
   status        DishStatus     @default(Available)
   createdAt     DateTime       @default(now())
@@ -43,8 +43,10 @@ model Dish {
 model DishSnapshot {
   id          Int        @id @default(autoincrement())
   name        String
+  nameEn      String?
   price       Int
   description String
+  descriptionEn String?
   image       String
   status      DishStatus @default(Available)
   dishId      Int?
@@ -108,6 +110,24 @@ model Socket {
   guestId   Int?     @unique
   account   Account? @relation(fields: [accountId], references: [id], onUpdate: NoAction)
   guest     Guest?   @relation(fields: [guestId], references: [id], onUpdate: NoAction)
+}
+
+model RecommendationLog {
+  id               Int      @id @default(autoincrement())
+  guestId          Int?
+  tableNumber      Int?
+  dishId           Int
+  score            Float
+  reasons          Json
+  contextHour      Int
+  contextDayOfWeek Int
+  createdAt        DateTime @default(now())
+  clickedAt        DateTime?
+  orderedAt        DateTime?
+
+  @@index([guestId, createdAt])
+  @@index([tableNumber, createdAt])
+  @@index([dishId, createdAt])
 }
 
 enum Role {

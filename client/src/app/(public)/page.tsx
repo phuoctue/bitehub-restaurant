@@ -1,7 +1,7 @@
 import dishApiRequest from "@/apiRequest/dish";
 import { formatCurrency } from "@/lib/utils";
 import { DishListResType } from "@/schemaValidations/dish.schema";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,10 +9,15 @@ export const revalidate = 60;
 
 export default async function Home() {
   const t = await getTranslations("PublicHome");
+  const locale = await getLocale();
 
   let dishList: DishListResType["data"] = [];
   try {
-    const result = await dishApiRequest.list();
+    const result = await dishApiRequest.list({
+      headers: {
+        "x-locale": locale,
+      },
+    });
     const {
       payload: { data }
     } = result;

@@ -41,7 +41,9 @@ export default function EditDish({
     resolver: zodResolver(UpdateDishBody) as any,
     defaultValues: {
       name: '',
+      nameEn: '',
       description: '',
+      descriptionEn: '',
       price: 0,
       image: '',
       status: DishStatus.Unavailable
@@ -58,10 +60,12 @@ export default function EditDish({
 
   useEffect(() => {
     if (data) {
-      const { name, image, description, price, status } = data.payload.data
+      const { name, nameEn, image, description, descriptionEn, price, status } = data.payload.data
       form.reset({
         name,
+        nameEn: nameEn ?? '',
         description,
+        descriptionEn: descriptionEn ?? '',
         price,
         status,
         image: image ?? ''
@@ -203,6 +207,22 @@ export default function EditDish({
 
               <FormField
                 control={form.control}
+                name='nameEn'
+                render={({ field }) => (
+                  <FormItem>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
+                      <Label htmlFor='nameEn'>Dish Name (EN)</Label>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
+                        <Input id='nameEn' className='w-full' {...field} />
+                        <FormMessage />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name='description'
                 render={({ field }) => (
                   <FormItem>
@@ -210,6 +230,22 @@ export default function EditDish({
                       <Label htmlFor='description'>{t('description')}</Label>
                       <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
                         <Textarea id='description' className='w-full' {...field} />
+                        <FormMessage />
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='descriptionEn'
+                render={({ field }) => (
+                  <FormItem>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4'>
+                      <Label htmlFor='descriptionEn'>Description (EN)</Label>
+                      <div className='col-span-1 sm:col-span-3 w-full space-y-2'>
+                        <Textarea id='descriptionEn' className='w-full' {...field} value={field.value ?? ''} />
                         <FormMessage />
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 //// ------------------------------------------------------
-//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// THIS FILE WAS MANUALLY UPDATED TO MATCH prisma/schema.prisma
 //// ------------------------------------------------------
 
 Table Account {
@@ -22,8 +22,10 @@ Table Account {
 Table Dish {
   id Int [pk, increment]
   name String [not null]
+  nameEn String
   price Int [not null]
   description String [not null]
+  descriptionEn String
   image String [not null]
   status DishStatus [not null, default: 'Available']
   createdAt DateTime [default: `now()`, not null]
@@ -34,8 +36,10 @@ Table Dish {
 Table DishSnapshot {
   id Int [pk, increment]
   name String [not null]
+  nameEn String
   price Int [not null]
   description String [not null]
+  descriptionEn String
   image String [not null]
   status DishStatus [not null, default: 'Available']
   dishId Int
@@ -99,6 +103,26 @@ Table Socket {
   guestId Int [unique]
   account Account
   guest Guest
+}
+
+Table RecommendationLog {
+  id Int [pk, increment]
+  guestId Int
+  tableNumber Int
+  dishId Int [not null]
+  score Float [not null]
+  reasons Json [not null]
+  contextHour Int [not null]
+  contextDayOfWeek Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  clickedAt DateTime
+  orderedAt DateTime
+
+  indexes {
+    (guestId, createdAt)
+    (tableNumber, createdAt)
+    (dishId, createdAt)
+  }
 }
 
 Enum Role {

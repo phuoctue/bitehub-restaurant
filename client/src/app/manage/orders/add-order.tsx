@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import {
   Dialog,
   DialogContent,
@@ -29,16 +29,15 @@ import Quantity from "@/app/guest/menu/quantity";
 import Image from "next/image";
 import { cn, formatCurrency, handleErrorApi } from "@/lib/utils";
 import { DishStatus } from "@/constants/type";
-import { DishListResType } from "@/schemaValidations/dish.schema";
 import { useGetDishListQuery } from "@/queries/useDish";
 import { useCreateOrderMutation } from "@/queries/useOrder";
 import { useCreateGuestMutation } from "@/queries/useAccount";
 import { toast } from "sonner";
-import { Value } from "@radix-ui/react-select";
 
 export default function AddOrder() {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [selectedGuest, setSelectedGuest] = useState<
     GetListGuestsResType["data"][0] | null
   >(null);
@@ -54,6 +53,18 @@ export default function AddOrder() {
       return result + order.quantity * dish.price;
     }, 0);
   }, [dishes, orders]);
+
+  const visibleDishes = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    const available = dishes.filter((dish) => dish.status !== DishStatus.Hidden);
+    if (!keyword) return available;
+    return available.filter((dish) => {
+      return (
+        dish.name.toLowerCase().includes(keyword) ||
+        dish.description.toLowerCase().includes(keyword)
+      );
+    });
+  }, [dishes, search]);
 
   const createOrdersMutation = useCreateOrderMutation();
   const createGuestMutation = useCreateGuestMutation();
@@ -116,6 +127,7 @@ export default function AddOrder() {
     setSelectedGuest(null);
     setIsNewGuest(true);
     setOrders([]);
+    setSearch("");
     setOpen(false);
   };
 
@@ -137,145 +149,177 @@ export default function AddOrder() {
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-screen overflow-auto">
-        <DialogHeader>
+
+      <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="border-b border-border/60 px-6 py-4">
           <DialogTitle>{t("ManageOrders.createOrder")}</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-          <Label htmlFor="isNewGuest">{t("ManageOrders.newGuest")}</Label>
-          <div className="col-span-1 sm:col-span-3 flex items-center">
-            <Switch
-              id="isNewGuest"
-              checked={isNewGuest}
-              onCheckedChange={setIsNewGuest}
-            />
-          </div>
-        </div>
-        {isNewGuest && (
-          <Form {...form}>
-            <form
-              noValidate
-              className="grid auto-rows-max items-start gap-4 md:gap-8"
-              id="add-employee-form"
-            >
-              <div className="grid gap-4 py-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                        <Label htmlFor="name">
-                          {t("ManageOrders.customerName")}
-                        </Label>
-                        <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                          <Input id="name" className="w-full" {...field} />
-                          <FormMessage />
-                        </div>
-                      </div>
-                    </FormItem>
-                  )}
+
+        <div className="flex max-h-[calc(90vh-74px)] flex-col overflow-hidden">
+          <div className="space-y-4 border-b border-border/60 px-6 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="isNewGuest">{t("ManageOrders.newGuest")}</Label>
+              <div className="col-span-1 sm:col-span-3 flex items-center">
+                <Switch
+                  id="isNewGuest"
+                  checked={isNewGuest}
+                  onCheckedChange={setIsNewGuest}
                 />
-                <FormField
-                  control={form.control}
-                  name="tableNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                        <Label htmlFor="tableNumber">
-                          {t("ManageOrders.selectTable")}
-                        </Label>
-                        <div className="col-span-1 sm:col-span-3 w-full space-y-2">
-                          <div className="flex items-center gap-4">
-                            <div>{field.value}</div>
-                            <TablesDialog
-                              onChoose={(table) => {
-                                field.onChange(table.number);
-                              }}
-                            />
+              </div>
+            </div>
+
+            {isNewGuest && (
+              <Form {...form}>
+                <form noValidate className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                          <Label htmlFor="name">{t("ManageOrders.customerName")}</Label>
+                          <div className="col-span-1 sm:col-span-3 w-full space-y-2">
+                            <Input id="name" className="w-full" {...field} />
+                            <FormMessage />
                           </div>
                         </div>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tableNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                          <Label htmlFor="tableNumber">{t("ManageOrders.selectTable")}</Label>
+                          <div className="col-span-1 sm:col-span-3 w-full">
+                            <div className="flex items-center gap-4">
+                              <div className="rounded-md bg-muted px-3 py-1.5 text-sm font-semibold">
+                                {field.value}
+                              </div>
+                              <TablesDialog
+                                onChoose={(table) => {
+                                  field.onChange(table.number);
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            )}
+
+            {!isNewGuest && (
+              <GuestsDialog
+                onChoose={(guest) => {
+                  setSelectedGuest(guest);
+                }}
+              />
+            )}
+
+            {!isNewGuest && selectedGuest && (
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4 text-sm">
+                <Label htmlFor="selectedGuest">{t("ManageOrders.selectedGuest")}</Label>
+                <div className="col-span-1 sm:col-span-3 flex items-center gap-3">
+                  <div className="rounded-md bg-muted px-2.5 py-1">
+                    {selectedGuest.name} (#{selectedGuest.id})
+                  </div>
+                  <div className="rounded-md bg-muted px-2.5 py-1">
+                    {t("table")}: {selectedGuest.tableNumber}
+                  </div>
+                </div>
               </div>
-            </form>
-          </Form>
-        )}
-        {!isNewGuest && (
-          <GuestsDialog
-            onChoose={(guest) => {
-              setSelectedGuest(guest);
-            }}
-          />
-        )}
-        {!isNewGuest && selectedGuest && (
-          <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-            <Label htmlFor="selectedGuest">
-              {t("ManageOrders.selectedGuest")}
-            </Label>
-            <div className="col-span-1 sm:col-span-3 w-full gap-4 flex items-center">
-              <div>
-                {selectedGuest.name} (#{selectedGuest.id})
+            )}
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("ManageDishes.filterDishName")}
+                className="sm:col-span-2"
+              />
+              <div className="rounded-md border border-border/70 bg-muted/40 px-3 py-2 text-sm">
+                {t("ManageOrders.ordersLabel")}: <span className="font-semibold">{orders.length}</span>
               </div>
-              <div>Bàn: {selectedGuest.tableNumber}</div>
             </div>
           </div>
-        )}
-        {dishes
-          .filter((dish) => dish.status !== DishStatus.Hidden)
-          .map((dish) => (
-            <div
-              key={dish.id}
-              className={cn("flex gap-4", {
-                "pointer-events-none": dish.status === DishStatus.Unavailable,
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-3">
+              {visibleDishes.map((dish) => {
+                const quantity =
+                  orders.find((order) => order.dishId === dish.id)?.quantity ?? 0;
+                const isUnavailable = dish.status === DishStatus.Unavailable;
+
+                return (
+                  <div
+                    key={dish.id}
+                    className={cn(
+                      "flex gap-3 rounded-lg border border-border/70 p-3",
+                      quantity > 0 && "border-primary/60 bg-primary/5",
+                      isUnavailable && "pointer-events-none opacity-60"
+                    )}
+                  >
+                    <div className="relative flex-shrink-0">
+                      {isUnavailable && (
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                          {t("ManageOrders.outOfStock")}
+                        </span>
+                      )}
+                      <Image
+                        src={dish.image}
+                        alt={dish.name}
+                        height={100}
+                        width={100}
+                        quality={100}
+                        className="h-[72px] w-[72px] rounded-md object-cover"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h3 className="line-clamp-1 text-sm font-semibold">{dish.name}</h3>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">{dish.description}</p>
+                      <p className="text-xs font-semibold">{formatCurrency(dish.price)}</p>
+                    </div>
+
+                    <div className="ml-auto flex flex-shrink-0 items-center justify-center">
+                      <Quantity
+                        onChange={(value) => handleQuantityChange(dish.id, value)}
+                        value={quantity}
+                      />
+                    </div>
+                  </div>
+                );
               })}
-            >
-              <div className="flex-shrink-0 relative">
-                {dish.status === DishStatus.Unavailable && (
-                  <span className="absolute inset-0 flex items-center justify-center text-sm">
-                    {t("ManageOrders.outOfStock")}
-                  </span>
-                )}
-                <Image
-                  src={dish.image}
-                  alt={dish.name}
-                  height={100}
-                  width={100}
-                  quality={100}
-                  className="object-cover w-[80px] h-[80px] rounded-md"
-                />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm">{dish.name}</h3>
-                <p className="text-xs">{dish.description}</p>
-                <p className="text-xs font-semibold">
-                  {formatCurrency(dish.price)}
-                </p>
-              </div>
-              <div className="flex-shrink-0 ml-auto flex justify-center items-center">
-                <Quantity
-                  onChange={(value) => handleQuantityChange(dish.id, value)}
-                  value={
-                    orders.find((order) => order.dishId === dish.id)
-                      ?.quantity ?? 0
-                  }
-                />
-              </div>
+
+              {visibleDishes.length === 0 && (
+                <div className="rounded-lg border border-dashed border-border/70 px-4 py-6 text-center text-sm text-muted-foreground">
+                  {t("ManageDishes.noResults")}
+                </div>
+              )}
             </div>
-          ))}
-        <DialogFooter>
-          <Button
-            className="w-full justify-between"
-            onClick={handleOrder}
-            disabled={orders.length === 0 || (!isNewGuest && !selectedGuest)}
-          >
-            <span>Đặt hàng · {orders.length} món</span>
-            <span>{formatCurrency(totalPrice)}</span>
-          </Button>
-        </DialogFooter>
+          </div>
+
+          <DialogFooter className="border-t border-border/60 px-6 py-4">
+            <Button
+              className="w-full justify-between"
+              onClick={handleOrder}
+              disabled={orders.length === 0 || (!isNewGuest && !selectedGuest)}
+            >
+              <span>
+                {t("ManageOrders.createOrder")} · {orders.length} {t("ManageOrders.ordersCountUnit")}
+              </span>
+              <span>{formatCurrency(totalPrice)}</span>
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
+

@@ -49,3 +49,33 @@ export type GuestCreateOrdersResType = z.TypeOf<typeof GuestCreateOrdersRes>
 export const GuestGetOrdersRes = GuestCreateOrdersRes
 
 export type GuestGetOrdersResType = z.TypeOf<typeof GuestGetOrdersRes>
+
+export const GuestRecommendationsQuery = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(12).optional().default(8)
+  })
+  .strict()
+
+export type GuestRecommendationsQueryType = z.TypeOf<typeof GuestRecommendationsQuery>
+
+export const RecommendationDishSchema = z.object({
+  dishId: z.number(),
+  name: z.string(),
+  price: z.number(),
+  image: z.string(),
+  score: z.number(),
+  reasons: z.array(z.string())
+})
+
+export const GuestRecommendationsRes = z.object({
+  message: z.string(),
+  data: z.array(RecommendationDishSchema)
+})
+
+export type GuestRecommendationsResType = z.TypeOf<typeof GuestRecommendationsRes>
+
+export const RecommendationClickParam = z.object({
+  dishId: z.coerce.number().int().positive()
+})
+
+export type RecommendationClickParamType = z.TypeOf<typeof RecommendationClickParam>

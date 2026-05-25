@@ -4,6 +4,8 @@ import {
   guestGetOrdersController,
   guestLoginController,
   guestLogoutController,
+  guestGetRecommendationsController,
+  guestRecommendationClickController,
   guestRefreshTokenController
 } from '@/controllers/guest.controller'
 import { requireGuestHook, requireLoginedHook } from '@/hooks/auth.hooks'
@@ -23,12 +25,32 @@ import {
   GuestCreateOrdersResType,
   GuestGetOrdersRes,
   GuestGetOrdersResType,
+  GuestRecommendationsQuery,
+  GuestRecommendationsQueryType,
+  GuestRecommendationsRes,
+  GuestRecommendationsResType,
   GuestLoginBody,
   GuestLoginBodyType,
   GuestLoginRes,
-  GuestLoginResType
+  GuestLoginResType,
+  RecommendationClickParam,
+  RecommendationClickParamType
 } from '@/schemaValidations/guest.schema'
+import { pickLocalizedText, resolveContentLocale } from '@/utils/locale'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+
+const localizeOrder = (order: any, locale: 'vi' | 'en') => ({
+  ...order,
+  dishSnapshot: {
+    ...order.dishSnapshot,
+    name: pickLocalizedText({ locale, vi: order.dishSnapshot.name, en: order.dishSnapshot.nameEn }),
+    description: pickLocalizedText({
+      locale,
+      vi: order.dishSnapshot.description,
+      en: order.dishSnapshot.descriptionEn
+    })
+  }
+})
 
 export default async function guestRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.post<{ Reply: GuestLoginResType; Body: GuestLoginBodyType }>(
@@ -61,6 +83,7 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
       })
     }
   )
+
   fastify.post<{ Reply: MessageResType; Body: LogoutBodyType }>(
     '/auth/logout',
     {
@@ -117,12 +140,13 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
       preValidation: fastify.auth([requireLoginedHook, requireGuestHook])
     },
     async (request, reply) => {
+      const locale = resolveContentLocale(request.headers as Record<string, unknown>)
       const guestId = request.decodedAccessToken?.userId as number
       const result = await guestCreateOrdersController(guestId, request.body)
       fastify.io.to(ManagerRoom).emit('new-order', result)
       reply.send({
         message: 'Đặt món thành công',
-        data: result
+        data: result.map((order) => localizeOrder(order, locale))
       })
     }
   )
@@ -140,12 +164,62 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
       preValidation: fastify.auth([requireLoginedHook, requireGuestHook])
     },
     async (request, reply) => {
+      const locale = resolveContentLocale(request.headers as Record<string, unknown>)
       const guestId = request.decodedAccessToken?.userId as number
       const result = await guestGetOrdersController(guestId)
       reply.send({
         message: 'Lấy danh sách đơn hàng thành công',
-        data: result as GuestGetOrdersResType['data']
+        data: result.map((order) => localizeOrder(order, locale)) as GuestGetOrdersResType['data']
       })
+    }
+  )
+
+  fastify.get<{
+    Reply: GuestRecommendationsResType
+    Querystring: GuestRecommendationsQueryType
+  }>(
+    '/recommendations',
+    {
+      schema: {
+        response: {
+          200: GuestRecommendationsRes
+        },
+        querystring: GuestRecommendationsQuery
+      },
+      preValidation: fastify.auth([requireLoginedHook, requireGuestHook])
+    },
+    async (request, reply) => {
+      const locale = resolveContentLocale(request.headers as Record<string, unknown>)
+      const guestId = request.decodedAccessToken?.userId as number
+      const result = await guestGetRecommendationsController(guestId, request.query)
+      reply.send({
+        message: 'Lấy gợi ý món thành công',
+        data: result.map((item) => ({
+          ...item,
+          name: pickLocalizedText({ locale, vi: item.name, en: item.nameEn })
+        }))
+      })
+    }
+  )
+
+  fastify.post<{
+    Reply: MessageResType
+    Params: RecommendationClickParamType
+  }>(
+    '/recommendations/:dishId/click',
+    {
+      schema: {
+        response: {
+          200: MessageRes
+        },
+        params: RecommendationClickParam
+      },
+      preValidation: fastify.auth([requireLoginedHook, requireGuestHook])
+    },
+    async (request, reply) => {
+      const guestId = request.decodedAccessToken?.userId as number
+      const message = await guestRecommendationClickController(guestId, request.params.dishId)
+      reply.send({ message })
     }
   )
 }

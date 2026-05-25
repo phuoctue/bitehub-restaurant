@@ -30,9 +30,11 @@ const configSchema = z.object({
   DOMAIN: z.string(),
   PROTOCOL: z.string(),
   UPLOAD_FOLDER: z.string(),
+  CLIENT_ORIGIN: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
-  GOOGLE_REDIRECT_CLIENT_URL: z.string()
+  GOOGLE_REDIRECT_CLIENT_URL: z.string(),
+  GOOGLE_REDIRECT_URI: z.string().optional()
 })
 
 const configServer = configSchema.safeParse(process.env)

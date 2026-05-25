@@ -45,8 +45,10 @@ export const deleteDish = (id: number) => {
 
 const ImportDishRow = z.object({
   name: z.string().min(1).max(256),
+  nameEn: z.string().max(256).optional().default(''),
   price: z.number().int().positive(),
   description: z.string().max(10000),
+  descriptionEn: z.string().max(10000).optional().default(''),
   image: z.union([z.string().url(), z.literal('')]).optional().default(''),
   status: z.enum(DishStatusValues).optional()
 })
@@ -87,8 +89,10 @@ export const importDishesFromExcel = async (buffer: Buffer) => {
   for (const row of rows) {
     const rawBody = {
       name: getExcelValue(row.values, ['name', 'dishname', 'tenmonan', 'tênmónăn']),
+      nameEn: getExcelValue(row.values, ['nameen', 'dishnameen', 'tenmonanen']),
       price: normalizeExcelNumber(getExcelValue(row.values, ['price', 'pricevnd', 'gia', 'giavn', 'giá', 'giavnđ'])),
       description: getExcelValue(row.values, ['description', 'mota', 'môtả', 'motamonan']),
+      descriptionEn: getExcelValue(row.values, ['descriptionen', 'motaen', 'motamonanen']),
       image: getExcelValue(row.values, ['image', 'anh', 'imageurl', 'urlanh']),
       status: normalizeDishStatus(getExcelValue(row.values, ['status', 'trangthai', 'trạngthái']))
     }
@@ -113,6 +117,8 @@ export const importDishesFromExcel = async (buffer: Buffer) => {
 
     await createDish({
       ...parsed.data,
+      nameEn: normalizeExcelText(parsed.data.nameEn) || undefined,
+      descriptionEn: normalizeExcelText(parsed.data.descriptionEn) || undefined,
       image: normalizeExcelText(parsed.data.image)
     })
 

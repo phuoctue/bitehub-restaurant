@@ -1,5 +1,6 @@
 import guestApiRequest from "@/apiRequest/guest";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
 
 export const useGuestLoginMutation = () => {
   return useMutation({
@@ -20,8 +21,9 @@ export const useGuestOrderMuatation = () => {
 };
 
 export const useGuestGetOrderListQuery = () => {
+  const locale = useLocale();
   return useQuery({
     queryFn: guestApiRequest.getOrderList,
-    queryKey: ["guest-orders"],
+    queryKey: ["guest-orders", locale],
   });
 };

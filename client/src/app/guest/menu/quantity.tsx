@@ -2,6 +2,7 @@ import React from "react";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 export default function Quantity({
   onChange,
   value,
@@ -10,15 +11,15 @@ export default function Quantity({
   value: number;
 }) {
   return (
-    <>
+    <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-2 py-1">
       <Button
         variant="outline"
         size="icon"
-        className="h-7 w-7 rounded-full"
+        className="h-8 w-8 rounded-full"
         disabled={value < 1}
         onClick={() => onChange(value - 1)}
       >
-        <Minus className="w-3 h-3" />
+        <Minus className="h-3.5 w-3.5" />
       </Button>
       <Input
         type="text"
@@ -27,23 +28,20 @@ export default function Quantity({
         readOnly
         value={value}
         onChange={(e) => {
-          let value = e.target.value;
-          const numberValue = Number(value);
-          if (isNaN(numberValue)) {
-            return;
-          }
+          const numberValue = Number(e.target.value);
+          if (isNaN(numberValue)) return;
           onChange(numberValue);
         }}
-        className="h-7 w-8 p-0 text-center text-xs border-none focus-visible:ring-0"
+        className="h-8 w-10 border-none bg-transparent p-0 text-center text-sm font-semibold focus-visible:ring-0"
       />
       <Button
         variant="outline"
         size="icon"
-        className="h-7 w-7 rounded-full"
+        className="h-8 w-8 rounded-full"
         onClick={() => onChange(value + 1)}
       >
-        <Plus className="w-3 h-3" />
+        <Plus className="h-3.5 w-3.5" />
       </Button>
-    </>
+    </div>
   );
 }

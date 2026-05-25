@@ -11,11 +11,17 @@ import { wrapServerApi } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { headers } from "next/headers";
+import { getLocale } from "next-intl/server";
 import DishDetail from "./dish-detail";
 
-const getDishById = cache(async (dishId: number) => {
-  const data = await wrapServerApi(() => dishApiRequest.getDish(dishId));
+const getDishById = cache(async (dishId: number, locale: string) => {
+  const data = await wrapServerApi(() =>
+    dishApiRequest.getDish(dishId, {
+      headers: {
+        "x-locale": locale,
+      },
+    })
+  );
   return data?.payload?.data;
 });
 
@@ -32,10 +38,9 @@ export async function generateMetadata({
   }
 
   try {
-    const dish = await getDishById(dishId);
+    const locale = await getLocale();
+    const dish = await getDishById(dishId, locale);
     if (!dish) return {};
-    const requestHeaders = await headers();
-    const locale = requestHeaders.get("x-locale") ?? "vi";
     const description = htmlToPlainText(dish.description);
     const imageUrl = toAbsoluteUrl(dish.image || getDefaultOgImage());
     const localizedPath = `/${locale}/dishes/${dish.id}`;
@@ -87,7 +92,8 @@ export default async function DishPage({
   }
 
   try {
-    const dish = await getDishById(dishId);
+    const locale = await getLocale();
+    const dish = await getDishById(dishId, locale);
     return <DishDetail dish={dish} />;
   } catch (error) {
     if (

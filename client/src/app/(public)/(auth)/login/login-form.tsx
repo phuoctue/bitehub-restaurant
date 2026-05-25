@@ -28,7 +28,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import envConfig from "@/config";
-import { withLocalePath } from "@/lib/locale-path";
 import { generateSocketInstance, handleErrorApi } from "@/lib/utils";
 import { useLoginMutation } from "@/queries/useAuth";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
@@ -81,7 +80,7 @@ export default function LoginForm() {
       const result = await loginMutation.mutateAsync(data);
       toast.success(result.payload.message);
       setRole(result.payload.data.account.role);
-      router.push(withLocalePath("/manage/dashboard"));
+      router.push("/manage/dashboard");
       setSocket(await generateSocketInstance(result.payload.data.accessToken));
     } catch (error) {
       handleErrorApi({

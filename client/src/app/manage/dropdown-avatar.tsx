@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { withLocalePath } from "@/lib/locale-path";
 import { handleErrorApi } from "@/lib/utils";
 import { useAccountMe } from "@/queries/useAccount";
 import { useLogoutMutation } from "@/queries/useAuth";
@@ -35,7 +34,7 @@ export default function DropdownAvatar() {
       await logoutMutation.mutateAsync();
       setRole();
       disconnectSocket();
-      router.push(withLocalePath("/"));
+      router.push("/");
     } catch (error) {
       handleErrorApi({ error });
     }
