@@ -75,7 +75,7 @@
                                                    "description":  "List of 5 latest invoices (last 7 days)",
                                                    "empty":  "No invoices yet",
                                                    "guestFallback":  "Customer",
-                                                   "meta":  "Table {table} Ã¢â‚¬Â¢ {count} dishes Ã¢â‚¬Â¢ {dateTime}",
+                                                   "meta":  "Table {table} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {count} dishes ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {dateTime}",
                                                    "downloadTitle":  "Download invoice",
                                                    "printTitle":  "Print invoice"
                                                }
@@ -272,5 +272,19 @@
                       "outOfStock":  "Out of stock",
                       "placeOrder":  "Place order",
                       "orderSummary":  "Order: {count} item(s)"
-                  }
+                  },
+    "GuestOrders":  {
+                        "title":  "🛒 Your orders",
+                        "empty":  "You have no orders yet.",
+                        "total":  "Total · {count} item(s)",
+                        "toastOrderUpdated":  "Dish {dish} (Qty: {quantity}) was updated to {status}",
+                        "toastPayment":  "{guest} at table {table} paid successfully for {count} order(s)",
+                        "status":  {
+                                       "Pending":  "Pending",
+                                       "Processing":  "Processing",
+                                       "Rejected":  "Rejected",
+                                       "Delivered":  "Delivered",
+                                       "Paid":  "Paid"
+                                   }
+                    }
 }

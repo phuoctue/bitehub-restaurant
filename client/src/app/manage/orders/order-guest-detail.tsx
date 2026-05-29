@@ -51,29 +51,48 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
   };
 
   return (
-    <div className="space-y-2 text-sm">
+    <div className="space-y-4 text-sm">
       {guest && (
         <Fragment>
-          <div className="space-x-1">
-            <span className="font-semibold">{t("name")}:</span>
-            <span>{guest.name}</span>
-            <span className="font-semibold">(#{guest.id})</span>
-            <span>|</span>
-            <span className="font-semibold">{t("table")}:</span>
-            <span>{guest.tableNumber}</span>
-          </div>
-          <div className="space-x-1">
-            <span className="font-semibold">{t("registered")}:</span>
-            <span>{formatDateTimeToLocaleString(guest.createdAt)}</span>
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="grid gap-1 sm:grid-cols-2">
+              <div>
+                <span className="text-muted-foreground">{t("name")}: </span>
+                <span className="font-semibold">
+                  {guest.name} (#{guest.id})
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">{t("table")}: </span>
+                <span className="font-semibold">{guest.tableNumber}</span>
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-muted-foreground">{t("registered")}: </span>
+              <span className="font-medium">
+                {formatDateTimeToLocaleString(guest.createdAt)}
+              </span>
+            </div>
           </div>
         </Fragment>
       )}
 
-      <div className="space-y-1">
-        <div className="font-semibold">{t("ordersLabel")}:</div>
+      <div className="space-y-2">
+        <div className="font-semibold">{t("ordersLabel")}</div>
+        <div className="hidden sm:grid grid-cols-[28px_28px_1fr_56px_92px_170px] gap-2 text-[11px] uppercase tracking-wide text-muted-foreground px-1">
+          <span>#</span>
+          <span></span>
+          <span>{t("dish")}</span>
+          <span className="text-center">Qty</span>
+          <span className="text-right">{t("total")}</span>
+          <span>{t("created")}</span>
+        </div>
         {orders.map((order, index) => (
-          <div key={order.id} className="flex gap-2 items-center text-xs">
-            <span className="w-[10px]">{index + 1}</span>
+          <div
+            key={order.id}
+            className="grid grid-cols-[22px_22px_1fr_48px_90px_70px] sm:grid-cols-[28px_28px_1fr_56px_92px_170px] items-center gap-2 rounded-md border px-2 py-1.5 text-xs"
+          >
+            <span className="text-muted-foreground">{index + 1}</span>
             <span title={statusLabel(order.status)}>
               {order.status === OrderStatus.Pending && <OrderStatusIcon.Pending className="w-4 h-4" />}
               {order.status === OrderStatus.Processing && <OrderStatusIcon.Processing className="w-4 h-4" />}
@@ -81,65 +100,69 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
               {order.status === OrderStatus.Delivered && <OrderStatusIcon.Delivered className="w-4 h-4" />}
               {order.status === OrderStatus.Paid && <OrderStatusIcon.Paid className="w-4 h-4 text-yellow-400" />}
             </span>
-            <Image
-              src={order.dishSnapshot.image}
-              alt={order.dishSnapshot.name}
-              title={order.dishSnapshot.name}
-              width={30}
-              height={30}
-              className="h-[30px] w-[30px] rounded object-cover"
-            />
-            <span className="truncate w-[70px] sm:w-[100px]" title={order.dishSnapshot.name}>
-              {order.dishSnapshot.name}
-            </span>
-            <span className="font-semibold" title={`${t("total")}: ${order.quantity}`}>
+            <div className="flex min-w-0 items-center gap-2">
+              <Image
+                src={order.dishSnapshot.image}
+                alt={order.dishSnapshot.name}
+                title={order.dishSnapshot.name}
+                width={28}
+                height={28}
+                className="h-7 w-7 rounded object-cover"
+              />
+              <span className="truncate" title={order.dishSnapshot.name}>
+                {order.dishSnapshot.name}
+              </span>
+            </div>
+            <span className="text-center font-semibold" title={`${t("total")}: ${order.quantity}`}>
               x{order.quantity}
             </span>
-            <span className="italic">{formatCurrency(order.quantity * order.dishSnapshot.price)}</span>
-            <span
-              className="hidden sm:inline"
-              title={`${t("created")}: ${formatDateTimeToLocaleString(order.createdAt)} | ${t("updated")}: ${formatDateTimeToLocaleString(order.updatedAt)}`}
-            >
-              {formatDateTimeToLocaleString(order.createdAt)}
+            <span className="text-right font-medium">
+              {formatCurrency(order.quantity * order.dishSnapshot.price)}
             </span>
             <span
-              className="sm:hidden"
+              className="text-muted-foreground"
               title={`${t("created")}: ${formatDateTimeToLocaleString(order.createdAt)} | ${t("updated")}: ${formatDateTimeToLocaleString(order.updatedAt)}`}
             >
-              {formatDateTimeToTimeString(order.createdAt)}
+              <span className="hidden sm:inline">
+                {formatDateTimeToLocaleString(order.createdAt)}
+              </span>
+              <span className="sm:hidden">
+                {formatDateTimeToTimeString(order.createdAt)}
+              </span>
             </span>
           </div>
         ))}
       </div>
 
-      <div className="space-x-1">
-        <span className="font-semibold">{t("unpaid")}:</span>
-        <Badge>
-          <span>
-            {formatCurrency(
-              ordersFilterToPurchase.reduce((acc, order) => {
-                return acc + order.quantity * order.dishSnapshot.price;
-              }, 0),
-            )}
-          </span>
-        </Badge>
-      </div>
-
-      <div className="space-x-1">
-        <span className="font-semibold">{t("paid")}:</span>
-        <Badge variant={"outline"}>
-          <span>
-            {formatCurrency(
-              purchasedOrderFilter.reduce((acc, order) => {
-                return acc + order.quantity * order.dishSnapshot.price;
-              }, 0),
-            )}
-          </span>
-        </Badge>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="flex items-center justify-between rounded-md border bg-muted/20 px-3 py-2">
+          <span className="font-semibold">{t("unpaid")}</span>
+          <Badge className="text-xs">
+            <span>
+              {formatCurrency(
+                ordersFilterToPurchase.reduce((acc, order) => {
+                  return acc + order.quantity * order.dishSnapshot.price;
+                }, 0),
+              )}
+            </span>
+          </Badge>
+        </div>
+        <div className="flex items-center justify-between rounded-md border px-3 py-2">
+          <span className="font-semibold">{t("paid")}</span>
+          <Badge variant={"outline"} className="text-xs">
+            <span>
+              {formatCurrency(
+                purchasedOrderFilter.reduce((acc, order) => {
+                  return acc + order.quantity * order.dishSnapshot.price;
+                }, 0),
+              )}
+            </span>
+          </Badge>
+        </div>
       </div>
 
       <div>
-        <Button className="w-full" size={"sm"} variant={"secondary"} disabled={ordersFilterToPurchase.length === 0} onClick={pay}>
+        <Button className="w-full font-semibold" size={"sm"} variant={"default"} disabled={ordersFilterToPurchase.length === 0} onClick={pay}>
           {t("payAll")} ({ordersFilterToPurchase.length} {t("ordersCountUnit")})
         </Button>
       </div>

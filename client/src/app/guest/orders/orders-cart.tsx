@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 import React, { useEffect, useMemo } from "react";
 import Image from "next/image";
-import { formatCurrency, getVietnameseOrderStatus } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { useGuestGetOrderListQuery } from "@/queries/useGuest";
 import { OrderStatus } from "@/constants/type";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +12,13 @@ import {
 } from "@/schemaValidations/order.schema";
 import { toast } from "sonner";
 import { useAppStore } from "@/components/app-provider";
+import { useTranslations } from "next-intl";
 
 export default function OrdersCart() {
+  const t = useTranslations("GuestOrders");
   const { data, refetch } = useGuestGetOrderListQuery();
   const orders = useMemo(() => data?.payload.data ?? [], [data]);
-   const  socket = useAppStore(state => state.socket);
-
+  const socket = useAppStore((state) => state.socket);
 
   const { totalPrice, totalQuantity } = useMemo(() => {
     return orders.reduce(
@@ -52,7 +53,11 @@ export default function OrdersCart() {
         dishSnapshot: { name },
       } = data;
       toast.success(
-        `món ${name} (SL: ${data.quantity}) vừa được cập nhật sang trạng thái ${getVietnameseOrderStatus(data.status)}`,
+        t("toastOrderUpdated", {
+          dish: name,
+          quantity: data.quantity,
+          status: t(`status.${data.status}`),
+        }),
       );
       refetch();
     }
@@ -60,7 +65,11 @@ export default function OrdersCart() {
     function onPayment(data: PayGuestOrdersResType["data"]) {
       const { guest } = data[0];
       toast.success(
-        `${guest?.name} tại bàn ${guest?.tableNumber} thanh toán thành công ${data.length} đơn`,
+        t("toastPayment", {
+          guest: guest?.name ?? "",
+          table: guest?.tableNumber ?? "",
+          count: data.length,
+        }),
       );
       refetch();
     }
@@ -80,7 +89,7 @@ export default function OrdersCart() {
       socket?.off("disconnect", onDisconnect);
       socket?.off("payment", onPayment);
     };
-  }, [refetch, socket]);
+  }, [refetch, socket, t]);
 
   return (
     <>
@@ -131,22 +140,14 @@ export default function OrdersCart() {
                 }
                 className="text-[10px] px-2 py-0"
               >
-                {order.status === OrderStatus.Pending
-                  ? "Chờ xác nhận"
-                  : order.status === OrderStatus.Processing
-                    ? "Đang chế biến"
-                    : order.status === OrderStatus.Rejected
-                      ? "Bị từ chối"
-                      : order.status === OrderStatus.Delivered
-                        ? "Đã phục vụ"
-                        : "Đã thanh toán"}
+                {t(`status.${order.status}`)}
               </Badge>
             </div>
           </div>
         ))}
         {orders.length === 0 && (
           <div className="text-center py-10 text-muted-foreground">
-            Bạn chưa có đơn hàng nào.
+            {t("empty")}
           </div>
         )}
       </div>
@@ -154,7 +155,7 @@ export default function OrdersCart() {
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-[368px]">
           <div className="w-full h-12 shadow-lg rounded-full px-6 flex justify-between items-center bg-primary text-primary-foreground transition-all">
             <span className="font-medium text-sm">
-              Tổng cộng · {totalQuantity} món
+              {t("total", { count: totalQuantity })}
             </span>
             <span className="font-bold text-lg">
               {formatCurrency(totalPrice)}
