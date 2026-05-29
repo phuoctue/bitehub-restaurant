@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -44,6 +45,8 @@ export default function EditEmployee({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+
+  const t = useTranslations("ManageAccounts");
 
   const { data } = useGetAccount({
     id: id as number,
@@ -127,8 +130,8 @@ export default function EditEmployee({
     >
       <DialogContent className="sm:max-w-[600px] max-h-screen overflow-auto">
         <DialogHeader>
-          <DialogTitle>Update account</DialogTitle>
-          <DialogDescription>Name and email are required fields</DialogDescription>
+          <DialogTitle>{t("editAccount")}</DialogTitle>
+          <DialogDescription>{t("editAccountDescription")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -168,7 +171,7 @@ export default function EditEmployee({
                         onClick={() => avatarInputRef.current?.click()}
                       >
                         <Upload className="h-4 w-4 text-muted-foreground" />
-                        <span className="sr-only">Upload</span>
+                        <span className="sr-only">{t("upload")}</span>
                       </button>
                     </div>
                   </FormItem>
@@ -181,7 +184,7 @@ export default function EditEmployee({
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="name">Name</Label>
+                      <Label htmlFor="name">{t("name")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="name" className="w-full" {...field} />
                         <FormMessage />
@@ -197,7 +200,7 @@ export default function EditEmployee({
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t("email")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Input id="email" className="w-full" {...field} />
                         <FormMessage />
@@ -213,12 +216,12 @@ export default function EditEmployee({
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label>Role</Label>
+                      <Label>{t("role")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select role" />
+                              <SelectValue placeholder={t("selectRole")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -242,7 +245,7 @@ export default function EditEmployee({
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                      <Label htmlFor="changePassword">Change password</Label>
+                      <Label htmlFor="changePassword">{t("changePassword")}</Label>
                       <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                         <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
                         <FormMessage />
@@ -259,7 +262,7 @@ export default function EditEmployee({
                   render={({ field }) => (
                     <FormItem>
                       <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                        <Label htmlFor="password">New password</Label>
+                        <Label htmlFor="password">{t("password")}</Label>
                         <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                           <Input id="password" className="w-full" type="password" value={field.value ?? ""} onChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                           <FormMessage />
@@ -277,7 +280,7 @@ export default function EditEmployee({
                   render={({ field }) => (
                     <FormItem>
                       <div className="grid grid-cols-1 sm:grid-cols-4 items-center justify-items-start gap-4">
-                        <Label htmlFor="confirmPassword">Confirm new password</Label>
+                        <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
                         <div className="col-span-1 sm:col-span-3 w-full space-y-2">
                           <Input id="confirmPassword" className="w-full" type="password" value={field.value ?? ""} onChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                           <FormMessage />
@@ -292,8 +295,8 @@ export default function EditEmployee({
         </Form>
 
         <DialogFooter>
-          <Button type="submit" form="edit-employee-form">
-            Save
+          <Button type="submit" form="edit-employee-form" disabled={updateAccountMutation.isPending}>
+            {updateAccountMutation.isPending ? t("saving") : t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -224,6 +224,7 @@
                          "saving":  "Saving...",
                          "importSuccess":  "Import completed successfully",
                          "add":  "Add",
+                         "selectTable":  "Add",
                          "status":  {
                                         "Available":  "Available",
                                         "Hidden":  "Hidden",
@@ -258,7 +259,15 @@
                            "requiredFields":  "Name, email, and password fields are required",
                            "email":  "Email",
                            "password":  "Password",
-                           "confirmPassword":  "Confirm password"
+                           "confirmPassword":  "Confirm password",
+                           "editAccount":  "Update account",
+                           "editAccountDescription":  "Name and email are required fields",
+                           "changePassword":  "Change password",
+                           "role":  "Role",
+                           "selectRole":  "Select role",
+                           "upload":  "Upload",
+                           "save":  "Save",
+                           "saving":  "Saving..."
                        },
     "GuestLogin":  {
                        "title":  "Guest Login",

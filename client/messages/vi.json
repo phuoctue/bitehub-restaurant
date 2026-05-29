@@ -113,7 +113,7 @@
                          "createdUpdated":  "Tạo/Cập nhật",
                          "openMenu":  "Mở menu",
                          "actions":  "Hành động",
-                         "edit":  "Sửa",
+                         "edit":  "Thêm",
                          "deleted":  "Đã bị xóa",
                          "ready":  "Sẵn sàng",
                          "ordersCountUnit":  "đơn",
@@ -224,18 +224,19 @@
                          "saving":  "Đang lưu...",
                          "importSuccess":  "Nhập dữ liệu thành công",
                          "add":  "Thêm",
+                         "selectTable":  "Thêm",
                          "status":  {
                                         "Available":  "Trống",
                                         "Hidden":  "Ẩn",
                                         "Reserved":  "Đã đặt"
                                     },
-                         "editTableDescription":  "C?p nh?t s?c ch?a ho?c tr?ng th?i b?n.",
-                         "changeQrCode":  "??i QR code",
-                         "orderUrl":  "URL g?i m?n",
-                         "editTable":  "S?a b?n",
-                         "save":  "L?u",
-                         "changeQrCodeHint":  "L?m m?i token ??nh danh (kh?ch d?ng QR c? s? m?t quy?n truy c?p).",
-                         "qrCode":  "M? QR"
+                         "editTableDescription":  "Cập nhật sức chứa hoặc trạng thái bàn.",
+                         "changeQrCode":  "Đổi QR code",
+                         "orderUrl":  "URL gọi món",
+                         "editTable":  "Sửa bàn",
+                         "save":  "Lưu",
+                         "changeQrCodeHint":  "Làm mới token định danh (khách dùng QR cũ sẽ mất quyền truy cập).",
+                         "qrCode":  "Mã QR"
                      },
     "ManageAccounts":  {
                            "avatar":  "Ảnh đại diện",
@@ -258,7 +259,15 @@
                            "requiredFields":  "Các trường tên, email, mật khẩu là bắt buộc",
                            "email":  "Email",
                            "password":  "Mật khẩu",
-                           "confirmPassword":  "Xác nhận mật khẩu"
+                           "confirmPassword":  "Xác nhận mật khẩu",
+                           "editAccount":  "Cập nhật tài khoản",
+                           "editAccountDescription":  "Tên và email là các trường bắt buộc",
+                           "changePassword":  "Đổi mật khẩu",
+                           "role":  "Vai trò",
+                           "selectRole":  "Chọn vai trò",
+                           "upload":  "Tải lên",
+                           "save":  "Lưu",
+                           "saving":  "Đang lưu..."
                        },
     "GuestLogin":  {
                        "title":  "Đăng nhập khách",

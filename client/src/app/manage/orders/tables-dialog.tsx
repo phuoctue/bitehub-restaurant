@@ -40,8 +40,10 @@ const PAGE_SIZE = 10;
 
 export function TablesDialog({
   onChoose,
+  isForAddOrder,
 }: {
   onChoose: (table: TableItem) => void;
+  isForAddOrder?: boolean;
 }) {
   const t = useTranslations("ManageTables");
   const [open, setOpen] = useState(false);
@@ -125,7 +127,7 @@ export function TablesDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{t("edit")}</Button>
+        <Button variant="outline">{t(isForAddOrder ? "selectTable" : "edit")}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-full overflow-auto">
         <DialogHeader>

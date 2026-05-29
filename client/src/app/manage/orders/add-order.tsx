@@ -200,6 +200,7 @@ export default function AddOrder() {
                                 {field.value}
                               </div>
                               <TablesDialog
+                                isForAddOrder={true}
                                 onChoose={(table) => {
                                   field.onChange(table.number);
                                 }}
