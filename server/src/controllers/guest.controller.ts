@@ -12,29 +12,42 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from '@/utils/j
 import ms from 'ms'
 
 export const guestLoginController = async (body: GuestLoginBodyType) => {
-  const table = await prisma.table.findUnique({
-    where: {
-      number: body.tableNumber,
-      token: body.token
+  let guest = await prisma.$transaction(async (tx) => {
+    const table = await tx.table.findUnique({
+      where: {
+        number: body.tableNumber,
+        token: body.token
+      }
+    })
+    if (!table) {
+      throw new Error('Bàn không tồn tại hoặc mã token không đúng')
     }
-  })
-  if (!table) {
-    throw new Error('Bàn không tồn tại hoặc mã token không đúng')
-  }
 
-  if (table.status === TableStatus.Hidden) {
-    throw new Error('Bàn này đã bị ẩn, hãy chọn bàn khác để đăng nhập')
-  }
-
-  if (table.status === TableStatus.Reserved) {
-    throw new Error('Bàn đã được đặt trước, hãy liên hệ nhân viên để được hỗ trợ')
-  }
-
-  let guest = await prisma.guest.create({
-    data: {
-      name: body.name,
-      tableNumber: body.tableNumber
+    if (table.status === TableStatus.Hidden) {
+      throw new Error('Bàn này đã bị ẩn, hãy chọn bàn khác để đăng nhập')
     }
+
+    if (table.status === TableStatus.Reserved) {
+      throw new Error('Bàn đang được sử dụng, hãy liên hệ nhân viên để được hỗ trợ')
+    }
+
+    const guest = await tx.guest.create({
+      data: {
+        name: body.name,
+        tableNumber: body.tableNumber
+      }
+    })
+
+    await tx.table.update({
+      where: {
+        number: body.tableNumber
+      },
+      data: {
+        status: TableStatus.Reserved
+      }
+    })
+
+    return guest
   })
   const refreshToken = signRefreshToken(
     {
@@ -75,13 +88,37 @@ export const guestLoginController = async (body: GuestLoginBodyType) => {
 }
 
 export const guestLogoutController = async (id: number) => {
-  await prisma.guest.update({
-    where: {
-      id
-    },
-    data: {
-      refreshToken: null,
-      refreshTokenExpiresAt: null
+  await prisma.$transaction(async (tx) => {
+    const guest = await tx.guest.update({
+      where: {
+        id
+      },
+      data: {
+        refreshToken: null,
+        refreshTokenExpiresAt: null
+      }
+    })
+
+    if (guest.tableNumber !== null) {
+      const activeOrders = await tx.order.count({
+        where: {
+          tableNumber: guest.tableNumber,
+          status: {
+            in: [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.Delivered]
+          }
+        }
+      })
+
+      if (activeOrders === 0) {
+        await tx.table.update({
+          where: {
+            number: guest.tableNumber
+          },
+          data: {
+            status: TableStatus.Available
+          }
+        })
+      }
     }
   })
   return 'Đăng xuất thành công'
@@ -142,9 +179,6 @@ export const guestCreateOrdersController = async (guestId: number, body: GuestCr
     if (table.status === TableStatus.Hidden) {
       throw new Error(`Bàn ${table.number} đã bị ẩn, vui lòng đăng xuất và chọn bàn khác`)
     }
-    if (table.status === TableStatus.Reserved) {
-      throw new Error(`Bàn ${table.number} đã được đặt trước, vui lòng đăng xuất và chọn bàn khác`)
-    }
     const orders = await Promise.all(
       body.map(async (order) => {
         const dish = await tx.dish.findUniqueOrThrow({
@@ -194,6 +228,14 @@ export const guestCreateOrdersController = async (guestId: number, body: GuestCr
         }
       })
     )
+    await tx.table.update({
+      where: {
+        number: guest.tableNumber
+      },
+      data: {
+        status: TableStatus.Reserved
+      }
+    })
     return orders
   })
   return result

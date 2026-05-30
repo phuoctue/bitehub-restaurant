@@ -9,6 +9,10 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
   const guest = await prisma.guest.findUniqueOrThrow({
     where: {
       id: guestId
+    },
+    select: {
+      id: true,
+      tableNumber: true
     }
   })
   if (guest.tableNumber === null) {
@@ -74,6 +78,14 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
           }
         })
       )
+      await tx.table.update({
+        where: {
+          number: guest.tableNumber!
+        },
+        data: {
+          status: TableStatus.Reserved
+        }
+      })
       return ordersRecord
     }),
     prisma.socket.findUnique({
@@ -142,6 +154,29 @@ export const payOrdersController = async ({
         orderHandlerId
       }
     })
+    const tableNumbers = Array.from(
+      new Set(orders.map((order) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null))
+    )
+    for (const tableNumber of tableNumbers) {
+      const activeOrders = await tx.order.count({
+        where: {
+          tableNumber,
+          status: {
+            in: [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.Delivered]
+          }
+        }
+      })
+      if (activeOrders === 0) {
+        await tx.table.update({
+          where: {
+            number: tableNumber
+          },
+          data: {
+            status: TableStatus.Available
+          }
+        })
+      }
+    }
     return updatedOrders
   })
   const [ordersResult, sockerRecord] = await Promise.all([
@@ -170,7 +205,7 @@ export const payOrdersController = async ({
   // Generate invoice PDF
   let invoice = null
   try {
-    invoice = generateInvoiceFromOrdersController(ordersResult, locale || 'vi')
+    invoice = await generateInvoiceFromOrdersController(ordersResult, locale || 'vi')
   } catch (error) {
     console.error('Failed to generate invoice:', error)
     // Continue without invoice if generation fails
@@ -226,7 +261,7 @@ export const getOrderInvoiceController = async (orderId: number, locale: Invoice
     }
   })
 
-  return generateInvoiceFromOrdersController(relatedPaidOrders, locale)
+  return await generateInvoiceFromOrdersController(relatedPaidOrders, locale)
 }
 
 export const getOrderDetailController = (orderId: number) => {

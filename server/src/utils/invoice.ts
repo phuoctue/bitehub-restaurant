@@ -38,6 +38,8 @@ const resolveInvoiceFonts = () => {
   const regularCandidates = [
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans.ttf'),
+    '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/TTF/DejaVuSans.ttf',
     'C:/Windows/Fonts/arial.ttf',
     'C:/Windows/Fonts/segoeui.ttf',
     'C:/Windows/Fonts/tahoma.ttf'
@@ -45,6 +47,8 @@ const resolveInvoiceFonts = () => {
   const boldCandidates = [
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans-Bold.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans-Bold.ttf'),
+    '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
+    '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
     'C:/Windows/Fonts/arialbd.ttf',
     'C:/Windows/Fonts/segoeuib.ttf',
     'C:/Windows/Fonts/tahomabd.ttf'
@@ -125,7 +129,7 @@ const formatInvoiceDate = (date: Date, locale: InvoiceLocale) => {
   return formatDate(date)
 }
 
-export const generatePdfInvoice = (invoiceData: InvoiceData): string => {
+export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> => {
   const invoicesDir = ensureInvoicesDirectory()
   const fonts = resolveInvoiceFonts()
   const locale: InvoiceLocale = invoiceData.locale === 'en' ? 'en' : 'vi'
@@ -236,8 +240,12 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): string => {
   doc.text(t.footer1, margin, footerY + 18, { width: contentWidth, align: 'center' })
   doc.text(t.footer2, margin, footerY + 34, { width: contentWidth, align: 'center' })
 
-  doc.end()
-  return `/static/invoices/${fileName}`
+  return new Promise((resolve, reject) => {
+    stream.on('finish', () => resolve(`/static/invoices/${fileName}`))
+    stream.on('error', reject)
+    doc.on('error', reject)
+    doc.end()
+  })
 }
 
 export const calculateInvoiceTotals = (items: InvoiceItem[], taxPercentage: number = 10) => {

@@ -66,6 +66,7 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
     async (request, reply) => {
       const { body } = request
       const result = await guestLoginController(body)
+      fastify.io.to(ManagerRoom).emit('table-update')
       reply.send({
         message: 'Đăng nhập thành công',
         data: {
@@ -97,6 +98,7 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
     },
     async (request, reply) => {
       const message = await guestLogoutController(request.decodedAccessToken?.userId as number)
+      fastify.io.to(ManagerRoom).emit('table-update')
       reply.send({
         message
       })
@@ -144,6 +146,7 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
       const guestId = request.decodedAccessToken?.userId as number
       const result = await guestCreateOrdersController(guestId, request.body)
       fastify.io.to(ManagerRoom).emit('new-order', result)
+      fastify.io.to(ManagerRoom).emit('table-update')
       reply.send({
         message: 'Đặt món thành công',
         data: result.map((order) => localizeOrder(order, locale))

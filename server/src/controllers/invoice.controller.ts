@@ -48,16 +48,16 @@ export const prepareInvoiceDataFromOrders = (
   }
 }
 
-export const generateInvoiceFromOrdersController = (
+export const generateInvoiceFromOrdersController = async (
   orders: (Order & { dishSnapshot: any; guest: any })[],
   locale: InvoiceLocale = 'vi'
-): { invoiceNumber: string; invoiceUrl: string } => {
+): Promise<{ invoiceNumber: string; invoiceUrl: string }> => {
   if (orders.length === 0) {
     throw new Error(locale === 'en' ? 'No orders found to generate invoice' : 'Không có đơn hàng nào để tạo hóa đơn')
   }
 
   const invoiceData = prepareInvoiceDataFromOrders(orders, locale)
-  const invoiceUrl = generatePdfInvoice(invoiceData)
+  const invoiceUrl = await generatePdfInvoice(invoiceData)
 
   return {
     invoiceNumber: invoiceData.invoiceNumber,
