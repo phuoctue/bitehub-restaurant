@@ -34,6 +34,7 @@ export default async function Home() {
           src="/banner.png"
           width={400}
           height={200}
+          priority // Thêm thuộc tính này để Next.js ưu tiên tải trước, mất cảnh báo
           quality={75}
           alt="Banner"
           className="absolute top-0 left-0 h-full w-full object-cover"
@@ -62,6 +63,7 @@ export default async function Home() {
                     src={dish.image}
                     width={150}
                     height={150}
+                    priority // Thêm thuộc tính này để Next.js ưu tiên tải trước, mất cảnh báo
                     quality={75}
                     alt={dish.name}
                     className="h-[120px] w-[120px] rounded-md object-cover"

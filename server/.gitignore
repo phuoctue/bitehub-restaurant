@@ -4,6 +4,5 @@ dist/
 .env.*
 !.env.example
 *.log
-uploads/
 prisma/dev.db
 .DS_Store
