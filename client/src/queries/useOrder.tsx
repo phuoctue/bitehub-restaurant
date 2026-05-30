@@ -7,7 +7,7 @@ import {
   PayGuestOrdersRes,
   UpdateOrderBodyType,
 } from "@/schemaValidations/order.schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useUpdateOrderMutation = () => {
   return useMutation({
@@ -44,9 +44,25 @@ export const useGetOrderDetailQuery = ({
 };
 
 export const usePayForGuestMuattion = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: (body: PayGuestOrdersBodyType) =>
       orderApiRequest.payGuestOrders(body),
+    onSuccess: async () => {
+      // Invalidate dashboard indicators so it refreshes in real-time
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboardIndicators"],
+      });
+      // Invalidate all orders queries
+      await queryClient.invalidateQueries({
+        queryKey: ["orders"],
+      });
+      // Invalidate tables to update serving status
+      await queryClient.invalidateQueries({
+        queryKey: ["tables"],
+      });
+    },
   });
 };
 
