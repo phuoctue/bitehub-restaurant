@@ -1,93 +1,102 @@
-# BiteHub Restaurant
+﻿# BiteHub - Nền tảng dịch vụ theo mô hình Gig Economy
 
+BiteHub là đồ án xây dựng website trung gian kết nối **người mua dịch vụ (Buyer)** và **người bán dịch vụ (Seller/Freelancer)** theo mô hình Gig Economy.
 
+Mục tiêu của hệ thống là số hóa toàn bộ quy trình từ tìm kiếm dịch vụ, đặt hàng, thanh toán, đánh giá đến quản trị vận hành, giúp giao dịch minh bạch và dễ theo dõi hơn.
 
-## Getting started
+## 1. Mục tiêu đồ án
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- Xây dựng nền tảng kết nối freelancer và khách hàng trên web.
+- Chuẩn hóa quy trình nghiệp vụ: đăng dịch vụ -> đặt dịch vụ -> thanh toán -> đánh giá.
+- Hỗ trợ quản trị và kiểm soát rủi ro thông qua báo cáo vi phạm, nhật ký quản trị.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## 2. Chức năng chính
 
-## Add your files
+- Quản lý tài khoản và xác thực người dùng.
+- Quản lý dịch vụ (gig): tạo, chỉnh sửa, hiển thị, lưu dịch vụ.
+- Tìm kiếm và lọc dịch vụ theo nhiều tiêu chí.
+- Giỏ hàng, đơn hàng, theo dõi trạng thái xử lý.
+- Thanh toán trực tuyến qua cổng thanh toán (theo báo cáo: VNPAY).
+- Đánh giá/bình luận và phản hồi sau giao dịch.
+- Báo cáo vi phạm, khiếu nại và xử lý ở phía quản trị.
+- Bảng quản trị (Admin Panel) để quản lý người dùng, dịch vụ, đơn hàng và nội dung hệ thống.
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## 3. Kiến trúc hệ thống
 
+Dự án được tách thành 2 phần chính:
+
+- `client`: Frontend Next.js (React + TypeScript + Tailwind CSS).
+- `server`: Backend Fastify (TypeScript) + Prisma ORM.
+
+Ngoài ra hệ thống có hỗ trợ realtime qua Socket.IO cho các tình huống cần giao tiếp thời gian thực.
+
+## 4. Công nghệ sử dụng
+
+- Frontend: `Next.js`, `React`, `TypeScript`, `Tailwind CSS`
+- Backend: `Fastify`, `Node.js`, `TypeScript`
+- ORM/Database: `Prisma` (mô hình dữ liệu theo thiết kế ERD của đồ án)
+- Realtime: `Socket.IO`
+- Validation: `Zod`
+- Các công cụ khác: `ESLint`, `Prettier`
+
+## 5. Mô hình vai trò
+
+- `Buyer`: Tìm kiếm, đặt dịch vụ, thanh toán, đánh giá, khiếu nại.
+- `Seller`: Tạo và quản lý gig, nhận đơn, trao đổi và hoàn thành dịch vụ.
+- `Admin`: Giám sát hoạt động, xử lý vi phạm, quản trị dữ liệu hệ thống.
+
+## 6. Hướng dẫn chạy dự án
+
+### Yêu cầu môi trường
+
+- Node.js >= 18
+- npm
+
+### Cài đặt
+
+```bash
+npm install
+cd client && npm install
+cd ../server && npm install
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/bitehub/bitehub-restaurant.git
-git branch -M main
-git push -uf origin main
+
+### Chạy frontend
+
+```bash
+cd client
+npm run dev
 ```
 
-## Integrate with your tools
+### Chạy backend
 
-* [Set up project integrations](https://gitlab.com/bitehub/bitehub-restaurant/-/settings/integrations)
+```bash
+cd server
+npm run dev
+```
 
-## Collaborate with your team
+### Build production
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```bash
+cd client && npm run build
+cd ../server && npm run build
+```
 
-## Test and Deploy
+## 7. Giá trị học thuật và thực tiễn
 
-Use the built-in continuous integration in GitLab.
+- Áp dụng mô hình Gig Economy vào bối cảnh thị trường Việt Nam.
+- Thiết kế dữ liệu tương đối đầy đủ cho một nền tảng dịch vụ số.
+- Kết hợp kiến thức fullstack: UI/UX, API, dữ liệu, bảo mật, thanh toán, quản trị.
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## 8. Hướng phát triển
 
-***
+- Mở rộng thêm cổng thanh toán quốc tế (PayPal/Stripe).
+- Tối ưu hiệu năng và khả năng mở rộng khi số lượng người dùng tăng.
+- Cải thiện UI/UX và tăng cường phân tích dữ liệu hành vi người dùng.
 
-# Editing this README
+## 9. Tác giả
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Nhóm thực hiện đồ án ngành Công nghệ Thông tin - chuyên ngành Công nghệ Phần mềm.
 
-## Suggestions for a good README
+---
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Nếu bạn muốn, mình có thể viết thêm bản `README` học thuật hơn theo format báo cáo (Mở đầu - Cơ sở lý thuyết - Phân tích thiết kế - Kết quả - Kết luận) để nộp kèm hội đồng.

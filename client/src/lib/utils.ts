@@ -1,0 +1,277 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { UseFormSetError, FieldValues, Path } from "react-hook-form";
+import { EntityError, HttpError } from "@/lib/http";
+import { toast } from "sonner";
+import { jwtDecode } from "jwt-decode";
+import authApiRequest from "@/apiRequest/auth";
+import { DishStatus, OrderStatus, Role, TableStatus } from "@/constants/type";
+import envConfig from "@/config";
+import { format } from "date-fns";
+import { TokenPayload } from "@/types/jwt.types";
+import guestApiRequest from "@/apiRequest/guest";
+import { BookX, CookingPot, HandCoins, Loader, Truck } from "lucide-react";
+import type { Socket } from "socket.io-client";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export const normalizePath = (path: string) => {
+  return path.startsWith("/") ? path.slice(1) : path;
+};
+
+export const handleErrorApi = <TFieldValues extends FieldValues>({
+  error,
+  setError,
+  duration,
+}: {
+  error: unknown;
+  setError?: UseFormSetError<TFieldValues>;
+  duration?: number;
+}) => {
+  const defaultMessage = "Lỗi không xác định";
+
+  if (error instanceof EntityError && setError) {
+    error.payload.errors.forEach((item) => {
+      setError(item.field as Path<TFieldValues>, {
+        type: "server",
+        message: item.message,
+      });
+    });
+    return;
+  }
+
+  let message = defaultMessage;
+
+  if (error instanceof HttpError) {
+    message = error.payload?.message || error.message || defaultMessage;
+  } else if (error instanceof Error) {
+    message = error.message || defaultMessage;
+  } else if (typeof error === "object" && error !== null) {
+    const unknownError = error as {
+      payload?: { message?: string };
+      message?: string;
+    };
+    message =
+      unknownError.payload?.message || unknownError.message || defaultMessage;
+  }
+
+  toast.error(message, {
+    duration: duration ?? 5000,
+  });
+};
+
+export const getAccessTokenFromLocalStorage = () =>
+  typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+export const getRefreshTokenFromLocalStorage = () =>
+  typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+
+export const setAccessTokenToLocalStorage = (value: string) =>
+  typeof window !== "undefined" && localStorage.setItem("accessToken", value);
+
+export const setRefreshTokenToLocalStorage = (value: string) =>
+  typeof window !== "undefined" && localStorage.setItem("refreshToken", value);
+
+export const removeTokensFromLocalStorage = () => {
+  typeof window !== "undefined" && localStorage.removeItem("accessToken");
+  typeof window !== "undefined" && localStorage.removeItem("refreshToken");
+};
+
+export const checkAndRefreshToken = async (param?: {
+  onError?: () => void;
+  onSuccess?: () => void;
+  force?: boolean; // Thêm tham số force để ép buộc refresh token
+}) => {
+  //khong nen dua logic lay access va refresh token ra khỏi func nay
+  //vi de moi lan ma func nay dc goi thi chung ta se co 1 access va refresh token moi
+  //tranh hien tuong bug no lay access va refresh token cũ ở lần đầu roi goi cho lan tiep theo
+  const accessToken = getAccessTokenFromLocalStorage();
+  const refreshToken = getRefreshTokenFromLocalStorage();
+  //chua login thi cung khong cho chay
+  if (!accessToken || !refreshToken) {
+    param?.onError && param.onError();
+    return;
+  }
+  //check token co het han khong
+  const decodedAccessToken = decodeToken(accessToken);
+  const decodedRefreshToken = decodeToken(refreshToken);
+  //thoi điểm het han cua token la tính th epoch time (s)
+  //còn khi sai cu pháp new Date().getTime() thi se tra ve epock time (ms)
+  const now = Math.round(new Date().getTime() / 1000);
+  // truong hop refresh token hết hạn thì kh xử lý nữa
+  if (decodedRefreshToken.exp <= now) {
+    //Bao loi de chuyen ve login
+    removeTokensFromLocalStorage();
+    param?.onError && param.onError();
+    return;
+  }
+  //vd nếu access token của chúng ta có thời gian hết han là 10s
+  //thì sẽ check 1/3 thời gian (3s) thì sẽ cho refresh token lại
+  //thoi gian còn lại sẽ đc tính dựa trên cong thức: decodedAccessToken.exp - now
+  //thoi gian hết hạn của access token dựa trên cong thuc:  decodedAccessToken.exp - decodedAccessToken.iat (time hết hạn - time khởi tạo)
+  // Nếu Access Token còn hạn lâu (chưa quá 1/3) -> Vẫn coi là thành công để cho user vào tiếp
+  if (
+    !param?.force &&
+    decodedAccessToken.exp - now >=
+      (decodedAccessToken.exp - decodedAccessToken.iat) / 3
+  ) {
+    param?.onSuccess && param.onSuccess();
+    return;
+  }
+  if (
+    param?.force ||
+    decodedAccessToken.exp - now <
+      (decodedAccessToken.exp - decodedAccessToken.iat) / 3
+  ) {
+    //goi api refresh token
+    try {
+      const role = decodedRefreshToken.role;
+      let res;
+      if (role === Role.Guest) {
+        res = await guestApiRequest.refreshToken();
+      } else {
+        try {
+          res = await authApiRequest.refreshToken();
+        } catch (error) {
+          // Fallback for environments where Next API route `/api/auth/refresh-token`
+          // is not available (404). Refresh directly from backend, then sync cookies.
+          if (error instanceof HttpError && error.status === 404) {
+            res = await authApiRequest.sRefreshToken({ refreshToken });
+            await authApiRequest.setTokenToCookie({
+              accessToken: res.payload.data.accessToken,
+              refreshToken: res.payload.data.refreshToken,
+            });
+          } else {
+            throw error;
+          }
+        }
+      }
+      setAccessTokenToLocalStorage(res.payload.data.accessToken);
+      setRefreshTokenToLocalStorage(res.payload.data.refreshToken);
+      param?.onSuccess && param.onSuccess();
+    } catch (error) {
+      param?.onError && param.onError();
+    }
+  }
+};
+
+export const formatCurrency = (number: number) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(number);
+};
+
+export const getVietnameseDishStatus = (
+  status: (typeof DishStatus)[keyof typeof DishStatus],
+) => {
+  switch (status) {
+    case DishStatus.Available:
+      return "Có sẵn";
+    case DishStatus.Unavailable:
+      return "Không có sẵn";
+    default:
+      return "Ẩn";
+  }
+};
+
+export const getVietnameseOrderStatus = (
+  status: (typeof OrderStatus)[keyof typeof OrderStatus],
+) => {
+  switch (status) {
+    case OrderStatus.Delivered:
+      return "Đã phục vụ";
+    case OrderStatus.Paid:
+      return "Đã thanh toán";
+    case OrderStatus.Pending:
+      return "Chờ xử lý";
+    case OrderStatus.Processing:
+      return "Đang nấu";
+    default:
+      return "Từ chối";
+  }
+};
+
+export const getVietnameseTableStatus = (
+  status: (typeof TableStatus)[keyof typeof TableStatus],
+) => {
+  switch (status) {
+    case TableStatus.Available:
+      return "Có sẵn";
+    case TableStatus.Reserved:
+      return "Đã đặt";
+    default:
+      return "Ẩn";
+  }
+};
+export const getTableLink = ({
+  token,
+  tableNumber,
+}: {
+  token: string;
+  tableNumber: number;
+}) => {
+  return (
+    envConfig.NEXT_PUBLIC_URL + "/tables/" + tableNumber + "?token=" + token
+  );
+};
+
+export const decodeToken = (token: string) => {
+  return jwtDecode(token) as TokenPayload;
+};
+
+export function removeAccents(str: string) {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+}
+
+export const simpleMatchText = (fullText: string, matchText: string) => {
+  return removeAccents(fullText.toLowerCase()).includes(
+    removeAccents(matchText.trim().toLowerCase()),
+  );
+};
+
+export const formatDateTimeToLocaleString = (date: string | Date) => {
+  return format(
+    date instanceof Date ? date : new Date(date),
+    "HH:mm:ss dd/MM/yyyy",
+  );
+};
+
+export const formatDateTimeToTimeString = (date: string | Date) => {
+  return format(date instanceof Date ? date : new Date(date), "HH:mm:ss");
+};
+
+export const generateSocketInstance = async (accessToken: string): Promise<Socket> => {
+  const { io } = await import("socket.io-client");
+  return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
+    auth: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+};
+
+export const OrderStatusIcon = {
+  [OrderStatus.Pending]: Loader,
+  [OrderStatus.Processing]: CookingPot,
+  [OrderStatus.Rejected]: BookX,
+  [OrderStatus.Delivered]: Truck,
+  [OrderStatus.Paid]: HandCoins,
+};
+
+export const wrapServerApi = async <T>(fn: () => Promise<T>) => {
+  let result = null;
+  try {
+    result = await fn();
+  } catch (error: any) {
+    if (error.digest?.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
+  }
+  return result;
+};

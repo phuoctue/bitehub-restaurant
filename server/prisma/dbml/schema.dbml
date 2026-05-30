@@ -1,0 +1,172 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS MANUALLY UPDATED TO MATCH prisma/schema.prisma
+//// ------------------------------------------------------
+
+Table Account {
+  id Int [pk, increment]
+  name String [not null]
+  email String [unique, not null]
+  password String [not null]
+  avatar String
+  role Role [not null, default: 'Employee']
+  ownerId Int
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  owner Account
+  employees Account [not null]
+  orders Order [not null]
+  refreshToken RefreshToken [not null]
+  sockets Socket
+}
+
+Table Dish {
+  id Int [pk, increment]
+  name String [not null]
+  nameEn String
+  price Int [not null]
+  description String [not null]
+  descriptionEn String
+  image String [not null]
+  status DishStatus [not null, default: 'Available']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  dishSnapshots DishSnapshot [not null]
+}
+
+Table DishSnapshot {
+  id Int [pk, increment]
+  name String [not null]
+  nameEn String
+  price Int [not null]
+  description String [not null]
+  descriptionEn String
+  image String [not null]
+  status DishStatus [not null, default: 'Available']
+  dishId Int
+  updatedAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  dish Dish
+  order Order
+}
+
+Table Table {
+  number Int [pk]
+  capacity Int [not null]
+  status TableStatus [not null, default: 'Available']
+  token String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  guests Guest [not null]
+  orders Order [not null]
+}
+
+Table Order {
+  id Int [pk, increment]
+  guestId Int
+  tableNumber Int
+  dishSnapshotId Int [unique, not null]
+  quantity Int [not null]
+  orderHandlerId Int
+  status OrderStatus [not null, default: 'Pending']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  dishSnapshot DishSnapshot [not null]
+  guest Guest
+  orderHandler Account
+  table Table
+}
+
+Table RefreshToken {
+  token String [pk]
+  accountId Int [not null]
+  expiresAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  account Account [not null]
+}
+
+Table Guest {
+  id Int [pk, increment]
+  name String [not null]
+  tableNumber Int
+  refreshToken String
+  refreshTokenExpiresAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  table Table
+  orders Order [not null]
+  sockets Socket
+}
+
+Table Socket {
+  socketId String [pk]
+  accountId Int [unique]
+  guestId Int [unique]
+  account Account
+  guest Guest
+}
+
+Table RecommendationLog {
+  id Int [pk, increment]
+  guestId Int
+  tableNumber Int
+  dishId Int [not null]
+  score Float [not null]
+  reasons Json [not null]
+  contextHour Int [not null]
+  contextDayOfWeek Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  clickedAt DateTime
+  orderedAt DateTime
+
+  indexes {
+    (guestId, createdAt)
+    (tableNumber, createdAt)
+    (dishId, createdAt)
+  }
+}
+
+Enum Role {
+  Owner
+  Employee
+}
+
+Enum DishStatus {
+  Available
+  Unavailable
+  Hidden
+}
+
+Enum TableStatus {
+  Available
+  Hidden
+  Reserved
+}
+
+Enum OrderStatus {
+  Pending
+  Processing
+  Rejected
+  Delivered
+  Paid
+  Cancelled
+}
+
+Ref: Account.ownerId - Account.id
+
+Ref: DishSnapshot.dishId > Dish.id
+
+Ref: Order.dishSnapshotId - DishSnapshot.id [delete: Cascade]
+
+Ref: Order.guestId > Guest.id
+
+Ref: Order.orderHandlerId > Account.id
+
+Ref: Order.tableNumber > Table.number [delete: Cascade]
+
+Ref: RefreshToken.accountId > Account.id [delete: Cascade]
+
+Ref: Guest.tableNumber > Table.number
+
+Ref: Socket.accountId - Account.id
+
+Ref: Socket.guestId - Guest.id

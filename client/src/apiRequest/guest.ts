@@ -1,0 +1,36 @@
+import http from "@/lib/http";
+import {
+  RefreshTokenBodyType,
+  RefreshTokenResType,
+} from "@/schemaValidations/auth.schema";
+import {
+  GuestCreateOrdersBodyType,
+  GuestCreateOrdersResType,
+  GuestLoginBodyType,
+  GuestLoginResType,
+} from "@/schemaValidations/guest.schema";
+
+const guestApiRequest = {
+  sLogin: (body: GuestLoginBodyType) =>
+    http.post<GuestLoginResType>("/guest/auth/login", body),
+  login: (body: GuestLoginBodyType) =>
+    http.post<GuestLoginResType>("/api/guest/auth/login", body, {
+      baseUrl: "",
+    }),
+  sLogout: () => http.post("/guest/auth/logout", {}),
+  logout: () =>
+    http.post("/api/guest/auth/logout", null, {
+      baseUrl: "",
+    }),
+  sRefreshToken: (body: RefreshTokenBodyType) =>
+    http.post<RefreshTokenResType>("/guest/auth/refresh-token", body),
+  refreshToken: () =>
+    http.post<RefreshTokenResType>("/api/guest/auth/refresh-token", null, {
+      baseUrl: "",
+    }),
+  order: (body: GuestCreateOrdersBodyType) =>
+    http.post<GuestCreateOrdersResType>("/guest/orders", body),
+  getOrderList: () => http.get<GuestCreateOrdersResType>("/guest/orders"),
+};
+
+export default guestApiRequest;

@@ -1,0 +1,26 @@
+import AccountTable from "@/app/manage/accounts/account-table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
+
+export default async function AccountsPage() {
+  const t = await getTranslations("ManageCommon");
+
+  return (
+    <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+      <div className="space-y-2">
+        <Card x-chunk="dashboard-06-chunk-0">
+          <CardHeader>
+            <CardTitle>{t("accounts")}</CardTitle>
+            <CardDescription>{t("accountsDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Suspense>
+              <AccountTable />
+            </Suspense>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  );
+}

@@ -1,0 +1,115 @@
+"use client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  GuestLoginBody,
+  GuestLoginBodyType,
+} from "@/schemaValidations/guest.schema";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useGuestLoginMutation } from "@/queries/useGuest";
+import { useAppStore } from "@/components/app-provider";
+import { withLocalePath } from "@/lib/locale-path";
+import { generateSocketInstance, handleErrorApi } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+
+export default function GuestLoginForm() {
+  const t = useTranslations("GuestLogin");
+  const setRole = useAppStore((state) => state.setRole);
+  const setSocket = useAppStore((state) => state.setSocket);
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const router = useRouter();
+  const tableNumber = Number(params.number);
+  const token = searchParams.get("token");
+  const loginMutation = useGuestLoginMutation();
+
+  const form = useForm<GuestLoginBodyType>({
+    resolver: zodResolver(GuestLoginBody),
+    defaultValues: {
+      name: "",
+      token: token ?? "",
+      tableNumber: tableNumber,
+    },
+  });
+
+  useEffect(() => {
+    if (!token) {
+      router.push(withLocalePath("/"));
+    }
+  }, [token, router]);
+
+  useEffect(() => {
+    if (tableNumber) {
+      form.setValue("tableNumber", tableNumber);
+    }
+    if (token) {
+      form.setValue("token", token);
+    }
+  }, [tableNumber, token, form]);
+
+  async function onSubmit(values: GuestLoginBodyType) {
+    if (loginMutation.isPending) return;
+    try {
+      const result = await loginMutation.mutateAsync(values);
+      setRole(result.payload.data.guest.role);
+      setSocket(await generateSocketInstance(result.payload.data.accessToken));
+      router.push(withLocalePath("/guest/menu"));
+    } catch (error) {
+      handleErrorApi({
+        error,
+        setError: form.setError,
+      });
+    }
+  }
+
+  return (
+    <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+      <Card className="mx-auto w-full max-w-sm shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center font-bold">{t("title")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              className="space-y-6"
+              noValidate
+              onSubmit={form.handleSubmit(onSubmit, console.log)}
+            >
+              <div className="grid gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid gap-2">
+                        <Label htmlFor="name">{t("customerName")}</Label>
+                        <Input
+                          id="name"
+                          type="text"
+                          placeholder={t("namePlaceholder")}
+                          required
+                          {...field}
+                        />
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full font-semibold py-6">
+                  {t("submit")}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

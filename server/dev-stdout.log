@@ -1,0 +1,15 @@
+
+> server@1.0.0 dev
+> npx nodemon
+
+[33m[nodemon] 3.1.4[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): src\**\* .env[39m
+[33m[nodemon] watching extensions: ts,js,env[39m
+[32m[nodemon] starting `tsx ./src/index.ts`[39m
+prisma:info Starting a postgresql pool with 1 connections in PgBouncer mode.
+Server đang chạy: http://localhost:4000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx ./src/index.ts`[39m
+prisma:info Starting a postgresql pool with 1 connections in PgBouncer mode.
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

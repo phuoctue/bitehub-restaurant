@@ -1,0 +1,157 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+model Account {
+  id           Int            @id @default(autoincrement())
+  name         String
+  email        String         @unique
+  password     String
+  avatar       String?
+  role         Role           @default(Employee)
+  ownerId      Int?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  owner        Account?       @relation("OwnerEmployee", fields: [ownerId], references: [id], onUpdate: NoAction)
+  employees    Account[]      @relation("OwnerEmployee")
+  orders       Order[]
+  refreshToken RefreshToken[]
+  sockets      Socket?
+}
+
+model Dish {
+  id            Int            @id @default(autoincrement())
+  name          String
+  nameEn        String?
+  price         Int
+  description   String
+  descriptionEn String?
+  image         String
+  status        DishStatus     @default(Available)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  dishSnapshots DishSnapshot[]
+}
+
+model DishSnapshot {
+  id          Int        @id @default(autoincrement())
+  name        String
+  nameEn      String?
+  price       Int
+  description String
+  descriptionEn String?
+  image       String
+  status      DishStatus @default(Available)
+  dishId      Int?
+  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime   @default(now())
+  dish        Dish?      @relation(fields: [dishId], references: [id], onUpdate: NoAction)
+  order       Order?
+}
+
+model Table {
+  number    Int         @id
+  capacity  Int
+  status    TableStatus @default(Available)
+  token     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  guests    Guest[]
+  orders    Order[]
+}
+
+model Order {
+  id             Int          @id @default(autoincrement())
+  guestId        Int?
+  tableNumber    Int?
+  dishSnapshotId Int          @unique
+  quantity       Int
+  orderHandlerId Int?
+  status         OrderStatus  @default(Pending)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  dishSnapshot   DishSnapshot @relation(fields: [dishSnapshotId], references: [id], onDelete: Cascade)
+  guest          Guest?       @relation(fields: [guestId], references: [id], onUpdate: NoAction)
+  orderHandler   Account?     @relation(fields: [orderHandlerId], references: [id], onUpdate: NoAction)
+  table          Table?       @relation(fields: [tableNumber], references: [number], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model RefreshToken {
+  token     String   @id
+  accountId Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model Guest {
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  tableNumber           Int?
+  refreshToken          String?
+  refreshTokenExpiresAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  table                 Table?    @relation(fields: [tableNumber], references: [number], onUpdate: NoAction)
+  orders                Order[]
+  sockets               Socket?
+}
+
+model Socket {
+  socketId  String   @id
+  accountId Int?     @unique
+  guestId   Int?     @unique
+  account   Account? @relation(fields: [accountId], references: [id], onUpdate: NoAction)
+  guest     Guest?   @relation(fields: [guestId], references: [id], onUpdate: NoAction)
+}
+
+model RecommendationLog {
+  id               Int      @id @default(autoincrement())
+  guestId          Int?
+  tableNumber      Int?
+  dishId           Int
+  score            Float
+  reasons          Json
+  contextHour      Int
+  contextDayOfWeek Int
+  createdAt        DateTime @default(now())
+  clickedAt        DateTime?
+  orderedAt        DateTime?
+
+  @@index([guestId, createdAt])
+  @@index([tableNumber, createdAt])
+  @@index([dishId, createdAt])
+}
+
+enum Role {
+  Owner
+  Employee
+}
+
+enum DishStatus {
+  Available
+  Unavailable
+  Hidden
+}
+
+enum TableStatus {
+  Available
+  Hidden
+  Reserved
+}
+
+enum OrderStatus {
+  Pending
+  Processing
+  Rejected
+  Delivered
+  Paid
+  Cancelled
+}
