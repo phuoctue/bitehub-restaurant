@@ -68,6 +68,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       } else {
         fastify.io.to(ManagerRoom).emit('new-order', orders)
       }
+      fastify.io.to(ManagerRoom).emit('table-update')
       reply.send({
         message: `Tạo thành công ${orders.length} đơn hàng cho khách hàng`,
         data: orders as CreateOrdersResType['data']
@@ -190,6 +191,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       } else {
         fastify.io.to(ManagerRoom).emit('payment', result.orders)
       }
+      fastify.io.to(ManagerRoom).emit('table-update')
       reply.send({
         message: `Thanh toán thành công ${result.orders.length} đơn`,
         data: result.orders as PayGuestOrdersResType['data'],

@@ -1,4 +1,4 @@
-import envConfig from '@/config'
+import envConfig, { GOOGLE_REDIRECT_URI } from '@/config'
 import prisma from '@/database'
 import { LoginBodyType } from '@/schemaValidations/auth.schema'
 import { RoleType, TokenPayload } from '@/types/jwt.types'
@@ -57,13 +57,23 @@ export const loginController = async (body: LoginBodyType) => {
 
 export const loginGoogleController = async (code: string) => {
   // 1. Đổi code lấy id_token từ Google API
-  const response = await axios.post('https://oauth2.googleapis.com/token', {
-    code,
-    client_id: envConfig.GOOGLE_CLIENT_ID,
-    client_secret: envConfig.GOOGLE_CLIENT_SECRET,
-    redirect_uri: envConfig.GOOGLE_REDIRECT_URI ?? `${envConfig.PROTOCOL}://${envConfig.DOMAIN}:${envConfig.PORT}/auth/login/google`,
-    grant_type: 'authorization_code'
-  })
+  let response
+  try {
+    response = await axios.post('https://oauth2.googleapis.com/token', {
+      code,
+      client_id: envConfig.GOOGLE_CLIENT_ID,
+      client_secret: envConfig.GOOGLE_CLIENT_SECRET,
+      redirect_uri: GOOGLE_REDIRECT_URI,
+      grant_type: 'authorization_code'
+    })
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const googleError = error.response?.data as { error?: string; error_description?: string } | undefined
+      const description = googleError?.error_description || googleError?.error || error.message
+      throw new Error(`Google OAuth failed: ${description}`)
+    }
+    throw error
+  }
 
   const { id_token } = response.data
 

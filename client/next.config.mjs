@@ -6,6 +6,19 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const remotePatterns = [
+  {
+    protocol: "http",
+    hostname: "**",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "**",
+    pathname: "/**",
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
@@ -15,41 +28,10 @@ const nextConfig = {
     optimizePackageImports: ["date-fns", "lucide-react", "@hugeicons/react"],
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '4000',
-        pathname: '/**'
-      },
-      {
-        protocol: 'https',
-        hostname: '1.bp.blogspot.com',
-        pathname: '/**'
-      },
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-        pathname: '/**'
-      },
-      {
-        protocol: 'https',
-        hostname: 'th.bing.com',
-        pathname: '/**'
-      },
-      {
-        protocol: 'https',
-        hostname: 'tse2.mm.bing.net',
-        pathname: '/**'
-      }
-      ,{
-        protocol: 'https',
-        hostname: 'image-us.eva.vn',
-        pathname: '/**'
-      }
-    ],
+    remotePatterns,
     qualities: [75],
     dangerouslyAllowLocalIP: true,
+    unoptimized: true,
   },
 };
 

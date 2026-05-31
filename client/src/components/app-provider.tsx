@@ -1,5 +1,5 @@
 "use client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import {
   decodeToken,
@@ -31,6 +31,44 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function SocketQueryInvalidator() {
+  const socket = useAppStore((state) => state.socket);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const refreshTables = () => {
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    };
+
+    const refreshOrdersAndTables = () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    };
+
+    const refreshPaymentData = () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboardIndicators"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    };
+
+    socket.on("table-update", refreshTables);
+    socket.on("new-order", refreshOrdersAndTables);
+    socket.on("update-order", refreshOrdersAndTables);
+    socket.on("payment", refreshPaymentData);
+
+    return () => {
+      socket.off("table-update", refreshTables);
+      socket.off("new-order", refreshOrdersAndTables);
+      socket.off("update-order", refreshOrdersAndTables);
+      socket.off("payment", refreshPaymentData);
+    };
+  }, [queryClient, socket]);
+
+  return null;
+}
 
 // const AppContext = createContext({
 //   isAuth: false,
@@ -113,6 +151,7 @@ export default function AppProvider({
   return (
     // <AppContext value={{ role, setRole, isAuth, socket, setSocket, disconnectSocket }}>
       <QueryClientProvider client={queryClient}>
+        <SocketQueryInvalidator />
         {children}
         <ClientRuntimeEffects />
         {process.env.NODE_ENV === "development" ? (

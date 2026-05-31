@@ -20,6 +20,8 @@ services:
       - postgres
     ports:
       - "4000:4000"
+    volumes:
+      - server_uploads:/app/uploads
 
   client:
     build:
@@ -33,3 +35,4 @@ services:
 
 volumes:
   postgres_data:
+  server_uploads:

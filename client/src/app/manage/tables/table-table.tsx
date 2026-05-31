@@ -46,6 +46,8 @@ import { useDeleteTableMutation, usegetTableListQuery } from "@/queries/useTable
 import QRCodeTable from "@/components/qrcode-table";
 import { toast } from "sonner";
 import { TranslationValues, useTranslations } from "next-intl";
+import { useAppStore } from "@/components/app-provider";
+import { useQueryClient } from "@tanstack/react-query";
 
 type TableItem = TableListResType["data"][0];
 type TTables = (key: string, values?: TranslationValues) => string;
@@ -168,6 +170,8 @@ export default function TableTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({ pageIndex, pageSize: PAGE_SIZE });
+  const socket = useAppStore((state) => state.socket);
+  const queryClient = useQueryClient();
 
   const table = useReactTable({
     data,
@@ -188,6 +192,21 @@ export default function TableTable() {
   useEffect(() => {
     table.setPagination({ pageIndex, pageSize: PAGE_SIZE });
   }, [table, pageIndex]);
+
+  useEffect(() => {
+    const onTableUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    };
+
+    socket?.on("table-update", onTableUpdate);
+    socket?.on("new-order", onTableUpdate);
+    socket?.on("payment", onTableUpdate);
+    return () => {
+      socket?.off("table-update", onTableUpdate);
+      socket?.off("new-order", onTableUpdate);
+      socket?.off("payment", onTableUpdate);
+    };
+  }, [queryClient, socket]);
 
   return (
     <TableTableContext.Provider value={{ tableIdEdit, setTableIdEdit, tableDelete, setTableDelete }}>
