@@ -3,10 +3,9 @@ import prisma from '@/database'
 import { LoginBodyType } from '@/schemaValidations/auth.schema'
 import { RoleType, TokenPayload } from '@/types/jwt.types'
 import { comparePassword } from '@/utils/crypto'
-import { AuthError, EntityError } from '@/utils/errors'
+import { AuthError, EntityError, StatusError } from '@/utils/errors'
 import axios from 'axios'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '@/utils/jwt'
-import { Role } from '@prisma/client'
 
 export const logoutController = async (refreshToken: string) => {
   await prisma.refreshToken.delete({
@@ -80,19 +79,20 @@ export const loginGoogleController = async (code: string) => {
   // 2. Lấy thông tin user từ id_token (decode không cần verify vì lấy trực tiếp từ Google)
   const googleUser = JSON.parse(Buffer.from(id_token.split('.')[1], 'base64').toString())
 
-  // 3. Kiểm tra hoặc Tạo tài khoản trong DB
-  let account = await prisma.account.findUnique({
-    where: { email: googleUser.email }
+  // 3. Chi cho phep Gmail da duoc admin tao san trong DB
+  const account = await prisma.account.findFirst({
+    where: {
+      email: {
+        equals: googleUser.email,
+        mode: 'insensitive'
+      }
+    }
   })
 
   if (!account) {
-    account = await prisma.account.create({
-      data: {
-        email: googleUser.email,
-        name: googleUser.name || googleUser.email.split('@')[0],
-        role: Role.Employee, // Mặc định là Employee
-        password: '' // Không dùng mật khẩu cho Google login
-      }
+    throw new StatusError({
+      message: 'Gmail không phải nhân viên quán',
+      status: 403
     })
   }
 
