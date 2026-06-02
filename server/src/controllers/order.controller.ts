@@ -3,6 +3,39 @@ import prisma from '@/database'
 import { CreateOrdersBodyType, UpdateOrderBodyType } from '@/schemaValidations/order.schema'
 import { generateInvoiceFromOrdersController } from '@/controllers/invoice.controller'
 import { InvoiceLocale } from '@/utils/invoice'
+import { Prisma } from '@prisma/client'
+
+const ACTIVE_ORDER_STATUSES = [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.Delivered]
+
+const syncTableStatusByNumber = async (tx: Prisma.TransactionClient, tableNumber: number) => {
+  const table = await tx.table.findUnique({
+    where: {
+      number: tableNumber
+    },
+    select: {
+      status: true
+    }
+  })
+  if (!table || table.status === TableStatus.Hidden) return
+
+  const activeOrders = await tx.order.count({
+    where: {
+      tableNumber,
+      status: {
+        in: ACTIVE_ORDER_STATUSES
+      }
+    }
+  })
+
+  await tx.table.update({
+    where: {
+      number: tableNumber
+    },
+    data: {
+      status: activeOrders === 0 ? TableStatus.Available : TableStatus.Reserved
+    }
+  })
+}
 
 export const createOrdersController = async (orderHandlerId: number, body: CreateOrdersBodyType) => {
   const { guestId, orders } = body
@@ -29,55 +62,56 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
 
   const [ordersRecord, socketRecord] = await Promise.all([
     prisma.$transaction(async (tx) => {
-      const ordersRecord = await Promise.all(
-        orders.map(async (order) => {
-          const dish = await tx.dish.findUniqueOrThrow({
-            where: {
-              id: order.dishId
-            }
-          })
-          if (dish.status === DishStatus.Unavailable) {
-            throw new Error(`Món ${dish.name} đã hết`)
+      const ordersRecord = []
+      for (const order of orders) {
+        const dish = await tx.dish.findUniqueOrThrow({
+          where: {
+            id: order.dishId
           }
-          if (dish.status === DishStatus.Hidden) {
-            throw new Error(`Món ${dish.name} không thể đặt`)
+        })
+        if (dish.status === DishStatus.Unavailable) {
+          throw new Error(`Món ${dish.name} đã hết`)
+        }
+        if (dish.status === DishStatus.Hidden) {
+          throw new Error(`Món ${dish.name} không thể đặt`)
+        }
+        const dishSnapshot = await tx.dishSnapshot.create({
+          data: {
+            description: dish.description,
+            descriptionEn: dish.descriptionEn,
+            image: dish.image,
+            name: dish.name,
+            nameEn: dish.nameEn,
+            price: dish.price,
+            dishId: dish.id,
+            status: dish.status
           }
-          const dishSnapshot = await tx.dishSnapshot.create({
-            data: {
-              description: dish.description,
-              descriptionEn: dish.descriptionEn,
-              image: dish.image,
-              name: dish.name,
-              nameEn: dish.nameEn,
-              price: dish.price,
-              dishId: dish.id,
-              status: dish.status
-            }
-          })
-          const orderRecord = await tx.order.create({
-            data: {
-              dishSnapshotId: dishSnapshot.id,
-              guestId,
-              quantity: order.quantity,
-              tableNumber: guest.tableNumber,
-              orderHandlerId,
-              status: OrderStatus.Pending
-            },
-            include: {
-              dishSnapshot: true,
-              guest: true,
-              orderHandler: true
-            }
-          })
-          type OrderRecord = typeof orderRecord
-          return orderRecord as OrderRecord & {
+        })
+        const orderRecord = await tx.order.create({
+          data: {
+            dishSnapshotId: dishSnapshot.id,
+            guestId,
+            quantity: order.quantity,
+            tableNumber: guest.tableNumber,
+            orderHandlerId,
+            status: OrderStatus.Pending
+          },
+          include: {
+            dishSnapshot: true,
+            guest: true,
+            orderHandler: true
+          }
+        })
+        type OrderRecord = typeof orderRecord
+        ordersRecord.push(
+          orderRecord as OrderRecord & {
             status: (typeof OrderStatus)[keyof typeof OrderStatus]
             dishSnapshot: OrderRecord['dishSnapshot'] & {
               status: (typeof DishStatus)[keyof typeof DishStatus]
             }
           }
-        })
-      )
+        )
+      }
       await tx.table.update({
         where: {
           number: guest.tableNumber!
@@ -134,7 +168,7 @@ export const payOrdersController = async ({
     where: {
       guestId,
       status: {
-        in: [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.Delivered]
+        in: ACTIVE_ORDER_STATUSES
       }
     }
   })
@@ -155,27 +189,12 @@ export const payOrdersController = async ({
       }
     })
     const tableNumbers = Array.from(
-      new Set(orders.map((order) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null))
+      new Set(
+        orders.map((order) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null)
+      )
     )
     for (const tableNumber of tableNumbers) {
-      const activeOrders = await tx.order.count({
-        where: {
-          tableNumber,
-          status: {
-            in: [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.Delivered]
-          }
-        }
-      })
-      if (activeOrders === 0) {
-        await tx.table.update({
-          where: {
-            number: tableNumber
-          },
-          data: {
-            status: TableStatus.Available
-          }
-        })
-      }
+      await syncTableStatusByNumber(tx, tableNumber)
     }
     return updatedOrders
   })
@@ -329,6 +348,9 @@ export const updateOrderController = async (
         guest: true
       }
     })
+    if (newOrder.tableNumber !== null) {
+      await syncTableStatusByNumber(tx, newOrder.tableNumber)
+    }
     return newOrder
   })
   const socketRecord = await prisma.socket.findUnique({

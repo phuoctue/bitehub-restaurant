@@ -161,6 +161,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       } else {
         fastify.io.to(ManagerRoom).emit('update-order', result.order)
       }
+      fastify.io.to(ManagerRoom).emit('table-update')
       reply.send({
         message: 'Cập nhật đơn hàng thành công',
         data: result.order as UpdateOrderResType['data']

@@ -85,7 +85,7 @@ export default async function authRoutes(fastify: FastifyInstance, options: Fast
       } catch (error: any) {
         const qs = new URLSearchParams({
           message: error.message || 'Lỗi đăng nhập Google',
-          status: '500'
+          status: String(error.status || error.statusCode || 500)
         }).toString()
         return reply.redirect(`${envConfig.GOOGLE_REDIRECT_CLIENT_URL}?${qs}`)
       }
