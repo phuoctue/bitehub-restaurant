@@ -36,8 +36,11 @@ export const ensureInvoicesDirectory = () => {
 
 const resolveInvoiceFonts = () => {
   const regularCandidates = [
+    path.join(process.cwd(), 'assets/fonts/Geist-Regular.ttf'),
+    path.join(__dirname, '../assets/fonts/Geist-Regular.ttf'),
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans.ttf'),
+    path.join(__dirname, '../assets/fonts/DejaVuSans.ttf'),
     '/usr/share/fonts/dejavu/DejaVuSans.ttf',
     '/usr/share/fonts/TTF/DejaVuSans.ttf',
     'C:/Windows/Fonts/arial.ttf',
@@ -45,8 +48,11 @@ const resolveInvoiceFonts = () => {
     'C:/Windows/Fonts/tahoma.ttf'
   ]
   const boldCandidates = [
+    path.join(process.cwd(), 'assets/fonts/Geist-Bold.ttf'),
+    path.join(__dirname, '../assets/fonts/Geist-Bold.ttf'),
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans-Bold.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans-Bold.ttf'),
+    path.join(__dirname, '../assets/fonts/DejaVuSans-Bold.ttf'),
     '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
     '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
     'C:/Windows/Fonts/arialbd.ttf',
@@ -55,9 +61,9 @@ const resolveInvoiceFonts = () => {
   ]
 
   const regular = regularCandidates.find((fontPath) => fs.existsSync(fontPath))
-  const bold = boldCandidates.find((fontPath) => fs.existsSync(fontPath))
+  const bold = boldCandidates.find((fontPath) => fs.existsSync(fontPath)) || regular
 
-  if (!regular || !bold) {
+  if (!regular) {
     throw new Error('Cannot find Unicode fonts for PDF invoice rendering')
   }
 
