@@ -179,55 +179,56 @@ export const guestCreateOrdersController = async (guestId: number, body: GuestCr
     if (table.status === TableStatus.Hidden) {
       throw new Error(`Bàn ${table.number} đã bị ẩn, vui lòng đăng xuất và chọn bàn khác`)
     }
-    const orders = await Promise.all(
-      body.map(async (order) => {
-        const dish = await tx.dish.findUniqueOrThrow({
-          where: {
-            id: order.dishId
-          }
-        })
-        if (dish.status === DishStatus.Unavailable) {
-          throw new Error(`Món ${dish.name} đã hết`)
+    const orders = []
+    for (const order of body) {
+      const dish = await tx.dish.findUniqueOrThrow({
+        where: {
+          id: order.dishId
         }
-        if (dish.status === DishStatus.Hidden) {
-          throw new Error(`Món ${dish.name} không thể đặt`)
+      })
+      if (dish.status === DishStatus.Unavailable) {
+        throw new Error(`Món ${dish.name} đã hết`)
+      }
+      if (dish.status === DishStatus.Hidden) {
+        throw new Error(`Món ${dish.name} không thể đặt`)
+      }
+      const dishSnapshot = await tx.dishSnapshot.create({
+        data: {
+          description: dish.description,
+          descriptionEn: dish.descriptionEn,
+          image: dish.image,
+          name: dish.name,
+          nameEn: dish.nameEn,
+          price: dish.price,
+          dishId: dish.id,
+          status: dish.status
         }
-        const dishSnapshot = await tx.dishSnapshot.create({
-          data: {
-            description: dish.description,
-            descriptionEn: dish.descriptionEn,
-            image: dish.image,
-            name: dish.name,
-            nameEn: dish.nameEn,
-            price: dish.price,
-            dishId: dish.id,
-            status: dish.status
-          }
-        })
-        const orderRecord = await tx.order.create({
-          data: {
-            dishSnapshotId: dishSnapshot.id,
-            guestId,
-            quantity: order.quantity,
-            tableNumber: guest.tableNumber,
-            orderHandlerId: null,
-            status: OrderStatus.Pending
-          },
-          include: {
-            dishSnapshot: true,
-            guest: true,
-            orderHandler: true
-          }
-        })
-        type OrderRecord = typeof orderRecord
-        return orderRecord as OrderRecord & {
+      })
+      const orderRecord = await tx.order.create({
+        data: {
+          dishSnapshotId: dishSnapshot.id,
+          guestId,
+          quantity: order.quantity,
+          tableNumber: guest.tableNumber,
+          orderHandlerId: null,
+          status: OrderStatus.Pending
+        },
+        include: {
+          dishSnapshot: true,
+          guest: true,
+          orderHandler: true
+        }
+      })
+      type OrderRecord = typeof orderRecord
+      orders.push(
+        orderRecord as OrderRecord & {
           status: (typeof OrderStatus)[keyof typeof OrderStatus]
           dishSnapshot: OrderRecord['dishSnapshot'] & {
             status: (typeof DishStatus)[keyof typeof DishStatus]
           }
         }
-      })
-    )
+      )
+    }
     await tx.table.update({
       where: {
         number: guest.tableNumber
