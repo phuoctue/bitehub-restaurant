@@ -40,9 +40,14 @@ const resolveInvoiceFonts = () => {
     path.join(__dirname, '../assets/fonts/Geist-Regular.ttf'),
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans.ttf'),
+<<<<<<< Updated upstream
     path.join(__dirname, '../assets/fonts/DejaVuSans.ttf'),
+=======
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+>>>>>>> Stashed changes
     '/usr/share/fonts/dejavu/DejaVuSans.ttf',
     '/usr/share/fonts/TTF/DejaVuSans.ttf',
+    '/usr/local/share/fonts/DejaVuSans.ttf',
     'C:/Windows/Fonts/arial.ttf',
     'C:/Windows/Fonts/segoeui.ttf',
     'C:/Windows/Fonts/tahoma.ttf'
@@ -52,9 +57,14 @@ const resolveInvoiceFonts = () => {
     path.join(__dirname, '../assets/fonts/Geist-Bold.ttf'),
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans-Bold.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans-Bold.ttf'),
+<<<<<<< Updated upstream
     path.join(__dirname, '../assets/fonts/DejaVuSans-Bold.ttf'),
+=======
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+>>>>>>> Stashed changes
     '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
     '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
+    '/usr/local/share/fonts/DejaVuSans-Bold.ttf',
     'C:/Windows/Fonts/arialbd.ttf',
     'C:/Windows/Fonts/segoeuib.ttf',
     'C:/Windows/Fonts/tahomabd.ttf'
@@ -63,11 +73,15 @@ const resolveInvoiceFonts = () => {
   const regular = regularCandidates.find((fontPath) => fs.existsSync(fontPath))
   const bold = boldCandidates.find((fontPath) => fs.existsSync(fontPath)) || regular
 
+<<<<<<< Updated upstream
   if (!regular) {
     throw new Error('Cannot find Unicode fonts for PDF invoice rendering')
   }
 
   return { regular, bold }
+=======
+  return regular && bold ? { regular, bold } : null
+>>>>>>> Stashed changes
 }
 
 export const generateInvoiceNumber = (): string => {
@@ -77,14 +91,20 @@ export const generateInvoiceNumber = (): string => {
 }
 
 export const formatCurrency = (amount: number, locale: InvoiceLocale = 'vi'): string => {
-  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  const formattedAmount = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     maximumFractionDigits: 0
   }).format(amount)
+  return `${formattedAmount} VND`
 }
 
-const getInvoiceText = (locale: InvoiceLocale) => {
+const removeVietnameseDiacritics = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+
+const getInvoiceText = (locale: InvoiceLocale, useUnicode: boolean) => {
   if (locale === 'en') {
     return {
       title: 'INVOICE',
@@ -104,7 +124,7 @@ const getInvoiceText = (locale: InvoiceLocale) => {
     }
   }
 
-  return {
+  const text = {
     title: 'HÓA ĐƠN',
     invoiceNumber: 'Số HĐ',
     date: 'Ngày',
@@ -120,6 +140,12 @@ const getInvoiceText = (locale: InvoiceLocale) => {
     footer1: 'Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!',
     footer2: 'Vui lòng lưu lại hóa đơn này để đối chiếu khi cần.'
   }
+
+  if (useUnicode) return text
+
+  return Object.fromEntries(
+    Object.entries(text).map(([key, value]) => [key, removeVietnameseDiacritics(value)])
+  ) as typeof text
 }
 
 const formatInvoiceDate = (date: Date, locale: InvoiceLocale) => {
@@ -138,8 +164,9 @@ const formatInvoiceDate = (date: Date, locale: InvoiceLocale) => {
 export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> => {
   const invoicesDir = ensureInvoicesDirectory()
   const fonts = resolveInvoiceFonts()
+  const useUnicodeFonts = Boolean(fonts)
   const locale: InvoiceLocale = invoiceData.locale === 'en' ? 'en' : 'vi'
-  const t = getInvoiceText(locale)
+  const t = getInvoiceText(locale, useUnicodeFonts)
 
   const doc = new PDFDocument({ size: 'A4', margin: 48 })
   const fileName = `${invoiceData.invoiceNumber}.pdf`
@@ -147,25 +174,35 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
   const stream = fs.createWriteStream(filePath)
   doc.pipe(stream)
 
-  doc.registerFont('InvoiceRegular', fonts.regular)
-  doc.registerFont('InvoiceBold', fonts.bold)
+  if (fonts) {
+    doc.registerFont('InvoiceRegular', fonts.regular)
+    doc.registerFont('InvoiceBold', fonts.bold)
+  }
+
+  const regularFont = fonts ? 'InvoiceRegular' : 'Helvetica'
+  const boldFont = fonts ? 'InvoiceBold' : 'Helvetica-Bold'
+  const invoiceGuestName = useUnicodeFonts ? invoiceData.guestName : removeVietnameseDiacritics(invoiceData.guestName)
+  const invoiceItems = invoiceData.items.map((item) => ({
+    ...item,
+    name: useUnicodeFonts ? item.name : removeVietnameseDiacritics(item.name)
+  }))
 
   const pageWidth = doc.page.width
   const margin = 48
   const contentWidth = pageWidth - margin * 2
   const rightEdge = pageWidth - margin
 
-  doc.fillColor('#111827').font('InvoiceBold').fontSize(30).text(invoiceData.restaurantName || 'BiteHub', margin, 48, {
+  doc.fillColor('#111827').font(boldFont).fontSize(30).text(invoiceData.restaurantName || 'BiteHub', margin, 48, {
     width: contentWidth,
     align: 'center'
   })
-  doc.font('InvoiceRegular').fontSize(11).fillColor('#4b5563')
+  doc.font(regularFont).fontSize(11).fillColor('#4b5563')
   doc.text(invoiceData.restaurantAddress || '', margin, 86, { width: contentWidth, align: 'center' })
   doc.text(invoiceData.restaurantPhone || '', margin, 102, { width: contentWidth, align: 'center' })
 
   doc.moveTo(margin, 126).lineTo(rightEdge, 126).lineWidth(1).strokeColor('#e5e7eb').stroke()
 
-  doc.fillColor('#111827').font('InvoiceBold').fontSize(20).text(t.title, margin, 140, {
+  doc.fillColor('#111827').font(boldFont).fontSize(20).text(t.title, margin, 140, {
     width: contentWidth,
     align: 'center'
   })
@@ -176,12 +213,12 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
   const lineGap = 22
 
   const drawInfo = (x: number, y: number, label: string, value: string) => {
-    doc.font('InvoiceRegular').fontSize(10).fillColor('#6b7280').text(label, x, y, { width: 120 })
-    doc.font('InvoiceBold').fontSize(11).fillColor('#111827').text(value, x + 72, y, { width: contentWidth / 2 - 72 })
+    doc.font(regularFont).fontSize(10).fillColor('#6b7280').text(label, x, y, { width: 120 })
+    doc.font(boldFont).fontSize(11).fillColor('#111827').text(value, x + 72, y, { width: contentWidth / 2 - 72 })
   }
 
   drawInfo(leftInfoX, infoTop, `${t.invoiceNumber}:`, invoiceData.invoiceNumber)
-  drawInfo(leftInfoX, infoTop + lineGap, `${t.customer}:`, invoiceData.guestName)
+  drawInfo(leftInfoX, infoTop + lineGap, `${t.customer}:`, invoiceGuestName)
   drawInfo(rightInfoX, infoTop, `${t.date}:`, formatInvoiceDate(invoiceData.createdAt, locale))
   drawInfo(rightInfoX, infoTop + lineGap, `${t.table}:`, `${invoiceData.tableNumber}`)
 
@@ -195,16 +232,16 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
   const colQty = colUnitPrice - qtyWidth - 10
 
   doc.rect(margin, tableTop, contentWidth, 30).fill('#f3f4f6')
-  doc.fillColor('#111827').font('InvoiceBold').fontSize(11)
+  doc.fillColor('#111827').font(boldFont).fontSize(11)
   doc.text(t.dish, colDish, tableTop + 8, { width: 280 })
   doc.text(t.quantity, colQty, tableTop + 8, { width: qtyWidth, align: 'right' })
   doc.text(t.unitPrice, colUnitPrice, tableTop + 8, { width: priceWidth, align: 'right' })
   doc.text(t.amount, colAmount, tableTop + 8, { width: amountWidth, align: 'right' })
 
   let rowY = tableTop + 34
-  doc.font('InvoiceRegular').fontSize(11).fillColor('#111827')
+  doc.font(regularFont).fontSize(11).fillColor('#111827')
 
-  invoiceData.items.forEach((item, index) => {
+  invoiceItems.forEach((item, index) => {
     const amount = item.quantity * item.price
     if (index % 2 === 0) {
       doc.rect(margin, rowY - 4, contentWidth, 24).fill('#fafafa')
@@ -229,7 +266,7 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
   const labelX = valueX - totalsLabelWidth - 10
 
   const drawTotalRow = (label: string, value: string, y: number, bold = false) => {
-    doc.font(bold ? 'InvoiceBold' : 'InvoiceRegular').fontSize(bold ? 15 : 12).fillColor('#111827')
+    doc.font(bold ? boldFont : regularFont).fontSize(bold ? 15 : 12).fillColor('#111827')
     doc.text(`${label}:`, labelX, y, { width: totalsLabelWidth, align: 'right' })
     doc.text(value, valueX, y, { width: totalsValueWidth, align: 'right' })
   }
@@ -242,7 +279,7 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
 
   const footerY = totalsTop + 118
   doc.moveTo(margin, footerY).lineTo(rightEdge, footerY).lineWidth(1).strokeColor('#e5e7eb').stroke()
-  doc.font('InvoiceRegular').fontSize(10).fillColor('#4b5563')
+  doc.font(regularFont).fontSize(10).fillColor('#4b5563')
   doc.text(t.footer1, margin, footerY + 18, { width: contentWidth, align: 'center' })
   doc.text(t.footer2, margin, footerY + 34, { width: contentWidth, align: 'center' })
 
