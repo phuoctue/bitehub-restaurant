@@ -28,8 +28,18 @@ const guestApiRequest = {
     http.post<RefreshTokenResType>("/api/guest/auth/refresh-token", null, {
       baseUrl: "",
     }),
-  order: (body: GuestCreateOrdersBodyType) =>
-    http.post<GuestCreateOrdersResType>("/guest/orders", body),
+  order: (
+    body: GuestCreateOrdersBodyType,
+    options?: { clientSentAt?: number },
+  ) =>
+    http.post<GuestCreateOrdersResType>("/guest/orders", body, {
+      headers:
+        options?.clientSentAt !== undefined
+          ? {
+              "x-client-sent-at": String(options.clientSentAt),
+            }
+          : undefined,
+    }),
   getOrderList: () => http.get<GuestCreateOrdersResType>("/guest/orders"),
 };
 

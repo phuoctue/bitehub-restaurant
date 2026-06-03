@@ -125,9 +125,14 @@ export default function EditOrder({
 
   const onSubmit = async (values: UpdateOrderBodyType) => {
     if (updateOrderMutation.isPending) return;
+    const clientSentAt = Date.now();
+    const timingLabel = `staff-update-order:${id ?? "unknown"}:${clientSentAt}`;
     try {
+      console.time(timingLabel);
+      console.log(`[realtime][client][staff/orders/update] send at ${clientSentAt}`);
       const res = await updateOrderMutation.mutateAsync({
         orderId: id as number,
+        clientSentAt,
         ...values,
       });
       toast.success(res.payload.message);
@@ -138,6 +143,8 @@ export default function EditOrder({
         error,
         setError: form.setError,
       });
+    } finally {
+      console.timeEnd(timingLabel);
     }
   };
 

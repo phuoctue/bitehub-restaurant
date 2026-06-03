@@ -29,9 +29,14 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
 
   const pay = async () => {
     if (payForGuestMutation.isPending || !guest) return;
+    const clientSentAt = Date.now();
+    const timingLabel = `staff-pay-guest:${guest.id}:${clientSentAt}`;
     try {
+      console.time(timingLabel);
+      console.log(`[realtime][client][staff/orders/pay] send at ${clientSentAt}`);
       const result = await payForGuestMutation.mutateAsync({
         guestId: guest.id,
+        clientSentAt,
       });
 
       const invoiceUrlFromPay = result.payload.invoice?.invoiceUrl;
@@ -47,6 +52,8 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
       }
     } catch (error) {
       handleErrorApi({ error });
+    } finally {
+      console.timeEnd(timingLabel);
     }
   };
 

@@ -13,9 +13,10 @@ export const useUpdateOrderMutation = () => {
   return useMutation({
     mutationFn: ({
       orderId,
+      clientSentAt,
       ...body
-    }: UpdateOrderBodyType & { orderId: number }) =>
-      orderApiRequest.updateOrder(orderId, body),
+    }: UpdateOrderBodyType & { orderId: number; clientSentAt?: number }) =>
+      orderApiRequest.updateOrder(orderId, body, { clientSentAt }),
   });
 };
 
@@ -45,10 +46,13 @@ export const useGetOrderDetailQuery = ({
 
 export const usePayForGuestMuattion = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (body: PayGuestOrdersBodyType) =>
-      orderApiRequest.payGuestOrders(body),
+    mutationFn: ({
+      clientSentAt,
+      ...body
+    }: PayGuestOrdersBodyType & { clientSentAt?: number }) =>
+      orderApiRequest.payGuestOrders(body, { clientSentAt }),
     onSuccess: async () => {
       // Invalidate dashboard indicators so it refreshes in real-time
       await queryClient.invalidateQueries({
@@ -68,6 +72,12 @@ export const usePayForGuestMuattion = () => {
 
 export const useCreateOrderMutation = () => {
   return useMutation({
-    mutationFn: orderApiRequest.createOrders,
+    mutationFn: ({
+      orders,
+      clientSentAt,
+    }: {
+      orders: Parameters<typeof orderApiRequest.createOrders>[0];
+      clientSentAt?: number;
+    }) => orderApiRequest.createOrders(orders, { clientSentAt }),
   });
 };

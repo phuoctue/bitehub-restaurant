@@ -80,10 +80,16 @@ export default function OrderTable() {
   const { statics, orderObjectByGuestId, servingGuestByTableNumber } = useOrderService(orderList);
 
   const changeStatus = async (body: { orderId: number; dishId: number; status: (typeof OrderStatusValues)[number]; quantity: number }) => {
+    const clientSentAt = Date.now();
+    const timingLabel = `staff-change-order:${body.orderId}:${clientSentAt}`;
     try {
-      await updateOrderMutation.mutateAsync(body);
+      console.time(timingLabel);
+      console.log(`[realtime][client][staff/orders/change-status] send at ${clientSentAt}`);
+      await updateOrderMutation.mutateAsync({ ...body, clientSentAt });
     } catch (error) {
       handleErrorApi({ error });
+    } finally {
+      console.timeEnd(timingLabel);
     }
   };
 
