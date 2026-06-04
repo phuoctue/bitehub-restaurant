@@ -5,6 +5,10 @@ build_server:
   stage: build
   image: node:20
   before_script:
+    - node -v
+    - npm -v
+    - npm install -g npm@11.9.0
+    - npm -v
     - cd server
     - npm ci
   script:
@@ -14,6 +18,10 @@ build_client:
   stage: build
   image: node:20
   before_script:
+    - node -v
+    - npm -v
+    - npm install -g npm@11.9.0
+    - npm -v
     - cd client
     - npm ci
   script:
