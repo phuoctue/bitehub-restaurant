@@ -16,7 +16,13 @@ export const useGuestLogoutMutation = () => {
 
 export const useGuestOrderMuatation = () => {
   return useMutation({
-    mutationFn: guestApiRequest.order,
+    mutationFn: ({
+      orders,
+      clientSentAt,
+    }: {
+      orders: Parameters<typeof guestApiRequest.order>[0];
+      clientSentAt?: number;
+    }) => guestApiRequest.order(orders, { clientSentAt }),
   });
 };
 

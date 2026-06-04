@@ -45,6 +45,72 @@ const resolveInvoiceLocale = (headers: Record<string, any>): InvoiceLocale => {
   return 'vi'
 }
 
+type SocketTimingMeta = {
+  clientSentAt?: number
+  serverReceivedAt: number
+  serverEmittedAt: number
+}
+
+const readClientSentAt = (headers: Record<string, unknown>) => {
+  const rawHeader = headers['x-client-sent-at']
+  const rawValue = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader
+  const parsed = Number(rawValue)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+const buildSocketTimingMeta = ({
+  headers,
+  receivedAt,
+  eventName,
+}: {
+  headers: Record<string, unknown>
+  receivedAt: number
+  eventName: string
+}): SocketTimingMeta => {
+  const clientSentAt = readClientSentAt(headers)
+  const serverEmittedAt = Date.now()
+
+  if (clientSentAt !== undefined) {
+    console.groupCollapsed(`[realtime][${eventName}] timing`)
+    console.table([
+      {
+        metric: 'clientSentAt',
+        value: clientSentAt,
+        human: new Date(clientSentAt).toLocaleTimeString(),
+      },
+      {
+        metric: 'serverReceivedAt',
+        value: receivedAt,
+        human: new Date(receivedAt).toLocaleTimeString(),
+      },
+      {
+        metric: 'serverEmittedAt',
+        value: serverEmittedAt,
+        human: new Date(serverEmittedAt).toLocaleTimeString(),
+      },
+      {
+        metric: 'client -> server delta',
+        value: `${receivedAt - clientSentAt} ms`,
+      },
+      {
+        metric: 'server processing + emit delta',
+        value: `${serverEmittedAt - receivedAt} ms`,
+      },
+      {
+        metric: 'end-to-end delta so far',
+        value: `${serverEmittedAt - clientSentAt} ms`,
+      },
+    ])
+    console.groupEnd()
+  }
+
+  return {
+    clientSentAt,
+    serverReceivedAt: receivedAt,
+    serverEmittedAt,
+  }
+}
+
 export default async function orderRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.addHook('preValidation', fastify.auth([requireLoginedHook]))
   fastify.post<{ Reply: CreateOrdersResType; Body: CreateOrdersBodyType }>(
@@ -59,16 +125,22 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
+      const serverReceivedAt = Date.now()
       const { socketId, orders } = await createOrdersController(
         request.decodedAccessToken?.userId as number,
         request.body
       )
+      const newOrderTiming = buildSocketTimingMeta({
+        headers: request.headers as Record<string, unknown>,
+        receivedAt: serverReceivedAt,
+        eventName: 'new-order',
+      })
       if (socketId) {
-        fastify.io.to(ManagerRoom).to(socketId).emit('new-order', orders)
+        fastify.io.to(ManagerRoom).to(socketId).emit('new-order', orders, newOrderTiming)
       } else {
-        fastify.io.to(ManagerRoom).emit('new-order', orders)
+        fastify.io.to(ManagerRoom).emit('new-order', orders, newOrderTiming)
       }
-      fastify.io.to(ManagerRoom).emit('table-update')
+      fastify.io.to(ManagerRoom).emit('table-update', undefined, newOrderTiming)
       reply.send({
         message: `Tạo thành công ${orders.length} đơn hàng cho khách hàng`,
         data: orders as CreateOrdersResType['data']
@@ -152,16 +224,22 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
     },
     async (request, reply) => {
+      const serverReceivedAt = Date.now()
       const result = await updateOrderController(request.params.orderId, {
         ...request.body,
         orderHandlerId: request.decodedAccessToken?.userId as number
       })
+      const updateOrderTiming = buildSocketTimingMeta({
+        headers: request.headers as Record<string, unknown>,
+        receivedAt: serverReceivedAt,
+        eventName: 'update-order',
+      })
       if (result.socketId) {
-        fastify.io.to(result.socketId).to(ManagerRoom).emit('update-order', result.order)
+        fastify.io.to(result.socketId).to(ManagerRoom).emit('update-order', result.order, updateOrderTiming)
       } else {
-        fastify.io.to(ManagerRoom).emit('update-order', result.order)
+        fastify.io.to(ManagerRoom).emit('update-order', result.order, updateOrderTiming)
       }
-      fastify.io.to(ManagerRoom).emit('table-update')
+      fastify.io.to(ManagerRoom).emit('table-update', undefined, updateOrderTiming)
       reply.send({
         message: 'Cập nhật đơn hàng thành công',
         data: result.order as UpdateOrderResType['data']
@@ -182,17 +260,23 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
     },
     async (request, reply) => {
       const locale = resolveInvoiceLocale(request.headers as Record<string, any>)
+      const serverReceivedAt = Date.now()
       const result = await payOrdersController({
         guestId: request.body.guestId,
         orderHandlerId: request.decodedAccessToken?.userId as number,
         locale
       })
+      const paymentTiming = buildSocketTimingMeta({
+        headers: request.headers as Record<string, unknown>,
+        receivedAt: serverReceivedAt,
+        eventName: 'payment',
+      })
       if (result.socketId) {
-        fastify.io.to(result.socketId).to(ManagerRoom).emit('payment', result.orders)
+        fastify.io.to(result.socketId).to(ManagerRoom).emit('payment', result.orders, paymentTiming)
       } else {
-        fastify.io.to(ManagerRoom).emit('payment', result.orders)
+        fastify.io.to(ManagerRoom).emit('payment', result.orders, paymentTiming)
       }
-      fastify.io.to(ManagerRoom).emit('table-update')
+      fastify.io.to(ManagerRoom).emit('table-update', undefined, paymentTiming)
       reply.send({
         message: `Thanh toán thành công ${result.orders.length} đơn`,
         data: result.orders as PayGuestOrdersResType['data'],

@@ -95,7 +95,11 @@ export default function AddOrder() {
   };
 
   const handleOrder = async () => {
+    const clientSentAt = Date.now();
+    const timingLabel = `staff-create-order:${clientSentAt}`;
     try {
+      console.time(timingLabel);
+      console.log(`[realtime][client][staff/orders/create] send at ${clientSentAt}`);
       let guestId = selectedGuest?.id;
       if (isNewGuest) {
         const guestRes = await createGuestMutation.mutateAsync({
@@ -109,8 +113,11 @@ export default function AddOrder() {
         return;
       }
       await createOrdersMutation.mutateAsync({
-        guestId: guestId as number,
-        orders,
+        orders: {
+          guestId: guestId as number,
+          orders,
+        },
+        clientSentAt,
       });
       reset();
       toast.success(t("ManageOrders.orderSuccess"));
@@ -119,6 +126,8 @@ export default function AddOrder() {
         error,
         setError: form.setError,
       });
+    } finally {
+      console.timeEnd(timingLabel);
     }
   };
 
@@ -323,4 +332,3 @@ export default function AddOrder() {
     </Dialog>
   );
 }
-

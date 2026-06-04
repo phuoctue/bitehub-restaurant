@@ -29,23 +29,30 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
 
   const pay = async () => {
     if (payForGuestMutation.isPending || !guest) return;
+    const printWindow = invoiceApiRequest.openPrintWindow();
     try {
+      const clientSentAt = Date.now();
       const result = await payForGuestMutation.mutateAsync({
         guestId: guest.id,
+        clientSentAt,
       });
 
       const invoiceUrlFromPay = result.payload.invoice?.invoiceUrl;
       if (invoiceUrlFromPay) {
-        invoiceApiRequest.printInvoice(invoiceUrlFromPay);
+        invoiceApiRequest.printInvoice(invoiceUrlFromPay, printWindow);
         return;
       }
 
       const paidOrders = result.payload.data;
       if (paidOrders.length > 0) {
         const invoiceResult = await orderApiRequest.getOrderInvoice(paidOrders[0].id);
-        invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl);
+        invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl, printWindow);
+        return;
       }
+
+      printWindow?.close();
     } catch (error) {
+      printWindow?.close();
       handleErrorApi({ error });
     }
   };

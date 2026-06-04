@@ -52,6 +52,70 @@ const localizeOrder = (order: any, locale: 'vi' | 'en') => ({
   }
 })
 
+type SocketTimingMeta = {
+  clientSentAt?: number
+  serverReceivedAt: number
+  serverEmittedAt: number
+}
+
+const readClientSentAt = (headers: Record<string, unknown>) => {
+  const rawHeader = headers['x-client-sent-at']
+  const rawValue = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader
+  const parsed = Number(rawValue)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+const buildSocketTimingMeta = ({
+  headers,
+  receivedAt,
+}: {
+  headers: Record<string, unknown>
+  receivedAt: number
+}): SocketTimingMeta => {
+  const clientSentAt = readClientSentAt(headers)
+  const serverEmittedAt = Date.now()
+
+  if (clientSentAt !== undefined) {
+    console.groupCollapsed(`[realtime][guest/orders] timing`)
+    console.table([
+      {
+        metric: 'clientSentAt',
+        value: clientSentAt,
+        human: new Date(clientSentAt).toLocaleTimeString(),
+      },
+      {
+        metric: 'serverReceivedAt',
+        value: receivedAt,
+        human: new Date(receivedAt).toLocaleTimeString(),
+      },
+      {
+        metric: 'serverEmittedAt',
+        value: serverEmittedAt,
+        human: new Date(serverEmittedAt).toLocaleTimeString(),
+      },
+      {
+        metric: 'client -> server delta',
+        value: `${receivedAt - clientSentAt} ms`,
+      },
+      {
+        metric: 'server processing + emit delta',
+        value: `${serverEmittedAt - receivedAt} ms`,
+      },
+      {
+        metric: 'end-to-end delta so far',
+        value: `${serverEmittedAt - clientSentAt} ms`,
+      },
+    ])
+    console.groupEnd()
+  }
+
+  return {
+    clientSentAt,
+    serverReceivedAt: receivedAt,
+    serverEmittedAt,
+  }
+}
+
 export default async function guestRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.post<{ Reply: GuestLoginResType; Body: GuestLoginBodyType }>(
     '/auth/login',
@@ -144,9 +208,14 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
     async (request, reply) => {
       const locale = resolveContentLocale(request.headers as Record<string, unknown>)
       const guestId = request.decodedAccessToken?.userId as number
+      const serverReceivedAt = Date.now()
       const result = await guestCreateOrdersController(guestId, request.body)
-      fastify.io.to(ManagerRoom).emit('new-order', result)
-      fastify.io.to(ManagerRoom).emit('table-update')
+      const newOrderTiming = buildSocketTimingMeta({
+        headers: request.headers as Record<string, unknown>,
+        receivedAt: serverReceivedAt,
+      })
+      fastify.io.to(ManagerRoom).emit('new-order', result, newOrderTiming)
+      fastify.io.to(ManagerRoom).emit('table-update', undefined, newOrderTiming)
       reply.send({
         message: 'Đặt món thành công',
         data: result.map((order) => localizeOrder(order, locale))

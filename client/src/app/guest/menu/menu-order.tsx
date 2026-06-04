@@ -55,11 +55,17 @@ export default function MenuOrder() {
   };
 
   const handleOrder = async () => {
+    const clientSentAt = Date.now();
+    const timingLabel = `guest-order:${clientSentAt}`;
     try {
-      await mutateAsync(orders);
+      console.time(timingLabel);
+      console.log(`[realtime][client][guest/orders] send at ${clientSentAt}`);
+      await mutateAsync({ orders, clientSentAt });
       router.push(withLocalePath("/guest/orders"));
     } catch (error) {
       handleErrorApi({ error });
+    } finally {
+      console.timeEnd(timingLabel);
     }
   };
 

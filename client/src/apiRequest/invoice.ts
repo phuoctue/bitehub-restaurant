@@ -14,22 +14,30 @@ const getInvoiceAbsoluteUrl = (invoiceUrl: string) => {
   return `${envConfig.NEXT_PUBLIC_API_ENDPOINT}${normalizedInvoicePath}`
 }
 
+const printOpenedInvoiceWindow = (printWindow: Window, invoiceUrl: string) => {
+  printWindow.addEventListener('load', () => {
+    setTimeout(() => {
+      printWindow.print()
+    }, 300)
+  })
+  printWindow.location.href = getInvoiceAbsoluteUrl(invoiceUrl)
+}
+
 export const invoiceApiRequest = {
   // Download invoice PDF
   downloadInvoice: (invoiceUrl: string) => {
     window.open(getInvoiceAbsoluteUrl(invoiceUrl), '_blank')
   },
 
+  openPrintWindow: () => {
+    return window.open('about:blank', 'print', 'width=800,height=600')
+  },
+
   // Print invoice
-  printInvoice: (invoiceUrl: string) => {
-    const printWindow = window.open(getInvoiceAbsoluteUrl(invoiceUrl), 'print', 'width=800,height=600')
+  printInvoice: (invoiceUrl: string, existingPrintWindow?: Window | null) => {
+    const printWindow = existingPrintWindow ?? window.open('about:blank', 'print', 'width=800,height=600')
     if (printWindow) {
-      // Delay a little to make sure PDF viewer is ready before printing.
-      printWindow.addEventListener('load', () => {
-        setTimeout(() => {
-          printWindow.print()
-        }, 300)
-      })
+      printOpenedInvoiceWindow(printWindow, invoiceUrl)
     }
   }
 }

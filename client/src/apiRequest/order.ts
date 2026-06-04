@@ -17,9 +17,20 @@ import { toDate } from "date-fns";
 import queryString from "query-string";
 import { number } from "zod";
 
+type TimingOptions = {
+  clientSentAt?: number;
+};
+
 const orderApiRequest = {
-  createOrders: (body: CreateOrdersBodyType) =>
-    http.post<CreateOrdersResType>("/orders", body),
+  createOrders: (body: CreateOrdersBodyType, options?: TimingOptions) =>
+    http.post<CreateOrdersResType>("/orders", body, {
+      headers:
+        options?.clientSentAt !== undefined
+          ? {
+              "x-client-sent-at": String(options.clientSentAt),
+            }
+          : undefined,
+    }),
   getOrderList: (queryParams: GetOrdersQueryParamsType) =>
     http.get<GetOrdersResType>(
       "/orders?" +
@@ -28,14 +39,32 @@ const orderApiRequest = {
           toDate: queryParams.toDate?.toISOString(),
         }),
     ),
-  updateOrder: (orderId: number, body: UpdateOrderBodyType) =>
-    http.put<UpdateOrderResType>(`/orders/${orderId}`, body),
+  updateOrder: (
+    orderId: number,
+    body: UpdateOrderBodyType,
+    options?: TimingOptions,
+  ) =>
+    http.put<UpdateOrderResType>(`/orders/${orderId}`, body, {
+      headers:
+        options?.clientSentAt !== undefined
+          ? {
+              "x-client-sent-at": String(options.clientSentAt),
+            }
+          : undefined,
+    }),
   getOrderDetail: (orderId: number) =>
     http.get<GetOrderDetailResType>(`/orders/${orderId}`),
   getOrderInvoice: (orderId: number) =>
     http.get<GetOrderInvoiceResType>(`/orders/${orderId}/invoice`),
-  payGuestOrders: (body: PayGuestOrdersBodyType) =>
-    http.post<PayGuestOrdersResType>("/orders/pay", body),
+  payGuestOrders: (body: PayGuestOrdersBodyType, options?: TimingOptions) =>
+    http.post<PayGuestOrdersResType>("/orders/pay", body, {
+      headers:
+        options?.clientSentAt !== undefined
+          ? {
+              "x-client-sent-at": String(options.clientSentAt),
+            }
+          : undefined,
+    }),
 };
 
 export default orderApiRequest;
