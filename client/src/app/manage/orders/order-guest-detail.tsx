@@ -29,37 +29,12 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
 
   const pay = async () => {
     if (payForGuestMutation.isPending || !guest) return;
-<<<<<<< Updated upstream
-    const clientSentAt = Date.now();
-    const timingLabel = `staff-pay-guest:${guest.id}:${clientSentAt}`;
+    const printWindow = invoiceApiRequest.openPrintWindow();
     try {
-      console.time(timingLabel);
-      console.log(`[realtime][client][staff/orders/pay] send at ${clientSentAt}`);
+      const clientSentAt = Date.now();
       const result = await payForGuestMutation.mutateAsync({
         guestId: guest.id,
         clientSentAt,
-      });
-
-      const invoiceUrlFromPay = result.payload.invoice?.invoiceUrl;
-      if (invoiceUrlFromPay) {
-        invoiceApiRequest.printInvoice(invoiceUrlFromPay);
-        return;
-      }
-
-      const paidOrders = result.payload.data;
-      if (paidOrders.length > 0) {
-        const invoiceResult = await orderApiRequest.getOrderInvoice(paidOrders[0].id);
-        invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl);
-      }
-    } catch (error) {
-      handleErrorApi({ error });
-    } finally {
-      console.timeEnd(timingLabel);
-=======
-    const printWindow = invoiceApiRequest.openPrintWindow();
-    try {
-      const result = await payForGuestMutation.mutateAsync({
-        guestId: guest.id,
       });
 
       const invoiceUrlFromPay = result.payload.invoice?.invoiceUrl;
@@ -79,7 +54,6 @@ export default function OrderGuestDetail({ guest, orders }: { guest: Guest; orde
     } catch (error) {
       printWindow?.close();
       handleErrorApi({ error });
->>>>>>> Stashed changes
     }
   };
 

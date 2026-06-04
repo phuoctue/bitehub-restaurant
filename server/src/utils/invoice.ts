@@ -40,11 +40,8 @@ const resolveInvoiceFonts = () => {
     path.join(__dirname, '../assets/fonts/Geist-Regular.ttf'),
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans.ttf'),
-<<<<<<< Updated upstream
     path.join(__dirname, '../assets/fonts/DejaVuSans.ttf'),
-=======
     '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
->>>>>>> Stashed changes
     '/usr/share/fonts/dejavu/DejaVuSans.ttf',
     '/usr/share/fonts/TTF/DejaVuSans.ttf',
     '/usr/local/share/fonts/DejaVuSans.ttf',
@@ -57,11 +54,8 @@ const resolveInvoiceFonts = () => {
     path.join(__dirname, '../assets/fonts/Geist-Bold.ttf'),
     path.join(process.cwd(), 'src/assets/fonts/DejaVuSans-Bold.ttf'),
     path.join(process.cwd(), 'assets/fonts/DejaVuSans-Bold.ttf'),
-<<<<<<< Updated upstream
     path.join(__dirname, '../assets/fonts/DejaVuSans-Bold.ttf'),
-=======
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
->>>>>>> Stashed changes
     '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
     '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
     '/usr/local/share/fonts/DejaVuSans-Bold.ttf',
@@ -73,15 +67,7 @@ const resolveInvoiceFonts = () => {
   const regular = regularCandidates.find((fontPath) => fs.existsSync(fontPath))
   const bold = boldCandidates.find((fontPath) => fs.existsSync(fontPath)) || regular
 
-<<<<<<< Updated upstream
-  if (!regular) {
-    throw new Error('Cannot find Unicode fonts for PDF invoice rendering')
-  }
-
-  return { regular, bold }
-=======
   return regular && bold ? { regular, bold } : null
->>>>>>> Stashed changes
 }
 
 export const generateInvoiceNumber = (): string => {
