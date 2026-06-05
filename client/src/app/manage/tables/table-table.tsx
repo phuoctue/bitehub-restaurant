@@ -154,7 +154,7 @@ function AlertDialogDeleteTable({
   );
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 export default function TableTable() {
   const t = useTranslations("ManageTables");
   const columns = useMemo(() => createColumns(t), [t]);
@@ -213,19 +213,65 @@ export default function TableTable() {
       <div className="w-full">
         <EditTable id={tableIdEdit} setId={setTableIdEdit} />
         <AlertDialogDeleteTable tableDelete={tableDelete} setTableDelete={setTableDelete} />
-        <div className="flex items-center py-4">
+        <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
           <Input
             placeholder={t("filterTable")}
             value={(table.getColumn("number")?.getFilterValue() as string) ?? ""}
             onChange={(event) => table.getColumn("number")?.setFilterValue(event.target.value)}
-            className="max-w-sm"
+            className="w-full sm:max-w-sm"
           />
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:ml-auto">
             <ImportTables />
             <AddTable />
           </div>
         </div>
-        <div className="rounded-md border overflow-x-auto">
+        <div className="grid gap-3 md:hidden">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const item = row.original;
+              return (
+                <div key={row.id} className="rounded-md border bg-background p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm text-muted-foreground">{t("table")}</div>
+                      <div className="text-2xl font-semibold">{item.number}</div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">{t("openMenu")}</span>
+                          <DotsHorizontalIcon className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setTableIdEdit(item.number)}>{t("edit")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTableDelete(item)}>{t("delete")}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">{t("capacity")}</div>
+                      <div className="font-medium">{item.capacity}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">{t("statusLabel")}</div>
+                      <div className="font-medium">{t(`status.${item.status}`)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-center rounded-md border bg-white p-3">
+                    <QRCodeTable token={item.token} tableNumber={item.number} width={160} />
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="rounded-md border p-6 text-center text-sm text-muted-foreground">{t("noResults")}</div>
+          )}
+        </div>
+        <div className="hidden rounded-md border overflow-x-auto md:block">
           <Table className="min-w-[700px] md:min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (

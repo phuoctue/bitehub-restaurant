@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { SheetClose } from "@/components/ui/sheet";
 import { Role } from "@/constants/type";
 import { cn, handleErrorApi } from "@/lib/utils";
 import { useLogoutMutation } from "@/queries/useAuth";
@@ -29,7 +30,13 @@ type MenuItem = {
   hideWhenLogin?: boolean;
 };
 
-export default function NavItems({ className }: { className?: string }) {
+export default function NavItems({
+  className,
+  closeOnClick = false,
+}: {
+  className?: string;
+  closeOnClick?: boolean;
+}) {
   const t = useTranslations("PublicNav");
   const role = useAppStore((state) => state.role);
   const setRole = useAppStore((state) => state.setRole);
@@ -78,7 +85,17 @@ export default function NavItems({ className }: { className?: string }) {
           (!item.hideWhenLogin || (item.hideWhenLogin && !role));
 
         if (isRoleAuthorized || isPublicVisible) {
-          return (
+          const link = (
+            <Link href={item.href} className={className}>
+              {item.title}
+            </Link>
+          );
+
+          return closeOnClick ? (
+            <SheetClose asChild key={item.href}>
+              {link}
+            </SheetClose>
+          ) : (
             <Link href={item.href} key={item.href} className={className}>
               {item.title}
             </Link>
