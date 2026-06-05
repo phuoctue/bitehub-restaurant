@@ -60,74 +60,74 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
     throw new Error(`Bàn ${table.number} gắn liền với khách hàng đã bị ẩn, vui lòng chọn khách hàng khác!`)
   }
 
-  const [ordersRecord, socketRecord] = await Promise.all([
-    prisma.$transaction(async (tx) => {
-      const ordersRecord = []
-      for (const order of orders) {
-        const dish = await tx.dish.findUniqueOrThrow({
-          where: {
-            id: order.dishId
-          }
-        })
-        if (dish.status === DishStatus.Unavailable) {
-          throw new Error(`Món ${dish.name} đã hết`)
-        }
-        if (dish.status === DishStatus.Hidden) {
-          throw new Error(`Món ${dish.name} không thể đặt`)
-        }
-        const dishSnapshot = await tx.dishSnapshot.create({
-          data: {
-            description: dish.description,
-            descriptionEn: dish.descriptionEn,
-            image: dish.image,
-            name: dish.name,
-            nameEn: dish.nameEn,
-            price: dish.price,
-            dishId: dish.id,
-            status: dish.status
-          }
-        })
-        const orderRecord = await tx.order.create({
-          data: {
-            dishSnapshotId: dishSnapshot.id,
-            guestId,
-            quantity: order.quantity,
-            tableNumber: guest.tableNumber,
-            orderHandlerId,
-            status: OrderStatus.Pending
-          },
-          include: {
-            dishSnapshot: true,
-            guest: true,
-            orderHandler: true
-          }
-        })
-        type OrderRecord = typeof orderRecord
-        ordersRecord.push(
-          orderRecord as OrderRecord & {
-            status: (typeof OrderStatus)[keyof typeof OrderStatus]
-            dishSnapshot: OrderRecord['dishSnapshot'] & {
-              status: (typeof DishStatus)[keyof typeof DishStatus]
-            }
-          }
-        )
-      }
-      await tx.table.update({
+  const ordersRecord = await prisma.$transaction(async (tx) => {
+    const ordersRecord = []
+    for (const order of orders) {
+      const dish = await tx.dish.findUniqueOrThrow({
         where: {
-          number: guest.tableNumber!
-        },
-        data: {
-          status: TableStatus.Reserved
+          id: order.dishId
         }
       })
-      return ordersRecord
-    }),
-    prisma.socket.findUnique({
+      if (dish.status === DishStatus.Unavailable) {
+        throw new Error(`Món ${dish.name} đã hết`)
+      }
+      if (dish.status === DishStatus.Hidden) {
+        throw new Error(`Món ${dish.name} không thể đặt`)
+      }
+      const dishSnapshot = await tx.dishSnapshot.create({
+        data: {
+          description: dish.description,
+          descriptionEn: dish.descriptionEn,
+          image: dish.image,
+          name: dish.name,
+          nameEn: dish.nameEn,
+          price: dish.price,
+          dishId: dish.id,
+          status: dish.status
+        }
+      })
+      const orderRecord = await tx.order.create({
+        data: {
+          dishSnapshotId: dishSnapshot.id,
+          guestId,
+          quantity: order.quantity,
+          tableNumber: guest.tableNumber,
+          orderHandlerId,
+          status: OrderStatus.Pending
+        },
+        include: {
+          dishSnapshot: true,
+          guest: true,
+          orderHandler: true
+        }
+      })
+      type OrderRecord = typeof orderRecord
+      ordersRecord.push(
+        orderRecord as OrderRecord & {
+          status: (typeof OrderStatus)[keyof typeof OrderStatus]
+          dishSnapshot: OrderRecord['dishSnapshot'] & {
+            status: (typeof DishStatus)[keyof typeof DishStatus]
+          }
+        }
+      )
+    }
+    await tx.table.update({
       where: {
-        guestId: body.guestId
+        number: guest.tableNumber!
+      },
+      data: {
+        status: TableStatus.Reserved
       }
     })
-  ])
+    return ordersRecord
+  })
+
+  const socketRecord = await prisma.socket.findUnique({
+    where: {
+      guestId: body.guestId
+    }
+  })
+
   return {
     orders: ordersRecord,
     socketId: socketRecord?.socketId

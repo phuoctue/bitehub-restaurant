@@ -210,11 +210,22 @@ export default function AppProvider({
     if (count.current == 0) {
       const accessToken = getAccessTokenFromLocalStorage();
       if (accessToken) {
-        const role = decodeToken(accessToken).role;
-        setRole(role);
-        generateSocketInstance(accessToken).then((nextSocket) => {
-          setSocket(nextSocket);
-        });
+        try {
+          const decoded = decodeToken(accessToken);
+          const now = Math.floor(Date.now() / 1000);
+
+          if (decoded.exp <= now) {
+            removeTokensFromLocalStorage();
+          } else {
+            const role = decoded.role;
+            setRole(role);
+            generateSocketInstance(accessToken).then((nextSocket) => {
+              setSocket(nextSocket);
+            });
+          }
+        } catch {
+          removeTokensFromLocalStorage();
+        }
       }
       count.current++;
     }

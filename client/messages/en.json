@@ -75,7 +75,7 @@
                                                    "description":  "List of 5 latest invoices (last 7 days)",
                                                    "empty":  "No invoices yet",
                                                    "guestFallback":  "Customer",
-                                                   "meta":  "Table {table} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {count} dishes ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {dateTime}",
+                                                   "meta":  "Table {table} • {count} dishes • {dateTime}",
                                                    "downloadTitle":  "Download invoice",
                                                    "printTitle":  "Print invoice"
                                                }
