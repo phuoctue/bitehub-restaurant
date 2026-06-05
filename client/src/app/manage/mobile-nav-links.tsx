@@ -3,7 +3,7 @@
 import { getMenuItems } from "@/app/manage/menuItems";
 import { useAppStore } from "@/components/app-provider";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Package2, PanelLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,7 +24,7 @@ export default function MobileNavLinks() {
           <span className="sr-only">{t("toggleMenu")}</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="sm:max-w-xs">
+      <SheetContent side="left" className="w-72 sm:max-w-xs">
         <nav className="grid gap-6 text-lg font-medium">
           <div className="sr-only">
             <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
@@ -40,9 +40,8 @@ export default function MobileNavLinks() {
           {menuItems.map((item, index) => {
             const isActive = pathname === item.href;
             if (!item.roles?.includes(role as never)) return null;
-            return (
+            const link = (
               <Link
-                key={index}
                 href={item.href}
                 className={cn("flex items-center gap-4 px-2.5 hover:text-foreground", {
                   "text-foreground": isActive,
@@ -52,6 +51,11 @@ export default function MobileNavLinks() {
                 <item.Icon className="h-5 w-5" />
                 {item.title}
               </Link>
+            );
+            return (
+              <SheetClose asChild key={item.href}>
+                {link}
+              </SheetClose>
             );
           })}
         </nav>

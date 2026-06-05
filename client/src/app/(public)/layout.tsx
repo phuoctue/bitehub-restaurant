@@ -60,7 +60,10 @@ export default function Layout({
                   <span className="sr-only">BiteHub</span>
                 </Link>
 
-                <NavItems className="text-muted-foreground transition-colors hover:text-foreground" />
+                <NavItems
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  closeOnClick
+                />
               </nav>
             </SheetContent>
           </Sheet>

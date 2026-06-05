@@ -164,7 +164,7 @@ function AlertDialogDeleteAccount({
   );
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 export default function AccountTable() {
   const t = useTranslations("ManageAccounts");
   const role = useAppStore((state) => state.role);
@@ -223,20 +223,64 @@ export default function AccountTable() {
       <div className="w-full">
         {canManageEmployees && <EditEmployee id={employeeIdEdit} setId={setEmployeeIdEdit} onSubmitSuccess={() => {}} />}
         {canManageEmployees && <AlertDialogDeleteAccount employeeDelete={employeeDelete} setEmployeeDelete={setEmployeeDelete} />}
-        <div className="flex items-center py-4">
+        <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
           <Input
             placeholder={t("filterEmails")}
             value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
             onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
-            className="max-w-sm"
+            className="w-full sm:max-w-sm"
           />
           {canManageEmployees && (
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:ml-auto">
               <AddEmployee />
             </div>
           )}
         </div>
-        <div className="rounded-md border overflow-x-auto">
+        <div className="grid gap-3 md:hidden">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const item = row.original;
+              return (
+                <div key={row.id} className="rounded-md border bg-background p-3 shadow-sm">
+                  <div className="flex gap-3">
+                    <Avatar className="h-20 w-20 shrink-0 rounded-md">
+                      <AvatarImage src={item.avatar ?? undefined} />
+                      <AvatarFallback className="rounded-md text-xs">{item.name}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="line-clamp-2 font-medium">{item.name}</div>
+                          <div className="truncate text-sm text-muted-foreground">{item.email}</div>
+                        </div>
+                        {canManageEmployees && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 shrink-0 p-0">
+                                <span className="sr-only">{t("openMenu")}</span>
+                                <DotsHorizontalIcon className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setEmployeeIdEdit(item.id)}>{t("edit")}</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEmployeeDelete(item)}>{t("delete")}</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">ID #{item.id}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="rounded-md border p-6 text-center text-sm text-muted-foreground">{t("noResults")}</div>
+          )}
+        </div>
+        <div className="hidden rounded-md border overflow-x-auto md:block">
           <Table className="min-w-[700px] md:min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
