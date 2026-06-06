@@ -7,14 +7,6 @@ config({
   path: '.env'
 })
 
-const checkEnv = async () => {
-  const chalk = (await import('chalk')).default
-  if (!fs.existsSync(path.resolve('.env'))) {
-    console.log(chalk.red(`Không tìm thấy file môi trường .env`))
-    process.exit(1)
-  }
-}
-checkEnv()
 
 const configSchema = z.object({
   PORT: z.coerce.number().default(4000),
