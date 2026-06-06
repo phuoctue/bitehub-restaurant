@@ -1,6 +1,7 @@
 import { DashboardIndicatorQueryParamsType } from '@/schemaValidations/indicator.schema'
 import prisma from '@/database'
 import { startOfDay, endOfDay } from 'date-fns'
+import { Prisma } from '@prisma/client'
 
 export const getIndicatorsController = async (queryParams: DashboardIndicatorQueryParamsType) => {
   const { fromDate, toDate } = queryParams

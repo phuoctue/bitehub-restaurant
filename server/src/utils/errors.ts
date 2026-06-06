@@ -30,6 +30,6 @@ export class StatusError extends Error {
   }
 }
 
-export function isPrismaClientKnownRequestError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError
+export function isPrismaClientKnownRequestError(error: unknown): error is any {
+  return error instanceof Error && 'code' in error
 }
