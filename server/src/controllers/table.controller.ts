@@ -10,7 +10,7 @@ import z from 'zod'
 export const getTableList = () => {
   return prisma.table.findMany({
     orderBy: {
-      createdAt: 'desc'
+      number: 'asc'
     }
   })
 }

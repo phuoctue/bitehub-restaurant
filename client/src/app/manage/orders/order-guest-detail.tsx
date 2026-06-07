@@ -66,6 +66,7 @@ export default function OrderGuestDetail({ guest, orders, onOrderDeleted }: { gu
 
   const pay = async () => {
     if (payForGuestMutation.isPending || !guest) return;
+    const printPopup = invoiceApiRequest.openPrintWindow();
     try {
       const clientSentAt = Date.now();
       const result = await payForGuestMutation.mutateAsync({
@@ -75,18 +76,19 @@ export default function OrderGuestDetail({ guest, orders, onOrderDeleted }: { gu
 
       const invoiceUrlFromPay = result.payload.invoice?.invoiceUrl;
       if (invoiceUrlFromPay) {
-        invoiceApiRequest.printInvoice(invoiceUrlFromPay);
+        invoiceApiRequest.printInvoice(invoiceUrlFromPay, printPopup);
         return;
       }
 
       const paidOrders = result.payload.data;
       if (paidOrders.length > 0) {
         const invoiceResult = await orderApiRequest.getOrderInvoice(paidOrders[0].id);
-        invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl);
+        invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl, printPopup);
         return;
       }
     } catch (error) {
       handleErrorApi({ error });
+      printPopup?.close();
     }
   };
 

@@ -16,6 +16,7 @@ export const useGuestLogoutMutation = () => {
 
 export const useGuestOrderMuatation = () => {
   const queryClient = useQueryClient();
+  const locale = useLocale();
 
   return useMutation({
     mutationFn: ({
@@ -25,7 +26,20 @@ export const useGuestOrderMuatation = () => {
       orders: Parameters<typeof guestApiRequest.order>[0];
       clientSentAt?: number;
     }) => guestApiRequest.order(orders, { clientSentAt }),
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      queryClient.setQueryData(["guest-orders", locale], (oldData: any) => {
+        const existingOrders = oldData?.payload?.data ?? [];
+        const createdOrders = result.payload?.data ?? [];
+
+        return {
+          ...result,
+          payload: {
+            ...result.payload,
+            data: [...existingOrders, ...createdOrders],
+          },
+        };
+      });
+
       await queryClient.invalidateQueries({
         queryKey: ["guest-orders"],
       });

@@ -14,42 +14,113 @@ const getInvoiceAbsoluteUrl = (invoiceUrl: string) => {
   return `${envConfig.NEXT_PUBLIC_API_ENDPOINT}${normalizedInvoicePath}`
 }
 
-const printPdfWithIframe = (invoiceUrl: string) => {
+const buildInvoicePopupFeatures = () =>
+  'width=480,height=720,left=80,top=80,resizable=yes,scrollbars=yes'
+
+export const createInvoicePrintPopup = (url = 'about:blank') =>
+  window.open(url, 'invoice-print', buildInvoicePopupFeatures())
+
+const renderBlobInvoiceInPopup = async (
+  invoiceUrl: string,
+  popup: Window | null = null,
+) => {
   try {
     const absoluteUrl = getInvoiceAbsoluteUrl(invoiceUrl)
-    
-    // Create a hidden iframe
-    const iframe = document.createElement('iframe')
-    iframe.style.display = 'none'
-    iframe.src = absoluteUrl
-    
-    // Handle print after iframe loads
-    iframe.onload = () => {
+
+    const nextPopup = popup ?? createInvoicePrintPopup()
+    if (!nextPopup) {
+      window.open(absoluteUrl, '_blank')
+      return
+    }
+
+    nextPopup.document.open()
+    nextPopup.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>Invoice Preview</title>
+          <style>
+            html, body {
+              margin: 0;
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+              background: #fff;
+            }
+            .loading {
+              display: grid;
+              place-items: center;
+              width: 100%;
+              height: 100%;
+              font-family: system-ui, sans-serif;
+              font-size: 14px;
+              color: #111827;
+            }
+            iframe {
+              border: 0;
+              width: 100%;
+              height: 100%;
+              display: none;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="loading">Đang tải hóa đơn...</div>
+          <iframe id="invoice-frame"></iframe>
+        </body>
+      </html>
+    `)
+    nextPopup.document.close()
+
+    const response = await fetch(absoluteUrl, {
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch invoice PDF: ${response.status}`)
+    }
+
+    const pdfBlob = await response.blob()
+    const blobUrl = URL.createObjectURL(pdfBlob)
+    const frame = nextPopup.document.getElementById('invoice-frame') as HTMLIFrameElement | null
+    const loading = nextPopup.document.querySelector('.loading') as HTMLElement | null
+
+    if (!frame) {
+      throw new Error('Invoice frame is missing')
+    }
+
+    frame.src = blobUrl
+    frame.style.display = 'block'
+    if (loading) {
+      loading.style.display = 'none'
+    }
+
+    const revokeBlobUrl = () => {
+      URL.revokeObjectURL(blobUrl)
+    }
+
+    frame.onload = () => {
       try {
+        nextPopup.focus()
         setTimeout(() => {
-          iframe.contentWindow?.print()
-        }, 500)
+          try {
+            nextPopup.print()
+          } catch (error) {
+            console.error('Failed to print invoice:', error)
+          } finally {
+            setTimeout(revokeBlobUrl, 5000)
+          }
+        }, 600)
       } catch (error) {
-        console.error('Failed to print from iframe:', error)
+        console.error('Failed to prepare invoice print popup:', error)
+        revokeBlobUrl()
       }
     }
-    
-    // Handle errors
-    iframe.onerror = () => {
-      console.error('Failed to load PDF in iframe')
-      document.body.removeChild(iframe)
+
+    frame.onerror = () => {
+      console.error('Failed to load invoice PDF in popup')
+      revokeBlobUrl()
     }
-    
-    document.body.appendChild(iframe)
-    
-    // Clean up iframe after printing (with delay to allow print dialog)
-    setTimeout(() => {
-      try {
-        document.body.removeChild(iframe)
-      } catch (error) {
-        console.error('Error removing iframe:', error)
-      }
-    }, 5000)
   } catch (error) {
     console.error('Failed to open print window:', error)
   }
@@ -61,12 +132,10 @@ export const invoiceApiRequest = {
     window.open(getInvoiceAbsoluteUrl(invoiceUrl), '_blank')
   },
 
-  openPrintWindow: () => {
-    return window.open('about:blank', 'print', 'width=800,height=600')
-  },
+  openPrintWindow: createInvoicePrintPopup,
 
   // Print invoice using iframe
-  printInvoice: (invoiceUrl: string) => {
-    printPdfWithIframe(invoiceUrl)
+  printInvoice: (invoiceUrl: string, popup?: Window | null) => {
+    void renderBlobInvoiceInPopup(invoiceUrl, popup ?? null)
   }
 }

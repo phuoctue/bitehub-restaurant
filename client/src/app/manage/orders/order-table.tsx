@@ -41,6 +41,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import orderApiRequest from "@/apiRequest/order";
 import { useInvoice } from "@/queries/useInvoice";
+import { invoiceApiRequest } from "@/apiRequest/invoice";
 
 export const OrderTableContext = createContext({
   setOrderIdEdit: (_value: number | undefined) => {},
@@ -82,8 +83,19 @@ export default function OrderTable() {
   const orderTableColumns = orderTableColumnsFactory(t);
   const [pagination, setPagination] = useState({ pageIndex, pageSize: PAGE_SIZE });
   const updateOrderMutation = useUpdateOrderMutation();
-  const { printInvoice, downloadInvoice, isDownloading } = useInvoice();
+  const { downloadInvoice, isDownloading } = useInvoice();
   const { statics, orderObjectByGuestId, servingGuestByTableNumber } = useOrderService(orderList);
+
+  const printOrderInvoice = async (orderId: number) => {
+    const printPopup = invoiceApiRequest.openPrintWindow();
+    try {
+      const invoiceResult = await orderApiRequest.getOrderInvoice(orderId);
+      invoiceApiRequest.printInvoice(invoiceResult.payload.data.invoiceUrl, printPopup);
+    } catch (error) {
+      printPopup?.close();
+      handleErrorApi({ error });
+    }
+  };
 
   const changeStatus = async (body: { orderId: number; dishId: number; status: (typeof OrderStatusValues)[number]; quantity: number }) => {
     const clientSentAt = Date.now();
@@ -343,14 +355,7 @@ export default function OrderTable() {
                               variant="outline"
                               size="sm"
                               disabled={isDownloading}
-                              onClick={async () => {
-                                try {
-                                  const invoiceResult = await orderApiRequest.getOrderInvoice(order.id);
-                                  printInvoice(invoiceResult.payload.data.invoiceUrl);
-                                } catch (error) {
-                                  handleErrorApi({ error });
-                                }
-                              }}
+                              onClick={() => printOrderInvoice(order.id)}
                             >
                               Print
                             </Button>
