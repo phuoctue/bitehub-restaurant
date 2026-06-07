@@ -5,7 +5,8 @@ import {
   getOrderDetailController,
   getOrdersController,
   payOrdersController,
-  updateOrderController
+  updateOrderController,
+  deleteOrderController
 } from '@/controllers/order.controller'
 import { requireLoginedHook, requireStaffHook } from '@/hooks/auth.hooks'
 import {
@@ -61,7 +62,7 @@ const readClientSentAt = (headers: Record<string, unknown>) => {
 const buildSocketTimingMeta = ({
   headers,
   receivedAt,
-  eventName,
+  eventName
 }: {
   headers: Record<string, unknown>
   receivedAt: number
@@ -76,30 +77,30 @@ const buildSocketTimingMeta = ({
       {
         metric: 'clientSentAt',
         value: clientSentAt,
-        human: new Date(clientSentAt).toLocaleTimeString(),
+        human: new Date(clientSentAt).toLocaleTimeString()
       },
       {
         metric: 'serverReceivedAt',
         value: receivedAt,
-        human: new Date(receivedAt).toLocaleTimeString(),
+        human: new Date(receivedAt).toLocaleTimeString()
       },
       {
         metric: 'serverEmittedAt',
         value: serverEmittedAt,
-        human: new Date(serverEmittedAt).toLocaleTimeString(),
+        human: new Date(serverEmittedAt).toLocaleTimeString()
       },
       {
         metric: 'client -> server delta',
-        value: `${receivedAt - clientSentAt} ms`,
+        value: `${receivedAt - clientSentAt} ms`
       },
       {
         metric: 'server processing + emit delta',
-        value: `${serverEmittedAt - receivedAt} ms`,
+        value: `${serverEmittedAt - receivedAt} ms`
       },
       {
         metric: 'end-to-end delta so far',
-        value: `${serverEmittedAt - clientSentAt} ms`,
-      },
+        value: `${serverEmittedAt - clientSentAt} ms`
+      }
     ])
     console.groupEnd()
   }
@@ -107,7 +108,7 @@ const buildSocketTimingMeta = ({
   return {
     clientSentAt,
     serverReceivedAt: receivedAt,
-    serverEmittedAt,
+    serverEmittedAt
   }
 }
 
@@ -133,7 +134,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       const newOrderTiming = buildSocketTimingMeta({
         headers: request.headers as Record<string, unknown>,
         receivedAt: serverReceivedAt,
-        eventName: 'new-order',
+        eventName: 'new-order'
       })
       if (socketId) {
         fastify.io.to(ManagerRoom).to(socketId).emit('new-order', orders, newOrderTiming)
@@ -232,7 +233,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       const updateOrderTiming = buildSocketTimingMeta({
         headers: request.headers as Record<string, unknown>,
         receivedAt: serverReceivedAt,
-        eventName: 'update-order',
+        eventName: 'update-order'
       })
       if (result.socketId) {
         fastify.io.to(result.socketId).to(ManagerRoom).emit('update-order', result.order, updateOrderTiming)
@@ -242,6 +243,38 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       fastify.io.to(ManagerRoom).emit('table-update', undefined, updateOrderTiming)
       reply.send({
         message: 'Cập nhật đơn hàng thành công',
+        data: result.order as UpdateOrderResType['data']
+      })
+    }
+  )
+
+  fastify.delete<{ Reply: UpdateOrderResType; Params: OrderParamType }>(
+    '/:orderId',
+    {
+      schema: {
+        response: {
+          200: UpdateOrderRes
+        },
+        params: OrderParam
+      },
+      preValidation: fastify.auth([requireLoginedHook, requireStaffHook])
+    },
+    async (request, reply) => {
+      const serverReceivedAt = Date.now()
+      const result = await deleteOrderController(request.params.orderId)
+      const deleteOrderTiming = buildSocketTimingMeta({
+        headers: request.headers as Record<string, unknown>,
+        receivedAt: serverReceivedAt,
+        eventName: 'delete-order'
+      })
+      if (result.socketId) {
+        fastify.io.to(result.socketId).to(ManagerRoom).emit('delete-order', result.order, deleteOrderTiming)
+      } else {
+        fastify.io.to(ManagerRoom).emit('delete-order', result.order, deleteOrderTiming)
+      }
+      fastify.io.to(ManagerRoom).emit('table-update', undefined, deleteOrderTiming)
+      reply.send({
+        message: 'Xóa đơn hàng thành công',
         data: result.order as UpdateOrderResType['data']
       })
     }
@@ -269,7 +302,7 @@ export default async function orderRoutes(fastify: FastifyInstance, options: Fas
       const paymentTiming = buildSocketTimingMeta({
         headers: request.headers as Record<string, unknown>,
         receivedAt: serverReceivedAt,
-        eventName: 'payment',
+        eventName: 'payment'
       })
       if (result.socketId) {
         fastify.io.to(result.socketId).to(ManagerRoom).emit('payment', result.orders, paymentTiming)

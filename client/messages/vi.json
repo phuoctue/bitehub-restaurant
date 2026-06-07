@@ -141,6 +141,7 @@
                          "toastOrderUpdated":  "Món {dish} (SL: {quantity}) vừa được cập nhật sang trạng thái {status}",
                          "toastNewOrder":  "{guest} tại bàn {table} vừa đặt {count} đơn",
                          "toastPayment":  "{guest} tại bàn {table} thanh toán thành công {count} đơn",
+                         "confirmDelete":  "Bạn có chắc chắn muốn xóa đơn hàng này?",
                          "status":  {
                                         "Pending":  "Chờ xác nhận",
                                         "Processing":  "Đang chuẩn bị",

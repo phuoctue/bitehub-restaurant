@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { Users } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { OrderStatusIcon, cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -10,6 +10,9 @@ import { ServingGuestByTableNumber, Statics, StatusCountObject } from "@/app/man
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import OrderGuestDetail from "@/app/manage/orders/order-guest-detail";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function OrderStatics({
   statics,
@@ -24,12 +27,31 @@ export default function OrderStatics({
   const statusLabel = (status: (typeof OrderStatusValues)[number]) => t(`status.${status}`);
 
   const [selectedTableNumber, setSelectedTableNumber] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const selectedServingGuest = servingGuestByTableNumber[selectedTableNumber];
+
+  // Tính toán phân trang
+  const totalPages = Math.ceil(tableList.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTableList = tableList.slice(startIndex, endIndex);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   return (
     <Fragment>
       <Dialog
-        open={Boolean(selectedTableNumber)}
+        open={Boolean(selectedTableNumber && selectedServingGuest)}
         onOpenChange={(open) => {
           if (!open) setSelectedTableNumber(0);
         }}
@@ -46,7 +68,11 @@ export default function OrderStatics({
                 const orders = selectedServingGuest[Number(guestId)];
                 return (
                   <div key={guestId}>
-                    <OrderGuestDetail guest={orders[0].guest} orders={orders} />
+                    <OrderGuestDetail 
+                      guest={orders[0].guest} 
+                      orders={orders}
+                      onOrderDeleted={() => setSelectedTableNumber(0)}
+                    />
                     {index !== Object.keys(selectedServingGuest).length - 1 && <Separator className="my-5" />}
                   </div>
                 );
@@ -56,7 +82,7 @@ export default function OrderStatics({
       </Dialog>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 py-4">
-        {tableList.map((table) => {
+        {paginatedTableList.map((table) => {
           const tableNumber = table.number;
           const tableStatics: Record<number, StatusCountObject> | undefined = statics.table[tableNumber];
           let isEmptyTable = true;
@@ -154,6 +180,33 @@ export default function OrderStatics({
           );
         })}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <div className="text-sm">
+            {currentPage} / {totalPages}
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <div className="flex justify-start items-center gap-2 flex-wrap py-4">
         {OrderStatusValues.map((status) => (
