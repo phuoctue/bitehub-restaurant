@@ -23,6 +23,7 @@ COPY package*.json ./
 RUN apk add --no-cache font-dejavu openssl
 RUN npm ci --omit=dev
 
+# Copy Prisma engines
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
