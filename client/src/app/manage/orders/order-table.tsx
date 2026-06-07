@@ -150,13 +150,19 @@ export default function OrderTable() {
       refetchOrderList();
     }
 
+    function onDeleteOrder(data: UpdateOrderResType["data"]) {
+      refetchOrderList();
+    }
+
     socket?.on("update-order", onUpdateOrder);
     socket?.on("new-order", onNewOrder);
     socket?.on("payment", onPayment);
+    socket?.on("delete-order", onDeleteOrder);
     return () => {
       socket?.off("update-order", onUpdateOrder);
       socket?.off("new-order", onNewOrder);
       socket?.off("payment", onPayment);
+      socket?.off("delete-order", onDeleteOrder);
     };
   }, [refetchOrderList, socket, t]);
 

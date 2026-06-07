@@ -61,67 +61,73 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
   }
 
   const [ordersRecord, socketRecord] = await Promise.all([
-    prisma.$transaction(async (tx) => {
-      const ordersRecord = []
-      for (const order of orders) {
-        const dish = await tx.dish.findUniqueOrThrow({
-          where: {
-            id: order.dishId
-          }
-        })
-        if (dish.status === DishStatus.Unavailable) {
-          throw new Error(`Món ${dish.name} đã hết`)
-        }
-        if (dish.status === DishStatus.Hidden) {
-          throw new Error(`Món ${dish.name} không thể đặt`)
-        }
-        const dishSnapshot = await tx.dishSnapshot.create({
-          data: {
-            description: dish.description,
-            descriptionEn: dish.descriptionEn,
-            image: dish.image,
-            name: dish.name,
-            nameEn: dish.nameEn,
-            price: dish.price,
-            dishId: dish.id,
-            status: dish.status
-          }
-        })
-        const orderRecord = await tx.order.create({
-          data: {
-            dishSnapshotId: dishSnapshot.id,
-            guestId,
-            quantity: order.quantity,
-            tableNumber: guest.tableNumber,
-            orderHandlerId,
-            status: OrderStatus.Pending
-          },
-          include: {
-            dishSnapshot: true,
-            guest: true,
-            orderHandler: true
-          }
-        })
-        type OrderRecord = typeof orderRecord
-        ordersRecord.push(
-          orderRecord as OrderRecord & {
-            status: (typeof OrderStatus)[keyof typeof OrderStatus]
-            dishSnapshot: OrderRecord['dishSnapshot'] & {
-              status: (typeof DishStatus)[keyof typeof DishStatus]
+    prisma.$transaction(
+      async (tx) => {
+        const ordersRecord = []
+        for (const order of orders) {
+          const dish = await tx.dish.findUniqueOrThrow({
+            where: {
+              id: order.dishId
             }
+          })
+          if (dish.status === DishStatus.Unavailable) {
+            throw new Error(`Món ${dish.name} đã hết`)
           }
-        )
-      }
-      await tx.table.update({
-        where: {
-          number: guest.tableNumber!
-        },
-        data: {
-          status: TableStatus.Reserved
+          if (dish.status === DishStatus.Hidden) {
+            throw new Error(`Món ${dish.name} không thể đặt`)
+          }
+          const dishSnapshot = await tx.dishSnapshot.create({
+            data: {
+              description: dish.description,
+              descriptionEn: dish.descriptionEn,
+              image: dish.image,
+              name: dish.name,
+              nameEn: dish.nameEn,
+              price: dish.price,
+              dishId: dish.id,
+              status: dish.status
+            }
+          })
+          const orderRecord = await tx.order.create({
+            data: {
+              dishSnapshotId: dishSnapshot.id,
+              guestId,
+              quantity: order.quantity,
+              tableNumber: guest.tableNumber,
+              orderHandlerId,
+              status: OrderStatus.Pending
+            },
+            include: {
+              dishSnapshot: true,
+              guest: true,
+              orderHandler: true
+            }
+          })
+          type OrderRecord = typeof orderRecord
+          ordersRecord.push(
+            orderRecord as OrderRecord & {
+              status: (typeof OrderStatus)[keyof typeof OrderStatus]
+              dishSnapshot: OrderRecord['dishSnapshot'] & {
+                status: (typeof DishStatus)[keyof typeof DishStatus]
+              }
+            }
+          )
         }
-      })
-      return ordersRecord
-    }),
+        await tx.table.update({
+          where: {
+            number: guest.tableNumber!
+          },
+          data: {
+            status: TableStatus.Reserved
+          }
+        })
+        return ordersRecord
+      },
+      {
+        maxWait: 5000, // 🌟 Đợi tối đa 5 giây để giành kết nối
+        timeout: 20000 // 🌟 Nới rộng thời gian xử lý lên 20 giây cho Render Free
+      }
+    ),
     prisma.socket.findUnique({
       where: {
         guestId: body.guestId
@@ -175,29 +181,35 @@ export const payOrdersController = async ({
   if (orders.length === 0) {
     throw new Error('Không có hóa đơn nào cần thanh toán')
   }
-  await prisma.$transaction(async (tx) => {
-    const orderIds = orders.map((order) => order.id)
-    const updatedOrders = await tx.order.updateMany({
-      where: {
-        id: {
-          in: orderIds
+  await prisma.$transaction(
+    async (tx) => {
+      const orderIds = orders.map((order) => order.id)
+      const updatedOrders = await tx.order.updateMany({
+        where: {
+          id: {
+            in: orderIds
+          }
+        },
+        data: {
+          status: OrderStatus.Paid,
+          orderHandlerId
         }
-      },
-      data: {
-        status: OrderStatus.Paid,
-        orderHandlerId
-      }
-    })
-    const tableNumbers = Array.from(
-      new Set(
-        orders.map((order) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null)
+      })
+      const tableNumbers = Array.from(
+        new Set(
+          orders.map((order) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null)
+        )
       )
-    )
-    for (const tableNumber of tableNumbers) {
-      await syncTableStatusByNumber(tx, tableNumber)
+      for (const tableNumber of tableNumbers) {
+        await syncTableStatusByNumber(tx, tableNumber)
+      }
+      return updatedOrders
+    },
+    {
+      maxWait: 5000,
+      timeout: 20000 // 🌟 Thêm timeout 20s cho luồng thanh toán
     }
-    return updatedOrders
-  })
+  )
   const [ordersResult, sockerRecord] = await Promise.all([
     prisma.order.findMany({
       where: {
@@ -302,57 +314,63 @@ export const updateOrderController = async (
   body: UpdateOrderBodyType & { orderHandlerId: number }
 ) => {
   const { status, dishId, quantity, orderHandlerId } = body
-  const result = await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUniqueOrThrow({
-      where: {
-        id: orderId
-      },
-      include: {
-        dishSnapshot: true
-      }
-    })
-    let dishSnapshotId = order.dishSnapshotId
-    if (order.dishSnapshot.dishId !== dishId) {
-      const dish = await tx.dish.findUniqueOrThrow({
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const order = await tx.order.findUniqueOrThrow({
         where: {
-          id: dishId
+          id: orderId
+        },
+        include: {
+          dishSnapshot: true
         }
       })
-      const dishSnapshot = await tx.dishSnapshot.create({
-        data: {
-          description: dish.description,
-          descriptionEn: dish.descriptionEn,
-          image: dish.image,
-          name: dish.name,
-          nameEn: dish.nameEn,
-          price: dish.price,
-          dishId: dish.id,
-          status: dish.status
-        }
-      })
-      dishSnapshotId = dishSnapshot.id
-    }
-    const newOrder = await tx.order.update({
-      where: {
-        id: orderId
-      },
-      data: {
-        status,
-        dishSnapshotId,
-        quantity,
-        orderHandlerId
-      },
-      include: {
-        dishSnapshot: true,
-        orderHandler: true,
-        guest: true
+      let dishSnapshotId = order.dishSnapshotId
+      if (order.dishSnapshot.dishId !== dishId) {
+        const dish = await tx.dish.findUniqueOrThrow({
+          where: {
+            id: dishId
+          }
+        })
+        const dishSnapshot = await tx.dishSnapshot.create({
+          data: {
+            description: dish.description,
+            descriptionEn: dish.descriptionEn,
+            image: dish.image,
+            name: dish.name,
+            nameEn: dish.nameEn,
+            price: dish.price,
+            dishId: dish.id,
+            status: dish.status
+          }
+        })
+        dishSnapshotId = dishSnapshot.id
       }
-    })
-    if (newOrder.tableNumber !== null) {
-      await syncTableStatusByNumber(tx, newOrder.tableNumber)
+      const newOrder = await tx.order.update({
+        where: {
+          id: orderId
+        },
+        data: {
+          status,
+          dishSnapshotId,
+          quantity,
+          orderHandlerId
+        },
+        include: {
+          dishSnapshot: true,
+          orderHandler: true,
+          guest: true
+        }
+      })
+      if (newOrder.tableNumber !== null) {
+        await syncTableStatusByNumber(tx, newOrder.tableNumber)
+      }
+      return newOrder
+    },
+    {
+      maxWait: 5000,
+      timeout: 20000 // 🌟 Thêm timeout 20s cho luồng cập nhật trạng thái món
     }
-    return newOrder
-  })
+  )
   const socketRecord = await prisma.socket.findUnique({
     where: {
       guestId: result.guestId!
@@ -361,5 +379,55 @@ export const updateOrderController = async (
   return {
     order: result,
     socketId: socketRecord?.socketId
+  }
+}
+
+export const deleteOrderController = async (orderId: number) => {
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const order = await tx.order.findUniqueOrThrow({
+        where: {
+          id: orderId
+        },
+        include: {
+          dishSnapshot: true,
+          orderHandler: true,
+          guest: true
+        }
+      })
+
+      // Delete the order
+      await tx.order.delete({
+        where: {
+          id: orderId
+        }
+      })
+
+      // Update table status after deletion
+      if (order.tableNumber !== null) {
+        await syncTableStatusByNumber(tx, order.tableNumber)
+      }
+
+      return order
+    },
+    {
+      maxWait: 5000,
+      timeout: 20000
+    }
+  )
+
+  let socketId: string | undefined = undefined
+  if (result.guestId !== null) {
+    const socketRecord = await prisma.socket.findUnique({
+      where: {
+        guestId: result.guestId
+      }
+    })
+    socketId = socketRecord?.socketId
+  }
+
+  return {
+    order: result,
+    socketId
   }
 }

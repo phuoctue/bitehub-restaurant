@@ -141,6 +141,7 @@
                          "toastOrderUpdated":  "Dish {dish} (Qty: {quantity}) updated to {status}",
                          "toastNewOrder":  "{guest} at table {table} placed {count} order(s)",
                          "toastPayment":  "{guest} at table {table} paid {count} order(s)",
+                         "confirmDelete":  "Are you sure you want to delete this order?",
                          "status":  {
                                         "Pending":  "Pending",
                                         "Processing":  "Processing",

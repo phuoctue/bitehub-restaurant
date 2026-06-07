@@ -65,6 +65,8 @@ const orderApiRequest = {
             }
           : undefined,
     }),
+  deleteOrder: (orderId: number) =>
+    http.delete(`/orders/${orderId}`),
 };
 
 export default orderApiRequest;
