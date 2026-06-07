@@ -2,6 +2,7 @@ import envConfig from '@/config'
 import { PrismaErrorCode } from '@/constants/error-reference'
 import { Role, TableStatus } from '@/constants/type'
 import prisma from '@/database'
+import { Prisma } from '@prisma/client'
 import {
   ChangePasswordBodyType,
   CreateEmployeeAccountBodyType,
@@ -223,7 +224,7 @@ export const createGuestController = async (body: CreateGuestBodyType) => {
   if (table.status === TableStatus.Hidden) {
     throw new Error(`Bàn ${table.number} đã bị ẩn, vui lòng chọn bàn khác`)
   }
-  const guest = await prisma.$transaction(async (tx) => {
+  const guest = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const guest = await tx.guest.create({
       data: body
     })

@@ -60,10 +60,10 @@ export const createOrdersController = async (orderHandlerId: number, body: Creat
     throw new Error(`Bàn ${table.number} gắn liền với khách hàng đã bị ẩn, vui lòng chọn khách hàng khác!`)
   }
 
-  const ordersRecord = await prisma.$transaction(async (tx) => {
-    const ordersRecord = []
+  const ordersRecord = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const ordersRecord: any[] = []
     for (const order of orders) {
-      const dish = await tx.dish.findUniqueOrThrow({
+      const dish: any = await tx.dish.findUniqueOrThrow({
         where: {
           id: order.dishId
         }
@@ -175,7 +175,7 @@ export const payOrdersController = async ({
   if (orders.length === 0) {
     throw new Error('Không có hóa đơn nào cần thanh toán')
   }
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const orderIds = orders.map((order) => order.id)
     const updatedOrders = await tx.order.updateMany({
       where: {
@@ -190,7 +190,7 @@ export const payOrdersController = async ({
     })
     const tableNumbers = Array.from(
       new Set(
-        orders.map((order) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null)
+        orders.map((order: any) => order.tableNumber).filter((tableNumber): tableNumber is number => tableNumber !== null)
       )
     )
     for (const tableNumber of tableNumbers) {

@@ -4,6 +4,7 @@ import { TableStatus, TableStatusValues } from '@/constants/type'
 import { EntityError, isPrismaClientKnownRequestError } from '@/utils/errors'
 import { getExcelValue, normalizeExcelNumber, normalizeExcelText, readExcelRows } from '@/utils/excel-import'
 import { randomId } from '@/utils/helpers'
+import { Prisma } from '@prisma/client'
 import z from 'zod'
 
 export const getTableList = () => {
@@ -49,7 +50,7 @@ export const updateTable = (number: number, data: UpdateTableBodyType) => {
   if (data.changeToken) {
     const token = randomId()
     // Xóa hết các refresh token của guest theo table
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const [table] = await Promise.all([
         tx.table.update({
           where: {
