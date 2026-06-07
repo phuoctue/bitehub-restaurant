@@ -1,5 +1,5 @@
 import guestApiRequest from "@/apiRequest/guest";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
 
 export const useGuestLoginMutation = () => {
@@ -15,6 +15,8 @@ export const useGuestLogoutMutation = () => {
 };
 
 export const useGuestOrderMuatation = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       orders,
@@ -23,6 +25,11 @@ export const useGuestOrderMuatation = () => {
       orders: Parameters<typeof guestApiRequest.order>[0];
       clientSentAt?: number;
     }) => guestApiRequest.order(orders, { clientSentAt }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["guest-orders"],
+      });
+    },
   });
 };
 
@@ -31,5 +38,6 @@ export const useGuestGetOrderListQuery = () => {
   return useQuery({
     queryFn: guestApiRequest.getOrderList,
     queryKey: ["guest-orders", locale],
+    refetchOnMount: true,
   });
 };

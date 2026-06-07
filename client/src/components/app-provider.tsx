@@ -112,6 +112,7 @@ function SocketQueryInvalidator() {
     const refreshTables = (_payload?: unknown, meta?: SocketTimingMeta) => {
       logSocketTiming("table-update", meta);
       queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     };
 
     const refreshOrdersAndTables = (
@@ -122,6 +123,7 @@ function SocketQueryInvalidator() {
       logSocketTiming(eventName, meta);
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["guest-orders"] });
     };
 
     const refreshPaymentData = (
@@ -132,6 +134,17 @@ function SocketQueryInvalidator() {
       queryClient.invalidateQueries({ queryKey: ["dashboardIndicators"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["guest-orders"] });
+    };
+
+    const refreshDeletedOrder = (
+      _payload?: unknown,
+      meta?: SocketTimingMeta,
+    ) => {
+      logSocketTiming("delete-order", meta);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["guest-orders"] });
     };
 
     const onNewOrder = (payload?: unknown, meta?: SocketTimingMeta) =>
@@ -143,12 +156,14 @@ function SocketQueryInvalidator() {
     socket.on("new-order", onNewOrder);
     socket.on("update-order", onUpdateOrder);
     socket.on("payment", refreshPaymentData);
+    socket.on("delete-order", refreshDeletedOrder);
 
     return () => {
       socket.off("table-update", refreshTables);
       socket.off("new-order", onNewOrder);
       socket.off("update-order", onUpdateOrder);
       socket.off("payment", refreshPaymentData);
+      socket.off("delete-order", refreshDeletedOrder);
     };
   }, [queryClient, socket]);
 
