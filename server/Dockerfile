@@ -20,7 +20,7 @@ ENV NODE_ENV=production
 
 COPY package*.json ./
 
-RUN apk add --no-cache font-dejavu
+RUN apk add --no-cache font-dejavu openssl
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
