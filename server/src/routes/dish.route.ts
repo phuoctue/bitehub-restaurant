@@ -45,7 +45,7 @@ export default async function dishRoutes(fastify: FastifyInstance, options: Fast
       const locale = resolveContentLocale(request.headers as Record<string, unknown>)
       const dishs = await getDishList()
       reply.send({
-        data: dishs.map((dish) => localizeDish(dish, locale)) as DishListResType['data'],
+        data: dishs.map((dish: any) => localizeDish(dish, locale)) as DishListResType['data'],
         message: 'Lấy danh sách món ăn thành công!'
       })
     }

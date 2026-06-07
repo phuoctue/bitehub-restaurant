@@ -18,16 +18,18 @@ import EditOrder from "@/app/manage/orders/edit-order";
 import { createContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AutoPagination from "@/components/auto-pagination";
-import { handleErrorApi } from "@/lib/utils";
-import { OrderStatusValues } from "@/constants/type";
+import { formatCurrency, handleErrorApi } from "@/lib/utils";
+import { OrderStatus, OrderStatusValues } from "@/constants/type";
 import OrderStatics from "@/app/manage/orders/order-statics";
 import orderTableColumnsFactory from "@/app/manage/orders/order-table-columns";
 import { useOrderService } from "@/app/manage/orders/order.service";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { endOfDay, format, startOfDay } from "date-fns";
 import TableSkeleton from "@/app/manage/orders/table-skeleton";
 import { GuestCreateOrdersResType } from "@/schemaValidations/guest.schema";
@@ -36,6 +38,9 @@ import { usegetTableListQuery } from "@/queries/useTable";
 import { toast as toastSonner } from "sonner";
 import { useAppStore } from "@/components/app-provider";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
+import orderApiRequest from "@/apiRequest/order";
+import { useInvoice } from "@/queries/useInvoice";
 
 export const OrderTableContext = createContext({
   setOrderIdEdit: (_value: number | undefined) => {},
@@ -49,7 +54,7 @@ export type Statics = { status: StatusCountObject; table: Record<number, Record<
 export type OrderObjectByGuestID = Record<number, GetOrdersResType["data"]>;
 export type ServingGuestByTableNumber = Record<number, OrderObjectByGuestID>;
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 const initFromDate = startOfDay(new Date());
 const initToDate = endOfDay(new Date());
 
@@ -77,6 +82,7 @@ export default function OrderTable() {
   const orderTableColumns = orderTableColumnsFactory(t);
   const [pagination, setPagination] = useState({ pageIndex, pageSize: PAGE_SIZE });
   const updateOrderMutation = useUpdateOrderMutation();
+  const { printInvoice, downloadInvoice, isDownloading } = useInvoice();
   const { statics, orderObjectByGuestId, servingGuestByTableNumber } = useOrderService(orderList);
 
   const changeStatus = async (body: { orderId: number; dishId: number; status: (typeof OrderStatusValues)[number]; quantity: number }) => {
@@ -170,53 +176,53 @@ export default function OrderTable() {
     <OrderTableContext.Provider value={{ orderIdEdit, setOrderIdEdit, changeStatus, orderObjectByGuestId }}>
       <div className="w-full">
         <EditOrder id={orderIdEdit} setId={setOrderIdEdit} onSubmitSuccess={() => refetchOrderList()} />
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center">
+          <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+            <div className="grid gap-1.5 sm:flex sm:items-center sm:gap-2">
               <span className="text-sm whitespace-nowrap">{t("from")}</span>
               <Input
                 type="datetime-local"
                 placeholder={t("fromDate")}
-                className="text-sm w-[170px]"
+                className="w-full text-sm sm:w-[170px]"
                 value={format(fromDate, "yyyy-MM-dd HH:mm").replace(" ", "T")}
                 onChange={(event) => setFromDate(new Date(event.target.value))}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="grid gap-1.5 sm:flex sm:items-center sm:gap-2">
               <span className="text-sm whitespace-nowrap">{t("to")}</span>
               <Input
                 type="datetime-local"
                 placeholder={t("toDate")}
-                className="text-sm w-[170px]"
+                className="w-full text-sm sm:w-[170px]"
                 value={format(toDate, "yyyy-MM-dd HH:mm").replace(" ", "T")}
                 onChange={(event) => setToDate(new Date(event.target.value))}
               />
             </div>
-            <Button variant="outline" onClick={() => { setFromDate(initFromDate); setToDate(initToDate); }} size="sm">
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => { setFromDate(initFromDate); setToDate(initToDate); }} size="sm">
               {t("reset")}
             </Button>
           </div>
-          <div className="ml-auto">
+          <div className="sm:ml-auto">
             <AddOrder />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 py-4">
+        <div className="grid gap-2 py-4 sm:flex sm:flex-wrap sm:items-center">
           <Input
             placeholder={t("customerName")}
             value={(table.getColumn("guestName")?.getFilterValue() as string) ?? ""}
             onChange={(event) => table.getColumn("guestName")?.setFilterValue(event.target.value)}
-            className="w-[140px]"
+            className="w-full sm:w-[140px]"
           />
           <Input
             placeholder={t("tableNumber")}
             value={(table.getColumn("tableNumber")?.getFilterValue() as string) ?? ""}
             onChange={(event) => table.getColumn("tableNumber")?.setFilterValue(event.target.value)}
-            className="w-[80px]"
+            className="w-full sm:w-[80px]"
           />
           <Popover open={openStatusFilter} onOpenChange={setOpenStatusFilter}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={openStatusFilter} className="w-[150px] text-sm justify-between">
+              <Button variant="outline" role="combobox" aria-expanded={openStatusFilter} className="w-full justify-between text-sm sm:w-[150px]">
                 {table.getColumn("status")?.getFilterValue()
                   ? statusLabel(table.getColumn("status")?.getFilterValue() as (typeof OrderStatusValues)[number])
                   : t("statusLabel")}
@@ -250,7 +256,118 @@ export default function OrderTable() {
         <OrderStatics statics={statics} tableList={tableListSortedByNumber} servingGuestByTableNumber={servingGuestByTableNumber} />
         {orderListQuery.isPending && <TableSkeleton />}
         {!orderListQuery.isPending && (
-          <div className="rounded-md border overflow-x-auto">
+          <div className="grid gap-3 md:hidden">
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => {
+                const order = row.original;
+                const isPaid = order.status === OrderStatus.Paid;
+                return (
+                  <div key={row.id} className="rounded-md border bg-background p-3 shadow-sm">
+                    <div className="flex gap-3">
+                      <Image
+                        src={order.dishSnapshot.image}
+                        alt={order.dishSnapshot.name}
+                        width={72}
+                        height={72}
+                        className="h-20 w-20 shrink-0 rounded-md object-cover"
+                      />
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="line-clamp-2 font-medium">{order.dishSnapshot.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatCurrency(order.dishSnapshot.price * order.quantity)}
+                            </div>
+                          </div>
+                          <Badge variant="secondary">x{order.quantity}</Badge>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <div className="text-muted-foreground">{t("table")}</div>
+                            <div className="font-medium">{order.tableNumber}</div>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-muted-foreground">{t("customer")}</div>
+                            <div className="truncate font-medium">{order.guest ? `${order.guest.name} (#${order.guest.id})` : t("deleted")}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <Select
+                        onValueChange={(value: (typeof OrderStatusValues)[number]) => {
+                          changeStatus({
+                            orderId: order.id,
+                            dishId: order.dishSnapshot.dishId!,
+                            status: value,
+                            quantity: order.quantity,
+                          });
+                        }}
+                        value={order.status}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={t("statusLabel")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {OrderStatusValues.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {statusLabel(status)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex gap-2">
+                        <Button className="flex-1" variant="outline" size="sm" onClick={() => setOrderIdEdit(order.id)}>
+                          {t("edit")}
+                        </Button>
+                        {isPaid && (
+                          <>
+                            <Button
+                              className="flex-1"
+                              variant="outline"
+                              size="sm"
+                              disabled={isDownloading}
+                              onClick={async () => {
+                                try {
+                                  const invoiceResult = await orderApiRequest.getOrderInvoice(order.id);
+                                  downloadInvoice(invoiceResult.payload.data.invoiceUrl);
+                                } catch (error) {
+                                  handleErrorApi({ error });
+                                }
+                              }}
+                            >
+                              PDF
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              variant="outline"
+                              size="sm"
+                              disabled={isDownloading}
+                              onClick={async () => {
+                                try {
+                                  const invoiceResult = await orderApiRequest.getOrderInvoice(order.id);
+                                  printInvoice(invoiceResult.payload.data.invoiceUrl);
+                                } catch (error) {
+                                  handleErrorApi({ error });
+                                }
+                              }}
+                            >
+                              Print
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="rounded-md border p-6 text-center text-sm text-muted-foreground">{t("noResults")}</div>
+            )}
+          </div>
+        )}
+        {!orderListQuery.isPending && (
+          <div className="hidden rounded-md border overflow-x-auto md:block">
             <Table className="min-w-[900px] md:min-w-full">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (

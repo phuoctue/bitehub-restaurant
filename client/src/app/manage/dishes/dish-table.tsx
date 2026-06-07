@@ -168,7 +168,7 @@ function AlertDialogDeleteDish({
   )
 }
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 6
 
 export default function DishTable() {
   const t = useTranslations('ManageDishes')
@@ -212,19 +212,63 @@ export default function DishTable() {
       <div className='w-full'>
         <EditDish id={dishIdEdit} setId={setDishIdEdit} />
         <AlertDialogDeleteDish dishDelete={dishDelete} setDishDelete={setDishDelete} />
-        <div className='flex items-center py-4'>
+        <div className='flex flex-col gap-3 py-4 sm:flex-row sm:items-center'>
           <Input
             placeholder={t('filterDishName')}
             value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
             onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
-            className='max-w-sm'
+            className='w-full sm:max-w-sm'
           />
-          <div className='ml-auto flex items-center gap-2'>
+          <div className='flex items-center gap-2 sm:ml-auto'>
             <ImportDishes />
             <AddDish />
           </div>
         </div>
-        <div className='rounded-md border overflow-x-auto'>
+        <div className='grid gap-3 md:hidden'>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const item = row.original
+              return (
+                <div key={row.id} className='rounded-md border bg-background p-3 shadow-sm'>
+                  <div className='flex gap-3'>
+                    <Avatar className='h-20 w-20 shrink-0 rounded-md'>
+                      <AvatarImage src={item.image} />
+                      <AvatarFallback className='rounded-md text-xs'>{item.name}</AvatarFallback>
+                    </Avatar>
+                    <div className='min-w-0 flex-1 space-y-2'>
+                      <div className='flex items-start justify-between gap-2'>
+                        <div className='min-w-0'>
+                          <div className='line-clamp-2 font-medium'>{item.name}</div>
+                          <div className='text-sm text-muted-foreground'>{formatCurrency(item.price)}</div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' className='h-8 w-8 shrink-0 p-0'>
+                              <span className='sr-only'>{t('openMenu')}</span>
+                              <DotsHorizontalIcon className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setDishIdEdit(item.id)}>{t('edit')}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDishDelete(item)}>{t('delete')}</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className='inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium'>
+                        {t(`status.${item.status}`)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div className='rounded-md border p-6 text-center text-sm text-muted-foreground'>{t('noResults')}</div>
+          )}
+        </div>
+        <div className='hidden rounded-md border overflow-x-auto md:block'>
           <Table className='min-w-[700px] md:min-w-full'>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (

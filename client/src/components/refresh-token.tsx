@@ -7,25 +7,23 @@ import {
   generateSocketInstance,
   getAccessTokenFromLocalStorage,
 } from "@/lib/utils";
-import { withLocalePath } from "@/lib/locale-path";
+import { extractLocaleFromPath, withLocalePath } from "@/lib/locale-path";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-
-const AUTH_REQUIRED_PREFIXES = ["/manage", "/guest"];
 
 export default function RefreshToken() {
   const pathName = usePathname();
   const router = useRouter();
   const socket = useAppStore((state) => state.socket);
   const setSocket = useAppStore((state) => state.setSocket);
+  const localePrefix = extractLocaleFromPath(pathName);
+  const normalizedPathName = localePrefix
+    ? pathName.slice(localePrefix.length + 1) || "/"
+    : pathName;
+  const isManagePath = normalizedPathName.startsWith("/manage");
+  const isGuestPath = normalizedPathName.startsWith("/guest");
 
   useEffect(() => {
-    const shouldRefreshToken = AUTH_REQUIRED_PREFIXES.some((path) =>
-      pathName.startsWith(path),
-    );
-
-    if (!shouldRefreshToken) return;
-
     let intervalId: ReturnType<typeof setInterval> | null = null;
     let isActive = true;
 
@@ -73,15 +71,18 @@ export default function RefreshToken() {
           if (intervalId) {
             clearInterval(intervalId);
           }
-          router.push(withLocalePath("/login", pathName));
+          if (isManagePath || isGuestPath) {
+            router.push(withLocalePath(isGuestPath ? "/" : "/login", pathName));
+          }
         },
       });
     };
 
     syncSocketAuthAndConnect();
-    onRefreshToken(true);
+    // Không force refresh ngay lập tức khi vừa vào page
+    // Chỉ refresh khi token gần hết hạn (do interval kiểm tra mỗi 5s)
 
-    const TIMEOUT = 1000;
+    const TIMEOUT = 5000;
     intervalId = setInterval(() => onRefreshToken(), TIMEOUT);
 
     function onConnect() {
@@ -121,7 +122,7 @@ export default function RefreshToken() {
       socket?.off("disconnect", onDisconnect);
       socket?.off("refresh-token", onRefreshTokenSocket);
     };
-  }, [pathName, router, setSocket, socket]);
+  }, [isGuestPath, isManagePath, pathName, router, setSocket, socket]);
 
   return null;
 }

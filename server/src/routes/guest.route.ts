@@ -218,7 +218,7 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
       fastify.io.to(ManagerRoom).emit('table-update', undefined, newOrderTiming)
       reply.send({
         message: 'Đặt món thành công',
-        data: result.map((order) => localizeOrder(order, locale))
+        data: result.map((order: any) => localizeOrder(order, locale))
       })
     }
   )
@@ -241,7 +241,7 @@ export default async function guestRoutes(fastify: FastifyInstance, options: Fas
       const result = await guestGetOrdersController(guestId)
       reply.send({
         message: 'Lấy danh sách đơn hàng thành công',
-        data: result.map((order) => localizeOrder(order, locale)) as GuestGetOrdersResType['data']
+        data: result.map((order: any) => localizeOrder(order, locale)) as GuestGetOrdersResType['data']
       })
     }
   )

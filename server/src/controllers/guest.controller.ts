@@ -1,6 +1,7 @@
 import envConfig from '@/config'
 import { DishStatus, OrderStatus, Role, TableStatus } from '@/constants/type'
 import prisma from '@/database'
+import { Prisma } from '@prisma/client'
 import {
   GuestCreateOrdersBodyType,
   GuestLoginBodyType,
@@ -12,7 +13,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from '@/utils/j
 import ms from 'ms'
 
 export const guestLoginController = async (body: GuestLoginBodyType) => {
-  let guest = await prisma.$transaction(async (tx) => {
+  let guest = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const table = await tx.table.findUnique({
       where: {
         number: body.tableNumber,
@@ -88,7 +89,7 @@ export const guestLoginController = async (body: GuestLoginBodyType) => {
 }
 
 export const guestLogoutController = async (id: number) => {
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const guest = await tx.guest.update({
       where: {
         id
@@ -162,7 +163,7 @@ export const guestRefreshTokenController = async (refreshToken: string) => {
 }
 
 export const guestCreateOrdersController = async (guestId: number, body: GuestCreateOrdersBodyType) => {
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const guest = await tx.guest.findUniqueOrThrow({
       where: {
         id: guestId
