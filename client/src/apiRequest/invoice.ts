@@ -4,6 +4,16 @@ import envConfig from '@/config'
 export interface InvoiceData {
   invoiceNumber: string
   invoiceUrl: string
+  paymentQr?: {
+    bankId: string
+    accountNo: string
+    accountName: string
+    template?: string
+    transferPrefix?: string
+    amount: number
+    transferContent: string
+    imageUrl: string
+  } | null
 }
 
 const getInvoiceAbsoluteUrl = (invoiceUrl: string) => {

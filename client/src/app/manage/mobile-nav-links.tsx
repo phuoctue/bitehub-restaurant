@@ -1,27 +1,26 @@
 "use client";
 
 import { getMenuItems } from "@/app/manage/menuItems";
+import type { ManageCommonLabels } from "@/app/manage/menuItems";
 import { useAppStore } from "@/components/app-provider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Package2, PanelLeft } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 
 
-export default function MobileNavLinks() {
+export default function MobileNavLinks({ labels }: { labels: ManageCommonLabels }) {
   const pathname = usePathname();
   const role = useAppStore((state) => state.role);
-  const t = useTranslations("ManageCommon");
-  const menuItems = getMenuItems(t);
+  const menuItems = getMenuItems(labels);
 
   return (
     <Sheet>
       <SheetTrigger asChild>
         <Button size="icon" variant="outline" className="sm:hidden">
           <PanelLeft className="h-5 w-5" />
-          <span className="sr-only">{t("toggleMenu")}</span>
+          <span className="sr-only">{labels.toggleMenu}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72 sm:max-w-xs">

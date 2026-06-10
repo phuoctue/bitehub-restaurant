@@ -87,9 +87,23 @@ export const PayGuestOrdersBody = z.object({
 
 export type PayGuestOrdersBodyType = z.TypeOf<typeof PayGuestOrdersBody>
 
+export const InvoicePaymentQrSchema = z.object({
+  bankId: z.string(),
+  accountNo: z.string(),
+  accountName: z.string(),
+  template: z.string().optional(),
+  transferPrefix: z.string().optional(),
+  amount: z.number(),
+  transferContent: z.string(),
+  imageUrl: z.string()
+})
+
+export type InvoicePaymentQrSchemaType = z.TypeOf<typeof InvoicePaymentQrSchema>
+
 export const InvoiceSchema = z.object({
   invoiceNumber: z.string(),
-  invoiceUrl: z.string()
+  invoiceUrl: z.string(),
+  paymentQr: InvoicePaymentQrSchema.nullable().optional()
 })
 
 export type InvoiceSchemaType = z.TypeOf<typeof InvoiceSchema>

@@ -6,7 +6,8 @@ import {
   InvoiceItem,
   InvoiceData,
   ensureInvoicesDirectory,
-  InvoiceLocale
+  InvoiceLocale,
+  InvoicePaymentQrData
 } from '@/utils/invoice'
 
 export const prepareInvoiceDataFromOrders = (
@@ -51,16 +52,17 @@ export const prepareInvoiceDataFromOrders = (
 export const generateInvoiceFromOrdersController = async (
   orders: (Order & { dishSnapshot: any; guest: any })[],
   locale: InvoiceLocale = 'vi'
-): Promise<{ invoiceNumber: string; invoiceUrl: string }> => {
+): Promise<{ invoiceNumber: string; invoiceUrl: string; paymentQr: InvoicePaymentQrData | null }> => {
   if (orders.length === 0) {
     throw new Error(locale === 'en' ? 'No orders found to generate invoice' : 'Không có đơn hàng nào để tạo hóa đơn')
   }
 
   const invoiceData = prepareInvoiceDataFromOrders(orders, locale)
-  const invoiceUrl = await generatePdfInvoice(invoiceData)
+  const { invoiceUrl, paymentQr } = await generatePdfInvoice(invoiceData)
 
   return {
     invoiceNumber: invoiceData.invoiceNumber,
-    invoiceUrl
+    invoiceUrl,
+    paymentQr
   }
 }

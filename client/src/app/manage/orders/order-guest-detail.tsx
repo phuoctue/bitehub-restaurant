@@ -13,9 +13,10 @@ import orderApiRequest from "@/apiRequest/order";
 import { usePayForGuestMuattion } from "@/queries/useOrder";
 import { GetOrdersResType } from "@/schemaValidations/order.schema";
 import Image from "next/image";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
+import { buildPaymentQrData, formatInvoiceCurrency } from "@/lib/payment-qr";
 
 type Guest = GetOrdersResType["data"][0]["guest"];
 type Orders = GetOrdersResType["data"];
@@ -32,6 +33,16 @@ export default function OrderGuestDetail({ guest, orders, onOrderDeleted }: { gu
   const ordersFilterToPurchase = guest ? visibleOrders.filter((order) => order.status !== OrderStatus.Paid && order.status !== OrderStatus.Rejected) : [];
   const purchasedOrderFilter = guest ? visibleOrders.filter((order) => order.status === OrderStatus.Paid) : [];
   const payForGuestMutation = usePayForGuestMuattion();
+  const paymentQr = useMemo(() => {
+    const totalAmount = ordersFilterToPurchase.reduce((acc, order) => {
+      return acc + order.quantity * order.dishSnapshot.price;
+    }, 0);
+
+    return buildPaymentQrData({
+      amount: totalAmount,
+      invoiceNumber: `ORDER-${ordersFilterToPurchase[0]?.id ?? "UNKNOWN"}`,
+    });
+  }, [ordersFilterToPurchase]);
 
   const handleDeleteOrder = async (orderId: number) => {
     if (!confirm(t("confirmDelete") || "Bạn có chắc chắn muốn xóa đơn hàng này?")) {
@@ -213,6 +224,46 @@ export default function OrderGuestDetail({ guest, orders, onOrderDeleted }: { gu
           </Badge>
         </div>
       </div>
+
+      {paymentQr && ordersFilterToPurchase.length > 0 && (
+        <div className="rounded-md border bg-muted/20 p-3">
+          <div className="grid gap-3 sm:grid-cols-[160px_1fr] sm:items-start">
+            <div className="rounded-md border bg-white p-2">
+              <Image
+                src={paymentQr.imageUrl}
+                alt="VietQR payment code"
+                width={140}
+                height={140}
+                className="h-auto w-full"
+                unoptimized
+              />
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="font-semibold text-sm">{paymentQr.transferPrefix}</div>
+              <div>
+                <span className="text-muted-foreground">Bank: </span>
+                <span className="font-medium">{paymentQr.bankId}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Account: </span>
+                <span className="font-medium">{paymentQr.accountNo}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Name: </span>
+                <span className="font-medium">{paymentQr.accountName}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Amount: </span>
+                <span className="font-medium">{formatInvoiceCurrency(paymentQr.amount)}</span>
+              </div>
+              <div className="break-words">
+                <span className="text-muted-foreground">Content: </span>
+                <span className="font-medium">{paymentQr.transferContent}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div>
         <Button className="w-full font-semibold" size={"sm"} variant={"default"} disabled={ordersFilterToPurchase.length === 0} onClick={pay}>

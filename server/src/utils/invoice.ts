@@ -1,7 +1,9 @@
 import PDFDocument from 'pdfkit'
 import fs from 'fs'
 import path from 'path'
+import axios from 'axios'
 import { formatDate } from './helpers'
+import envConfig from '@/config'
 
 export type InvoiceLocale = 'vi' | 'en'
 
@@ -9,6 +11,20 @@ export interface InvoiceItem {
   name: string
   quantity: number
   price: number
+}
+
+export interface InvoicePaymentQrConfig {
+  bankId: string
+  accountNo: string
+  accountName: string
+  template?: string
+  transferPrefix?: string
+}
+
+export interface InvoicePaymentQrData extends InvoicePaymentQrConfig {
+  amount: number
+  transferContent: string
+  imageUrl: string
 }
 
 export interface InvoiceData {
@@ -24,6 +40,7 @@ export interface InvoiceData {
   restaurantAddress?: string
   restaurantPhone?: string
   locale?: InvoiceLocale
+  paymentQrConfig?: Partial<InvoicePaymentQrConfig>
 }
 
 export const ensureInvoicesDirectory = () => {
@@ -80,7 +97,7 @@ export const formatCurrency = (amount: number, locale: InvoiceLocale = 'vi'): st
   const formattedAmount = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     maximumFractionDigits: 0
   }).format(amount)
-  return `${formattedAmount} VND`
+  return `${formattedAmount} đ`
 }
 
 const removeVietnameseDiacritics = (value: string) =>
@@ -105,6 +122,13 @@ const getInvoiceText = (locale: InvoiceLocale, useUnicode: boolean) => {
       subtotal: 'Subtotal',
       tax: 'Tax (10%)',
       total: 'TOTAL',
+      paymentTitle: 'Payment QR',
+      paymentHint: 'Scan the QR code below to pay this bill.',
+      paymentBank: 'Bank:',
+      paymentAccount: 'Account:',
+      paymentName: 'Recipient:',
+      paymentAmount: 'Amount:',
+      paymentReference: 'Content:',
       footer1: 'Thank you for dining with us!',
       footer2: 'Please keep this invoice for any future reference.'
     }
@@ -123,6 +147,13 @@ const getInvoiceText = (locale: InvoiceLocale, useUnicode: boolean) => {
     subtotal: 'Tổng cộng',
     tax: 'Thuế (10%)',
     total: 'TỔNG CỘNG',
+    paymentTitle: 'Mã QR thanh toán',
+    paymentHint: 'Quét mã QR bên dưới để thanh toán hóa đơn này.',
+    paymentBank: 'Ngân hàng:',
+    paymentAccount: 'Số tài khoản:',
+    paymentName: 'Người nhận:',
+    paymentAmount: 'Số tiền:',
+    paymentReference: 'Nội dung:',
     footer1: 'Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!',
     footer2: 'Vui lòng lưu lại hóa đơn này để đối chiếu khi cần.'
   }
@@ -147,7 +178,102 @@ const formatInvoiceDate = (date: Date, locale: InvoiceLocale) => {
   return formatDate(date)
 }
 
-export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> => {
+const normalizePaymentPrefix = (value?: string) => value?.trim() || 'Thanh toan don hang'
+
+const normalizeVietQrBankId = (value?: string) => {
+  const normalized = value?.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+  if (!normalized) return ''
+
+  const aliases: Record<string, string> = {
+    TPBANK: 'TPB',
+    TPB: 'TPB',
+    MBBANK: 'MB',
+    MBB: 'MB',
+    VIETCOMBANK: 'VCB',
+    VIETINBANK: 'VTB',
+    BIDV: 'BIDV',
+    AGRIBANK: 'VARB',
+    TECHCOMBANK: 'TCB',
+    ACB: 'ACB',
+    SACOMBANK: 'STB',
+    VPBANK: 'VPB',
+    SHB: 'SHB',
+    HDBANK: 'HDB',
+    OCB: 'OCB',
+    EXIMBANK: 'EIB',
+    VIB: 'VIB',
+    MSB: 'MSB',
+    SEABANK: 'SSB',
+    LPBANK: 'LPB',
+    PGBANK: 'PGB',
+    KIENLONGBANK: 'KLB',
+    NAMABANK: 'NAB',
+    VIETABANK: 'VAB',
+    ABBANK: 'ABBANK',
+    PVCOMBANK: 'PVCB',
+    PUBLICBANK: 'PBVN',
+    WOORIBANK: 'WB',
+    UOB: 'UOB',
+    CIMB: 'CIMB',
+    KBANK: 'KBANK'
+  }
+
+  return aliases[normalized] || normalized
+}
+
+const buildVietQrImageUrl = (config: InvoicePaymentQrData) => {
+  const template = config.template?.trim() || 'compact2'
+  const baseUrl = 'https://img.vietqr.io/image'
+  const queryParams = new URLSearchParams({
+    amount: String(Math.max(0, Math.round(config.amount))),
+    addInfo: config.transferContent,
+    accountName: config.accountName
+  })
+
+  return `${baseUrl}/${encodeURIComponent(normalizeVietQrBankId(config.bankId))}-${encodeURIComponent(config.accountNo)}-${encodeURIComponent(template)}.png?${queryParams.toString()}`
+}
+
+export const buildInvoicePaymentQrData = (
+  invoiceNumber: string,
+  amount: number,
+  overrides?: Partial<InvoicePaymentQrConfig>
+): InvoicePaymentQrData | null => {
+  const bankId = normalizeVietQrBankId(overrides?.bankId || envConfig.VIETQR_BANK_ID)
+  const accountNo = overrides?.accountNo?.trim() || envConfig.VIETQR_ACCOUNT_NO?.trim()
+  const accountName = overrides?.accountName?.trim() || envConfig.VIETQR_ACCOUNT_NAME?.trim()
+  const template = overrides?.template?.trim() || envConfig.VIETQR_TEMPLATE?.trim() || 'compact2'
+  const transferPrefix = normalizePaymentPrefix(overrides?.transferPrefix || envConfig.VIETQR_TRANSFER_PREFIX)
+
+  if (!bankId || !accountNo || !accountName || amount <= 0) {
+    return null
+  }
+
+  const transferContent = `${transferPrefix} #${invoiceNumber} - BiteHub`
+
+  return {
+    bankId,
+    accountNo,
+    accountName,
+    template,
+    transferPrefix,
+    amount,
+    transferContent,
+    imageUrl: buildVietQrImageUrl({
+      bankId,
+      accountNo,
+      accountName,
+      template,
+      transferPrefix,
+      amount,
+      transferContent,
+      imageUrl: ''
+    })
+  }
+}
+
+export const generatePdfInvoice = async (
+  invoiceData: InvoiceData
+): Promise<{ invoiceUrl: string; paymentQr: InvoicePaymentQrData | null }> => {
   const invoicesDir = ensureInvoicesDirectory()
   const fonts = resolveInvoiceFonts()
   const useUnicodeFonts = Boolean(fonts)
@@ -172,6 +298,18 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
     ...item,
     name: useUnicodeFonts ? item.name : removeVietnameseDiacritics(item.name)
   }))
+  const paymentQr = buildInvoicePaymentQrData(invoiceData.invoiceNumber, invoiceData.total, invoiceData.paymentQrConfig)
+  let paymentQrImage: Buffer | null = null
+  if (paymentQr) {
+    try {
+      const response = await axios.get(paymentQr.imageUrl, {
+        responseType: 'arraybuffer'
+      })
+      paymentQrImage = Buffer.from(response.data)
+    } catch (error) {
+      console.error('Failed to load VietQR image:', error)
+    }
+  }
 
   const pageWidth = doc.page.width
   const margin = 48
@@ -263,14 +401,67 @@ export const generatePdfInvoice = (invoiceData: InvoiceData): Promise<string> =>
   doc.moveTo(labelX - 10, totalsTop + 52).lineTo(rightEdge, totalsTop + 52).lineWidth(1).strokeColor('#e5e7eb').stroke()
   drawTotalRow(t.total, formatCurrency(invoiceData.total, locale), totalsTop + 62, true)
 
-  const footerY = totalsTop + 118
+  let footerY = totalsTop + 118
+
+  if (paymentQr) {
+    const paymentTop = totalsTop + 108
+    const paymentHeight = 150
+    const paymentBoxWidth = contentWidth
+    const paymentQrWidth = 118
+    const paymentQrX = rightEdge - paymentQrWidth - 4
+    const paymentTextX = margin
+    const paymentTextWidth = paymentQrX - paymentTextX - 18
+
+    doc.roundedRect(margin, paymentTop, paymentBoxWidth, paymentHeight, 8).fillAndStroke('#f9fafb', '#e5e7eb')
+    doc.fillColor('#111827').font(boldFont).fontSize(12).text(t.paymentTitle, paymentTextX + 12, paymentTop + 10, {
+      width: paymentTextWidth,
+      align: 'left'
+    })
+    doc.font(regularFont).fontSize(9.5).fillColor('#4b5563').text(t.paymentHint, paymentTextX + 12, paymentTop + 28, {
+      width: paymentTextWidth,
+      align: 'left'
+    })
+
+    const paymentLines = [
+      `${t.paymentBank} ${paymentQr.bankId}`,
+      `${t.paymentAccount} ${paymentQr.accountNo}`,
+      `${t.paymentName} ${paymentQr.accountName}`,
+      `${t.paymentAmount} ${formatCurrency(paymentQr.amount, locale)}`,
+      `${t.paymentReference} ${paymentQr.transferContent}`
+    ]
+
+    let paymentLineY = paymentTop + 48
+    paymentLines.forEach((line) => {
+      doc.font(regularFont).fontSize(9.5).fillColor('#111827').text(line, paymentTextX + 12, paymentLineY, {
+        width: paymentTextWidth,
+        lineGap: 2
+      })
+      paymentLineY += 16
+    })
+
+    if (paymentQrImage) {
+      doc.image(paymentQrImage, paymentQrX, paymentTop + 12, {
+        width: paymentQrWidth,
+        height: paymentQrWidth
+      })
+    } else {
+      doc.roundedRect(paymentQrX, paymentTop + 12, paymentQrWidth, paymentQrWidth, 6).strokeColor('#d1d5db').stroke()
+      doc.font(regularFont).fontSize(8).fillColor('#6b7280').text('QR unavailable', paymentQrX + 8, paymentTop + 58, {
+        width: paymentQrWidth - 16,
+        align: 'center'
+      })
+    }
+
+    footerY = paymentTop + paymentHeight + 16
+  }
+
   doc.moveTo(margin, footerY).lineTo(rightEdge, footerY).lineWidth(1).strokeColor('#e5e7eb').stroke()
   doc.font(regularFont).fontSize(10).fillColor('#4b5563')
   doc.text(t.footer1, margin, footerY + 18, { width: contentWidth, align: 'center' })
   doc.text(t.footer2, margin, footerY + 34, { width: contentWidth, align: 'center' })
 
   return new Promise((resolve, reject) => {
-    stream.on('finish', () => resolve(`/static/invoices/${fileName}`))
+    stream.on('finish', () => resolve({ invoiceUrl: `/static/invoices/${fileName}`, paymentQr }))
     stream.on('error', reject)
     doc.on('error', reject)
     doc.end()

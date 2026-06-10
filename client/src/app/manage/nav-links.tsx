@@ -1,19 +1,18 @@
 "use client";
 
 import { getMenuItems } from "@/app/manage/menuItems";
+import type { ManageCommonLabels } from "@/app/manage/menuItems";
 import { useAppStore } from "@/components/app-provider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 
 import { Package2, Settings } from "lucide-react";
 
-export default function NavLinks() {
+export default function NavLinks({ labels }: { labels: ManageCommonLabels }) {
   const pathname = usePathname();
   const role = useAppStore((state) => state.role);
-  const t = useTranslations("ManageCommon");
-  const menuItems = getMenuItems(t);
+  const menuItems = getMenuItems(labels);
 
   return (
     <TooltipProvider>
@@ -67,10 +66,10 @@ export default function NavLinks() {
                 )}
               >
                 <Settings className="h-5 w-5" />
-                <span className="sr-only">{t("settings")}</span>
+                <span className="sr-only">{labels.settings}</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="right">{t("settings")}</TooltipContent>
+            <TooltipContent side="right">{labels.settings}</TooltipContent>
           </Tooltip>
         </nav>
       </aside>

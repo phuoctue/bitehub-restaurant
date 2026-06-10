@@ -14,16 +14,15 @@ import {
 import { handleErrorApi } from "@/lib/utils";
 import { useAccountMe } from "@/queries/useAccount";
 import { useLogoutMutation } from "@/queries/useAuth";
-import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
+import type { ManageCommonLabels } from "@/app/manage/menuItems";
 
 
-export default function DropdownAvatar() {
+export default function DropdownAvatar({ labels }: { labels: ManageCommonLabels }) {
   const logoutMutation = useLogoutMutation();
   const router = useRouter();
   const setRole = useAppStore((state) => state.setRole);
   const disconnectSocket = useAppStore((state) => state.disconnectSocket);
-  const t = useTranslations("ManageCommon");
 
   const { data } = useAccountMe();
   const account = data?.payload.data;
@@ -51,25 +50,25 @@ export default function DropdownAvatar() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{account?.name ?? t("user")}</DropdownMenuLabel>
+        <DropdownMenuLabel>{account?.name ?? labels.user}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/" className="w-full cursor-pointer">
-            {t("home")}
+            {labels.home}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/manage/setting" className="w-full cursor-pointer">
-            {t("settings")}
+            {labels.settings}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer">{t("support")}</DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">{labels.support}</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={logout}
           className="cursor-pointer text-destructive focus:text-destructive"
         >
-          {t("logout")}
+          {labels.logout}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

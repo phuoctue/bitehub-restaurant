@@ -28,7 +28,12 @@ const configSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REDIRECT_CLIENT_URL: z.string(),
   GOOGLE_AUTHORIZED_REDIRECT_URI: z.string().url().optional(),
-  GOOGLE_REDIRECT_URI: z.string().optional()
+  GOOGLE_REDIRECT_URI: z.string().optional(),
+  VIETQR_BANK_ID: z.string().optional(),
+  VIETQR_ACCOUNT_NO: z.string().optional(),
+  VIETQR_ACCOUNT_NAME: z.string().optional(),
+  VIETQR_TEMPLATE: z.string().optional(),
+  VIETQR_TRANSFER_PREFIX: z.string().optional()
 })
 
 const configServer = configSchema.safeParse(process.env)
