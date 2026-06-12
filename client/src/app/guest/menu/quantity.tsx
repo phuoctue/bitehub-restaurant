@@ -25,7 +25,6 @@ export default function Quantity({
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
-        readOnly
         value={value}
         onChange={(e) => {
           const numberValue = Number(e.target.value);

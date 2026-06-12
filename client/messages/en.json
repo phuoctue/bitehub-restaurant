@@ -133,7 +133,7 @@
                          "payAll":  "Pay all",
                          "createOrder":  "Create order",
                          "newGuest":  "New guest",
-                         "selectTable":  "Select table",
+                         "selectTable":  "Select",
                          "selectedGuest":  "Selected guest",
                          "outOfStock":  "Out of stock",
                          "chooseCustomer":  "Please choose a customer",
@@ -225,7 +225,7 @@
                          "saving":  "Saving...",
                          "importSuccess":  "Import completed successfully",
                          "add":  "Add",
-                         "selectTable":  "Add",
+                         "selectTable":  "Select",
                          "status":  {
                                         "Available":  "Available",
                                         "Hidden":  "Hidden",
